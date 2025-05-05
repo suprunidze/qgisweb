@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Два фрейми з регулюванням ширини</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    iframe {
+      border: none;
+      height: 100%;
+    }
+
+    .left, .right {
+      flex-grow: 1;
+      min-width: 10px;
+      transition: width 0.5s ease;
+    }
+
+    .left iframe {
+      width: 100%;
+    }
+
+    .resizer {
+      width: 10px;
+      background-color: #ccc;
+      cursor: default; /* Заміна курсору на default */
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .resizer button {
+      width: 30px;
+      height: 30px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      font-size: 18px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .resizer button:hover {
+      background-color: #0056b3;
+    }
+
+    #toggle3D2D, #toggle3D, #toggle2D {
+      position: fixed;
+      right: 22px;
+      width: 44px;
+      height: 44px;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      font-size: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      z-index: 10;
+    }
+
+    #toggle3D2D:hover, #toggle3D:hover, #toggle2D:hover {
+      background-color: #218838;
+    }
+
+    .active {
+      background-color: #28a745;
+    }
+
+    .inactive {
+      background-color: #6c757d;
+    }
+
+    #toggle3D {
+      bottom: 478px;
+    }
+
+    #toggle3D2D {
+      bottom: 430px;
+    }
+
+    #toggle2D {
+      bottom: 526px;
+    }
+
+    .right {
+      position: relative;
+      z-index: 0;
+    }
+
+    .resizer button.hidden {
+      display: none;
+    }
+
+    .header-bar {
+      position: fixed;
+      top: 5px; /* Змінив на 5px */
+      left: 5px; /* Залишив 5px зліва */
+      height: 40px;
+      width: calc(100vw - 85px); /* Ширина плашки на 85px менше ширини вікна */
+      background-color: white;
+      border-radius: 12px;
+      z-index: 15;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+    }
+
+    .header-bar .image-container {
+      width: 40px;
+      height: 40px;
+      background-color: #ccc;
+      border-radius: 8px;
+      margin-right: 15px;
+      margin-left: 0;
+    }
+
+    .header-bar .header-text {
+      font-size: 16px;
+      font-weight: normal; /* Нормальний шрифт */
+      font-family: 'Roboto', sans-serif; /* Сучасний шрифт */
+    }
+  </style>
+</head>
+<body>
+  <div class="header-bar">
+    <div class="image-container"></div>
+    <div class="header-text">Детальний план території в межах вулиць Героїв Дніпра та Козацької в місті Черкаси</div>
+  </div>
+  <button id="toggle2D" class="inactive">2D</button>
+  <button id="toggle3D" class="inactive">3D</button>
+  <button id="toggle3D2D" class="active">3D/2D</button>
+  <div class="container">
+    <div class="left" id="left-frame">
+      <iframe title="house" frameborder="0" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true" allow="autoplay; fullscreen; xr-spatial-tracking" xr-spatial-tracking execution-while-out-of-viewport execution-while-not-rendered web-share src="https://sketchfab.com/models/9e4ab02689c148a09c59219a45f3057e/embed?autostart=1"></iframe>
+    </div>
+    <div class="resizer" id="resizer">
+      <button id="resize-button" class="hidden">↔</button>
+    </div>
+    <iframe class="right" src="https://qgiscloud.com/suprun/web1/" title="Правий фрейм"></iframe>
+  </div>
+
+  <script>
+    const left = document.querySelector('.left');
+    const right = document.querySelector('.right');
+    const toggle3D2D = document.getElementById('toggle3D2D');
+    const toggle3D = document.getElementById('toggle3D');
+    const toggle2D = document.getElementById('toggle2D');
+    const resizerButton = document.getElementById('resize-button');
+    const resizer = document.getElementById('resizer');
+    let leftWidth = '50%';
+    let rightWidth = '50%';
+
+    left.style.width = leftWidth;
+    right.style.width = rightWidth;
+
+    const MIN_WIDTH = 10;
+
+    resizerButton.classList.add('hidden');
+
+    function resetFrames() {
+      left.style.width = '50%';
+      right.style.width = '50%';
+      resizerButton.classList.add('hidden');
+    }
+
+    function toggleFrameWidth() {
+      left.style.width = '50%';
+      right.style.width = '50%';
+      resizerButton.classList.add('hidden');
+    }
+
+    function setActiveButton(activeButton) {
+      toggle3D.classList.remove('active');
+      toggle3D.classList.add('inactive');
+      toggle3D2D.classList.remove('active');
+      toggle3D2D.classList.add('inactive');
+      toggle2D.classList.remove('active');
+      toggle2D.classList.add('inactive');
+
+      activeButton.classList.remove('inactive');
+      activeButton.classList.add('active');
+    }
+
+    toggle3D2D.addEventListener('mousedown', function() {
+      toggleFrameWidth();
+      setActiveButton(toggle3D2D);
+    });
+
+    toggle3D.addEventListener('mousedown', function() {
+      left.style.width = `calc(100% - 10px)`;
+      right.style.width = '10px';
+      resizerButton.classList.remove('hidden');
+      resizerButton.textContent = '←';
+      setActiveButton(toggle3D);
+    });
+
+    toggle2D.addEventListener('mousedown', function() {
+      left.style.width = '10px';
+      right.style.width = `calc(100% - 10px)`;
+      resizerButton.classList.remove('hidden');
+      resizerButton.textContent = '→';
+      setActiveButton(toggle2D);
+    });
+
+    resizer.addEventListener('click', function() {
+      if (left.offsetWidth <= MIN_WIDTH || right.offsetWidth <= MIN_WIDTH) {
+        toggleFrameWidth();
+        resizerButton.classList.add('hidden');
+      }
+      setActiveButton(toggle3D2D); // Активуємо тільки кнопку 3D/2D
+    });
+
+    if (left.offsetWidth === right.offsetWidth) {
+      resizer.style.cursor = 'default'; /* Замінив на default */
+    }
+  </script>
+</body>
+</html>
