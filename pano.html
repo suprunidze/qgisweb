@@ -1,36 +1,139 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-  <meta charset="UTF-8">
-  <title>Перегляд панорами - 3601.jpg</title>
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: #000;
-    }
-    #viewer {
-      width: 100%;
-      height: 100%;
-    }
-  </style>
-</head>
-<body>
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PhotoSphereViewer - equirectangular demo</title>
 
-<div id="viewer"></div>
+        <link rel="stylesheet" href="/dist/core/index.css" />
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div id="photosphere"></div>
 
-<script type="module">
-  import { Viewer } from 'https://cdn.skypack.dev/photo-sphere-viewer@5';
-  import 'https://cdn.skypack.dev/photo-sphere-viewer@5/dist/styles.css';
+        <script type="text/template" id="description">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Haec para/doca illi, nos admirabilia dicamus. Tibi hoc
+              incredibile, quod beatissimum. Sed et illum, quem nominavi, et ceteros sophistas, ut e Platone intellegi potest,
+              lusos videmus a Socrate. <a href="http://loripsum.net/" target="_blank">Qui ita affectus, beatum esse numquam
+                probabis;</a> Duo Reges: constructio interrete.
+              <mark>Contineo me ab exemplis.</mark>
+              Virtutis, magnitudinis animi, patientiae, fortitudinis fomentis dolor mitigari solet. Claudii libidini, qui tum erat
+              summo ne imperio, dederetur. Quare hoc videndum est, possitne nobis hoc ratio philosophorum dare. Nos autem non
+              solum beatae vitae istam esse oblectationem videmus, sed etiam levamentum miseriarum.
+            </p>
 
-  const viewer = new Viewer({
-    container: document.getElementById('viewer'),
-    panorama: 'https://raw.githubusercontent.com/suprunidze/qgisweb/849b2cc3e42b52d0f08a31d51f811da7a06d99a2/3601.jpg',
-    caption: 'Street View: 3601.jpg',
-    loadingImg: 'https://photo-sphere-viewer.js.org/assets/photosphere-logo.gif',
-    touchmoveTwoFingers: true,
-  });
-</script>
+            <p>Hic quoque suus est de summoque bono dissentiens dici vere Peripateticus non potest. Cum ageremus, inquit, vitae
+              beatum et eundem supremum diem, scribebamus haec. Atqui reperies, inquit, in hoc quidem pertinacem; Minime vero
+              istorum quidem, inquit. Hosne igitur laudas et hanc eorum, inquam, sententiam sequi nos censes oportere? </p>
 
-</body>
+            <p>Eaedem res maneant alio modo. Sed haec quidem liberius ab eo dicuntur et saepius. <a href="http://loripsum.net/"
+                                                                                                    target="_blank">Primum divisit
+              ineleganter;</a> <a href="http://loripsum.net/" target="_blank">Quae contraria sunt his, malane?</a> Hoc loco tenere
+              se Triarius non potuit. Illa tamen simplicia, vestra versuta. Progredientibus autem aetatibus sensim tardeve potius
+              quasi nosmet ipsos cognoscimus. </p>
+        </script>
+
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "/node_modules/three/build/three.module.js",
+                    "@photo-sphere-viewer/core": "/dist/core/index.module.js"
+                }
+            }
+        </script>
+
+        <script type="module">
+            import { Viewer, DEFAULTS } from '@photo-sphere-viewer/core';
+
+            const baseUrl = 'https://photo-sphere-viewer-data.netlify.app/assets/';
+
+            const panos = [
+                {
+                    url: baseUrl + 'sphere.jpg',
+                    caption: 'Parc national du Mercantour <b>&copy; Damien Sorel</b>',
+                    description: document.querySelector('#description').innerHTML,
+                },
+                {
+                    url: baseUrl + 'sphere-test.jpg',
+                    caption: 'Test sphere',
+                    description: null,
+                },
+            ];
+
+            const viewer = new Viewer({
+                container: 'photosphere',
+                panorama: panos[0].url,
+                caption: panos[0].caption,
+                description: panos[0].description,
+                loadingImg: baseUrl + 'loader.gif',
+                // minFov: 10,
+                // fisheye: true,
+                // mousemove: false,
+                // mousewheel: false,
+                // touchmoveTwoFingers: true,
+                // mousewheelCtrlKey: true,
+                // moveSpeed: 2,
+                // zoomSpeed: 2,
+                // moveInertia: false,
+                navbar: [
+                    'zoom',
+                    'move',
+                    'download',
+                    {
+                        title: 'Change image',
+                        className: 'custom-button',
+                        content: '🔄',
+                        onClick: (() => {
+                            let i = 0;
+                            return () => {
+                                i = 1 - i;
+                                viewer.setPanorama(panos[i].url, {
+                                    position: { yaw: 0, pitch: 0 },
+                                    zoom: 50,
+                                    caption: panos[i].caption,
+                                    description: panos[i].description,
+                                });
+                            };
+                        })(),
+                    },
+                    {
+                        title: 'Random position',
+                        className: 'custom-button',
+                        content: '🔀',
+                        onClick: () => {
+                            viewer.animate({
+                                yaw: (((Math.random() - 0.5) * 3) / 2) * Math.PI,
+                                pitch: (((Math.random() - 0.5) * 3) / 4) * Math.PI,
+                                zoom: Math.random() * 60 + 20,
+                                speed: 1500,
+                            });
+                        },
+                    },
+                    'caption',
+                    'fullscreen',
+                ],
+                keyboard: 'always',
+                keyboardActions: {
+                    ...DEFAULTS.keyboardActions,
+                    f: (viewer, e) => viewer.toggleFullscreen(),
+                    h: (viewer, e) => {
+                        if (viewer.panel.isVisible('help')) {
+                            viewer.panel.hide();
+                        } else {
+                            viewer.panel.show({
+                                id: 'help',
+                                content: 'Help content',
+                            });
+                        }
+                    },
+                },
+            });
+
+            viewer.addEventListener('click', ({ data }) => {
+                console.log('click', data);
+            });
+
+            window.viewer = viewer;
+        </script>
+    </body>
 </html>
