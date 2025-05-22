@@ -2,35 +2,35 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>Перегляд панорамного зображення</title>
-  <link rel="stylesheet" href="https://unpkg.com/photo-sphere-viewer@5/dist/photo-sphere-viewer.css" />
+  <title>Перегляд панорами - 3601.jpg</title>
   <style>
-    body {
+    html, body {
       margin: 0;
-      background-color: #000;
+      height: 100%;
+      background: #000;
     }
     #viewer {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 <body>
 
-  <div id="viewer"></div>
+<div id="viewer"></div>
 
-  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
-  <script src="https://unpkg.com/photo-sphere-viewer@5/dist/photo-sphere-viewer.js"></script>
-  <script>
-    const viewer = new PhotoSphereViewer.Viewer({
-      container: document.getElementById('viewer'),
-      panorama: 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/Street%20View%20360%201.jpg', // Заміни на своє панорамне зображення
-      caption: 'Панорамне зображення',
-      loadingImg: 'https://photo-sphere-viewer.js.org/assets/photosphere-logo.gif',
-      defaultYaw: '130deg',
-      touchmoveTwoFingers: true,
-    });
-  </script>
+<script type="module">
+  import { Viewer } from 'https://cdn.skypack.dev/photo-sphere-viewer@5';
+  import 'https://cdn.skypack.dev/photo-sphere-viewer@5/dist/styles.css';
+
+  const viewer = new Viewer({
+    container: document.getElementById('viewer'),
+    panorama: 'https://raw.githubusercontent.com/suprunidze/qgisweb/849b2cc3e42b52d0f08a31d51f811da7a06d99a2/3601.jpg',
+    caption: 'Street View: 3601.jpg',
+    loadingImg: 'https://photo-sphere-viewer.js.org/assets/photosphere-logo.gif',
+    touchmoveTwoFingers: true,
+  });
+</script>
 
 </body>
 </html>
