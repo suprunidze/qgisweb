@@ -2,71 +2,56 @@
 <html lang="uk">
 <head>
   <meta charset="UTF-8">
-  <title>Three.js 360 Панорама з зумом</title>
+  <title>Three.js 360 Панорама</title>
   <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      overflow: hidden;
-      background: #000;
-    }
-    canvas {
-      display: block;
-    }
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; }
   </style>
 </head>
 <body>
-
-<script type="module">
-  import * as THREE from 'https://cdn.skypack.dev/three@0.152.2';
-  import { OrbitControls } from 'https://cdn.skypack.dev/three@0.152.2/examples/jsm/controls/OrbitControls.js';
-
-  let scene, camera, renderer, sphere, controls;
-
-  init();
-
-  function init() {
-    scene = new THREE.Scene();
-
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1100);
+  <script src="https://unpkg.com/three@0.152.2/build/three.min.js"></script>
+  <script src="https://unpkg.com/three@0.152.2/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    // Створення сцени, камери, рендерера
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1100);
     camera.position.set(0, 0, 0.1);
 
-    renderer = new THREE.WebGLRenderer();
+    const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
+    // Завантаження текстури
+    const texture = new THREE.TextureLoader().load('https://raw.githubusercontent.com/suprunidze/qgisweb/849b2cc3e42b52d0f08a31d51f811da7a06d99a2/3601.jpg');
+
+    // Створення сфери
     const geometry = new THREE.SphereGeometry(500, 60, 40);
-    geometry.scale(-1, 1, 1);
-
-    const texture = new THREE.TextureLoader().load(
-      'https://raw.githubusercontent.com/suprunidze/qgisweb/849b2cc3e42b52d0f08a31d51f811da7a06d99a2/3601.jpg'
-    );
+    geometry.scale(-1, 1, 1); // Змінити орієнтацію для перегляду зсередини
     const material = new THREE.MeshBasicMaterial({ map: texture });
-
-    sphere = new THREE.Mesh(geometry, material);
+    const sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    controls = new OrbitControls(camera, renderer.domElement);
+    // Додати OrbitControls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableZoom = true;
     controls.zoomSpeed = 0.5;
     controls.enablePan = false;
-    controls.rotateSpeed = -0.3;
+    controls.rotateSpeed = -0.25;
 
+    // Масштабування камери
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
     animate();
-  }
 
-  function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    renderer.render(scene, camera);
-  }
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-</script>
-
+    // При зміні розміру вікна
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
 </body>
 </html>
