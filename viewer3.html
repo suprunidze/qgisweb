@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Червона Слобода — 2D/3D панель керування</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+
+<style>
+  /* Base styles for HTML and body */
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Montserrat', Arial, sans-serif;
+    background: #f9f9f9;
+  }
+
+  /* Top navigation bar styling */
+  #topBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background-color: white;
+    color: #333;
+    display: flex;
+    align-items: center;
+    padding: 0 10px; /* Зменшено відступ зліва та справа на 1/3 */
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    user-select: none;
+    z-index: 1000;
+  }
+
+  /* Logo styling */
+  #logo {
+    margin-right: 5px; /* Зменшено відступ справа для компактності */
+    flex-shrink: 0;
+  }
+
+  #logo img {
+    height: 40px; /* Set desired height for the logo image */
+    width: 40px; /* Set width equal to height for a square shape */
+    vertical-align: middle;
+    border-radius: 5px; /* Rounded corners for the logo */
+    object-fit: contain; /* Ensures the image fits within the square without cropping */
+  }
+
+  /* Title button styling - now styled like mode buttons */
+  #titleButton {
+    background-color: #e0e0e0; /* Світліший сірий фон */
+    border: none;
+    color: #333; /* Black text color */
+    padding: 9px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 5px; /* Rounded corners */
+    font-weight: 600;
+    transition: background-color 0.3s ease; /* Smooth transition */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow */
+    flex: 1; /* Allows the button to take available space */
+    margin: 0 5px; /* Зменшено горизонтальний відступ */
+    font-family: 'Montserrat', Arial, sans-serif; /* Ensure Montserrat font */
+
+    /* Key changes for ellipsis replacement */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden; /* Hide overflowing content */
+    text-overflow: clip; /* Clip the text, no default ellipsis */
+    position: relative; /* For positioning the pseudo-element */
+    text-align: left; /* Align text to the left */
+    padding-right: 45px; /* Increased padding to make space for the triangle + more padding */
+    display: block; /* Ensure it behaves like a block element for text-align */
+  }
+
+  #titleButton:hover {
+    background-color: #c0c0c0; /* Світліший hover колір */
+  }
+
+  /* Pseudo-element for the triangle icon */
+  #titleButton::after {
+    content: "\25BC"; /* Unicode triangle pointing down */
+    position: absolute;
+    right: 0; /* Position at the right edge of the button */
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #333; /* Color of the triangle */
+    background-color: #e0e0e0; /* Match button background to hide text underneath */
+    padding-left: 15px; /* Increased padding to make background wider */
+    padding-right: 8px; /* Add padding to the right of the triangle */
+    padding-top: 9px; /* Increased padding-top for more height */
+    padding-bottom: 9px; /* Increased padding-bottom for more height */
+    pointer-events: none; /* Allows clicks to pass through to the button */
+    transition: background-color 0.3s ease; /* Smooth transition for background color */
+  }
+
+  /* Hover effect for the triangle's background */
+  #titleButton:hover::after {
+    background-color: #c0c0c0; /* Match button hover color */
+  }
+
+  /* Mode label styling */
+  #modeLabel {
+    font-weight: 600;
+    margin-left: 20px;
+    margin-right: 10px;
+    color: #444;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  /* Buttons container styling */
+  #buttons {
+    display: flex;
+    /* Removed gap to make them stick together */
+    border-radius: 5px; /* Rounded corners for the entire group */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Subtle shadow for the group */
+    overflow: hidden; /* Ensures rounded corners are applied correctly */
+  }
+
+  #buttons button {
+    background-color: #e0e0e0; /* Світліший сірий фон */
+    border: none; /* Removed individual borders */
+    color: #333; /* Чорний текст за замовчуванням */
+    padding: 9px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    /* Removed individual border-radius */
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Додано перехід для кольору тексту */
+    /* Removed individual box-shadow */
+    font-family: 'Montserrat', Arial, sans-serif; /* Ensure Montserrat font */
+  }
+
+  /* Specific border-radius for the first and last button */
+  #buttons button:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+  }
+
+  #buttons button:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+
+  #buttons button.active {
+    background-color: #007bff; /* Active button color (blue) */
+    color: white; /* Білий текст для активної кнопки */
+  }
+
+  #buttons button:hover:not(.active) {
+    background-color: #c0c0c0; /* Світліший hover колір */
+  }
+
+  /* Styles for the new Fullscreen button */
+  #fullscreenBtn {
+    background-color: #e0e0e0; /* Світліший сірий фон */
+    border: none;
+    color: #333; /* Black text/icon color */
+    padding: 9px 12px; /* Adjusted padding to match height of other buttons */
+    font-size: 15px; /* Not strictly needed for icon, but good to keep consistent */
+    cursor: pointer;
+    border-radius: 5px; /* Rounded corners */
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: 'Montserrat', Arial, sans-serif;
+    margin-left: 10px; /* Add some space from the mode buttons */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Needed for positioning the tooltip */
+  }
+
+  #fullscreenBtn:hover {
+    background-color: #c0c0c0; /* Світліший hover колір */
+  }
+
+  #fullscreenBtn svg {
+    width: 20px; /* Adjusted icon size to match text height */
+    height: 20px; /* Adjusted icon size to match text height */
+    fill: currentColor; /* Use currentColor to inherit color from parent button */
+  }
+
+  /* Tooltip styles for fullscreen button */
+  #fullscreenBtn::before {
+    content: attr(data-tooltip); /* Get text from data-tooltip attribute */
+    position: absolute;
+    bottom: -30px; /* Position below the button */
+    right: 0; /* Align to the right edge of the button */
+    left: auto; /* Ensure it's not fighting with 'left: 0' */
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1001; /* Above other elements, below modal */
+  }
+
+  /* Removed ::after for the triangle to make it a "plaque" */
+  /* #fullscreenBtn::after { ... } */
+
+  #fullscreenBtn:hover::before { /* Only ::before is needed now */
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Active state for fullscreen button */
+  #fullscreenBtn.active {
+    background-color: #007bff; /* Active button color (blue) */
+    color: white; /* Білий текст для активної кнопки */
+  }
+
+
+  /* Main content container for iframes */
+  #container {
+    display: flex;
+    height: 100vh; /* Full viewport height */
+    width: 100vw; /* Full viewport width */
+    margin-top: 0; /* No top topBar is fixed */
+  }
+
+  /* Iframe base styling */
+  iframe {
+    border: none;
+    height: 100%;
+    width: 100%;
+    display: block;
+  }
+
+  /* Wrapper for iframes to handle overflow and transitions */
+  .frameWrapper {
+    position: relative;
+    overflow: hidden;
+    height: 100vh; /* Full height */
+    transition: width 0.5s ease; /* Smooth width transition */
+    background: white;
+  }
+
+  /* Minimum width for frames */
+  #leftFrame, #rightFrame {
+    min-width: 1px;
+  }
+
+  /* Divider styling */
+  #divider {
+    width: 8px; /* Зменшено ширину слайдера */
+    background-color: #e0e0e0; /* Світло-сірий */
+    cursor: col-resize; /* Cursor for resizing */
+    user-select: none;
+    z-index: 2;
+    position: relative; /* Для позиціонування псевдоелемента */
+    display: flex; /* Для центрування вмісту */
+    justify-content: center; /* Центрування по горизонталі */
+    align-items: center; /* Центрування по вертикалі */
+    transition: background-color 0.3s ease; /* Додано перехід для плавного ефекту */
+  }
+
+  /* Стилі для трьох вертикальних крапок на слайдері */
+  #divider::before {
+    content: "\22EE"; /* Юнікод символ вертикального багатокрапки */
+    font-size: 20px; /* Розмір символу */
+    color: #333333; /* Темно-сірий */
+    pointer-events: none; /* Дозволяє клікам проходити крізь символ */
+  }
+
+  /* Hover effect for the divider */
+  #divider:hover {
+    background-color: #c0c0c0; /* Темніший сірий при наведенні */
+  }
+
+  /* Overlay for resizing */
+  #overlay {
+    display: none;
+    position: fixed;
+    top: 56px; /* Below the top bar */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    cursor: col-resize;
+    z-index: 10;
+  }
+
+  /* Spinner overlay for loading states */
+  .spinner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7); /* Білий колір з 70% непрозорістю (30% прозорий) */
+    -webkit-backdrop-filter: blur(20px); /* Сильне розмиття для WebKit браузерів */
+    backdrop-filter: blur(20px);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    font-size: 18px;
+    color: #3498db;
+    font-weight: bold;
+    border-radius: 8px; /* Rounded corners for spinner overlay */
+  }
+
+  /* Spinner animation */
+  .spinner {
+    border: 6px solid #e0e0e0;
+    border-top: 6px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Utility class for hiding elements */
+  .hidden {
+    display: none;
+  }
+
+  /* Utility class to disable transitions */
+  .no-transition {
+    transition: none !important;
+  }
+
+  /* Project Info Dropdown Panel (new) */
+  #titleDropdownPanel {
+    position: absolute;
+    top: 56px; /* Position right below the top bar */
+    /* Removed left/right/margins for centering */
+    max-width: 600px; /* Set max-width as requested */
+    background-color: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    border-radius: 0 0 8px 8px; /* Rounded corners only at the bottom */
+    padding: 15px 20px;
+    z-index: 999; /* Below topBar, above frames */
+    display: none; /* Hidden by default */
+    opacity: 0;
+    transform: translateY(-10px); /* Start slightly above for animation */
+    transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s;
+    max-height: calc(100vh - 56px); /* Max height to prevent overflow */
+    overflow-y: auto; /* Enable scrolling if content is too long */
+    box-sizing: border-box; /* Include padding in width/height */
+  }
+
+  #titleDropdownPanel.visible {
+    display: block; /* Show the panel */
+    opacity: 1;
+    transform: translateY(0); /* Slide into place */
+  }
+
+  .dropdown-title-full {
+    font-size: 18px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .dropdown-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    /* Styles for scrollable container */
+    max-height: calc(6 * (32px + 10px + 20px)); /* 6 links * (icon_height + gap + padding_y*2) - rough estimate */
+    overflow-y: auto;
+    padding-right: 5px; /* Add some padding for scrollbar */
+  }
+
+  .dropdown-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribute space between text and icon */
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+    font-size: 15px;
+    /* Removed transform transition */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .dropdown-link:hover {
+    background-color: #e0e0e0;
+    /* Removed transform property */
+  }
+
+  /* Base file icon style for PDF, DOC, and Web */
+  .file-icon-base {
+    width: 32px; /* Збільшено розмір іконок */
+    height: 32px; /* Збільшено розмір іконок */
+    margin-right: 10px;
+    flex-shrink: 0;
+    object-fit: contain; /* Ensure image fits within the bounds */
+  }
+
+  .external-link-icon {
+    width: 16px; /* Smaller icon for external link */
+    height: 16px;
+    fill: #666; /* Grey color for external link icon */
+    margin-left: 10px; /* Space between text and icon */
+    flex-shrink: 0;
+  }
+
+  /* Close button for the dropdown panel */
+  #closeDropdownPanel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: white; /* Білий непрозорий фон */
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1002;
+  }
+
+  #closeDropdownPanel:hover {
+    color: #333;
+    background-color: #f0f0f0;
+  }
+</style>
+</head>
+<body>
+
+  <div id="topBar">
+    <a href="#" id="logo">
+      <img src="https://www.logoai.com/oss/icons/2021/12/02/SU8HhT2n6tL-p-_.png" alt="Company Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=Logo+Error';" />
+    </a>
+    <button id="titleButton" title="Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області для будівництва свинарника та складських приміщень.">
+      Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області для будівництва свинарника та складських приміщень.
+    </button>
+    <div id="modeLabel">Режим:</div>
+    <div id="buttons">
+      <button id="btn3D">3D</button>
+      <button id="btn2D3D">2D/3D</button>
+      <button id="btn2D">2D</button>
+    </div>
+    <button id="fullscreenBtn" data-tooltip="На весь екран">
+      <svg class="fullscreen-icon" viewBox="0 0 24 24">
+        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="titleDropdownPanel">
+    <button id="closeDropdownPanel">&times;</button>
+    <div class="dropdown-title-full">
+      Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області для будівництва свинарника та складських приміщень.
+    </div>
+    <div class="dropdown-links">
+      <a href="https://www.example.com/document1.pdf" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/pdf.png" alt="PDF icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/dc3545/ffffff?text=PDF';" />
+        <span>Документ 1: Генеральний план</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/document2.doc" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/word.png" alt="DOC icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/007bff/ffffff?text=DOC';" />
+        <span>Документ 2: Пояснювальна записка</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/webpage" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/domain--v1.png" alt="Web page icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/17a2b8/ffffff?text=WEB';" />
+        <span>Документ 3: Схема інженерних мереж</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/archive.zip" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/zip.png" alt="ZIP icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/808080/ffffff?text=ZIP';" />
+        <span>Документ 4: Архів ZIP</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/googledrive" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/google-drive--v2.png" alt="Google Drive icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/4285F4/ffffff?text=Drive';" />
+        <span>Документ 5: Google Drive</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/onedrive" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/microsoft-onedrive-2019.png" alt="OneDrive icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/0F6FBF/ffffff?text=OneDrive';" />
+        <span>Документ 6: OneDrive</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/document7.xls" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/xls.png" alt="Excel icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/217346/ffffff?text=XLS';" />
+        <span>Документ 7: Бюджетний план</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <div id="container">
+    <div id="leftFrame" class="frameWrapper" style="width: 50%;">
+      <div class="spinner-overlay" id="spinnerLeft">
+        <div class="spinner"></div>
+        <div>3D модель</div>
+      </div>
+      <iframe
+        title="Червона Слобода Гонти Максименко"
+        src="https://sketchfab.com/models/fd0dd06dda734ac595220546aaa56597/embed?autostart=1"
+        allowfullscreen
+        mozallowfullscreen="true"
+        webkitallowfullscreen="true"
+        allow="autoplay; fullscreen; xr-spatial-tracking"
+        onload="hideSpinnerLeft()"
+      ></iframe>
+    </div>
+
+    <div id="divider"></div>
+
+    <div id="rightFrame" class="frameWrapper" style="width: 50%;">
+      <div class="spinner-overlay" id="spinnerRight">
+        <div class="spinner"></div>
+        <div>2D карта</div>
+      </div>
+      <iframe
+        src="https://qgiscloud.com/suprun/web1/"
+        allowfullscreen
+        mozallowfullscreen="true"
+        webkitallowfullscreen="true"
+        onload="hideSpinnerRight()"
+      ></iframe>
+    </div>
+  </div>
+
+  <div id="overlay"></div>
+
+<script>
+  const divider = document.getElementById('divider');
+  const leftFrame = document.getElementById('leftFrame');
+  const rightFrame = document.getElementById('rightFrame');
+  const overlay = document.getElementById('overlay');
+
+  const btn3D = document.getElementById('btn3D');
+  const btn2D3D = document.getElementById('btn2D3D');
+  const btn2D = document.getElementById('btn2D');
+
+  const spinnerLeft = document.getElementById('spinnerLeft');
+  const spinnerRight = document.getElementById('spinnerRight');
+
+  const titleButton = document.getElementById('titleButton');
+  const titleDropdownPanel = document.getElementById('titleDropdownPanel');
+  const closeDropdownPanel = document.getElementById('closeDropdownPanel');
+
+  // Fullscreen button element
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+  const minWidth = 1;
+  let previousMode = '2D3D'; // Initial mode
+  let currentLeftFramePercentage = 50; // Stores the percentage width of the left frame in 2D/3D mode
+
+  /**
+   * Helper function to determine the current active mode based on button classes.
+   * @returns {string} - The current mode ('3D', '2D', or '2D3D').
+   */
+  function getCurrentMode() {
+      if (btn2D.classList.contains('active')) {
+          return '2D';
+      } else if (btn3D.classList.contains('active')) {
+          return '3D';
+      } else {
+          return '2D3D';
+      }
+  }
+
+  /**
+   * Updates the active state of the mode toggle buttons based on frame widths.
+   */
+  function updateToggleButtons() {
+    const leftWidth = leftFrame.getBoundingClientRect().width;
+    const rightWidth = rightFrame.getBoundingClientRect().width;
+
+    // Remove active class from all buttons
+    btn2D.classList.remove('active');
+    btn3D.classList.remove('active');
+    btn2D3D.classList.remove('active');
+
+    // Add active class to the appropriate button based on frame widths
+    if (leftWidth <= minWidth + 1) {
+      btn2D.classList.add('active');
+    } else if (rightWidth <= minWidth + 1) {
+      btn3D.classList.add('active');
+    } else {
+      btn2D3D.classList.add('active');
+    }
+  }
+
+  /**
+   * Hides the spinner for the left frame.
+   */
+  function hideSpinnerLeft() {
+    spinnerLeft.style.opacity = '0';
+    setTimeout(() => {
+      spinnerLeft.classList.add('hidden');
+      spinnerLeft.style.opacity = '1'; // Reset opacity for next use
+    }, 500);
+  }
+
+  /**
+   * Hides the spinner for the right frame.
+   */
+  function hideSpinnerRight() {
+    spinnerRight.style.opacity = '0';
+    setTimeout(() => {
+      spinnerRight.classList.add('hidden');
+      spinnerRight.style.opacity = '1'; // Reset opacity for next use
+    }, 500);
+  }
+
+  /**
+   * Shows the left spinner temporarily for 3 seconds.
+   */
+  function showSpinnerTemporaryLeft() {
+    spinnerLeft.classList.remove('hidden');
+    spinnerLeft.style.opacity = '1';
+    setTimeout(() => {
+      spinnerLeft.style.opacity = '0';
+      setTimeout(() => {
+        spinnerLeft.classList.add('hidden');
+        spinnerLeft.style.opacity = '1';
+      }, 500);
+    }, 3000); // Show for 3 seconds
+  }
+
+  /**
+   * Sets the display mode for the frames (3D, 2D, or 2D/3D).
+   * @param {string} mode - The desired mode ('3D', '2D', or '2D3D').
+   */
+  function setMode(mode) {
+    // Remove active class from all buttons
+    btn2D.classList.remove('active');
+    btn3D.classList.remove('active');
+    btn2D3D.classList.remove('active');
+
+    // Add active class to the current mode button
+    if (mode === '2D') btn2D.classList.add('active');
+    else if (mode === '3D') btn3D.classList.add('active');
+    else btn2D3D.classList.add('active');
+
+    // Adjust frame widths based on the selected mode
+    switch(mode) {
+      case '3D':
+        rightFrame.style.width = minWidth + 'px';
+        leftFrame.style.width = `calc(100% - ${minWidth + divider.offsetWidth}px)`;
+        if (previousMode === '2D') {
+          showSpinnerTemporaryLeft(); // Show spinner if transitioning from 2D to 3D
+        }
+        break;
+      case '2D':
+        leftFrame.style.width = minWidth + 'px';
+        rightFrame.style.width = `calc(100% - ${minWidth + divider.offsetWidth}px)`;
+        // No spinner needed for 2D transition
+        break;
+      default: // 2D/3D mode
+        // Always reset to 50/50 when the 2D/3D button is clicked
+        leftFrame.style.width = '50%';
+        rightFrame.style.width = '50%';
+        currentLeftFramePercentage = 50; // Reset the stored percentage
+        if (previousMode === '2D') {
+          showSpinnerTemporaryLeft();
+        }
+    }
+    previousMode = mode; // Update previous mode
+  }
+
+  // Event listeners for mode buttons
+  btn3D.addEventListener('click', () => setMode('3D'));
+  btn2D.addEventListener('click', () => setMode('2D'));
+  btn2D3D.addEventListener('click', () => setMode('2D3D'));
+
+  // Set initial mode on page load
+  setMode('2D3D');
+
+  let isResizing = false;
+
+  // Event listener for divider mousedown to start resizing
+  divider.addEventListener('mousedown', () => {
+    isResizing = true;
+    overlay.style.display = 'block'; // Show overlay to capture mouse events
+    document.body.style.userSelect = 'none'; // Disable text selection during resize
+
+    // Add no-transition class to frames to prevent animation during resize
+    leftFrame.classList.add('no-transition');
+    rightFrame.classList.add('no-transition');
+  });
+
+  // Event listener for overlay mousemove during resizing
+  mousemove = (e) => {
+    if (!isResizing) return;
+
+    const containerWidth = divider.parentNode.getBoundingClientRect().width;
+    let newLeftWidth = e.clientX;
+    let newRightWidth = containerWidth - newLeftWidth - divider.offsetWidth;
+
+    // Ensure minimum widths are maintained
+    if (newLeftWidth < minWidth) newLeftWidth = minWidth;
+    if (newRightWidth < minWidth) newRightWidth = minWidth;
+
+    leftFrame.style.width = newLeftWidth + 'px';
+    rightFrame.style.width = newRightWidth + 'px';
+
+    // Update the stored percentage only if in 2D/3D mode
+    const currentMode = getCurrentMode();
+    if (currentMode === '2D3D') {
+        currentLeftFramePercentage = (newLeftWidth / containerWidth) * 100;
+    }
+
+    updateToggleButtons(); // Update button active states
+  };
+  overlay.addEventListener('mousemove', mousemove);
+
+  // Event listener for overlay mouseup to stop resizing
+  mouseup = () => {
+    if (!isResizing) return;
+    isResizing = false;
+    overlay.style.display = 'none'; // Hide overlay
+    document.body.style.userSelect = 'auto'; // Re-enable text selection
+
+    // Remove no-transition class to re-enable animations
+    leftFrame.classList.remove('no-transition');
+    rightFrame.classList.remove('no-transition');
+  };
+  overlay.addEventListener('mouseup', mouseup);
+
+  // Global document mouseup listener to handle cases where mouse leaves overlay
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      isResizing = false;
+      overlay.style.display = 'none';
+      document.body.style.userSelect = 'auto';
+
+      leftFrame.classList.remove('no-transition');
+      rightFrame.classList.remove('no-transition');
+    }
+  });
+
+  /* Title Dropdown Panel Functionality */
+
+  // Function to toggle dropdown panel visibility
+  function toggleDropdownPanel() {
+    if (titleDropdownPanel.classList.contains('visible')) {
+      titleDropdownPanel.classList.remove('visible');
+      titleButton.classList.remove('active'); // Remove active class from button
+    } else {
+      const titleButtonRect = titleButton.getBoundingClientRect();
+      titleDropdownPanel.style.width = titleButtonRect.width + 'px'; // Set width to match button
+      // Ensure the width doesn't exceed max-width
+      if (titleButtonRect.width > 600) {
+          titleDropdownPanel.style.width = '600px';
+      }
+      titleDropdownPanel.style.left = titleButtonRect.left + 'px'; // Align to left edge of button
+      titleDropdownPanel.classList.add('visible');
+      titleButton.classList.add('active'); // Add active class to button
+    }
+  }
+
+  // Event listener to open/close dropdown panel when title button is clicked
+  titleButton.addEventListener('click', toggleDropdownPanel);
+
+  // Event listener to close dropdown panel when close button is clicked
+  closeDropdownPanel.addEventListener('click', () => {
+    titleDropdownPanel.classList.remove('visible');
+    titleButton.classList.remove('active'); // Remove active class from button
+  });
+
+  // Event listener to close dropdown panel when clicking outside of it
+  document.addEventListener('click', (event) => {
+    if (!titleButton.contains(event.target) && !titleDropdownPanel.contains(event.target)) {
+      titleDropdownPanel.classList.remove('visible');
+      titleButton.classList.remove('active'); // Remove active class from button
+    }
+  });
+
+  // Function to handle window resize and adjust frame widths
+  function handleWindowResize() {
+    // Only adjust if not currently resizing with the divider
+    if (!isResizing) {
+      const containerWidth = window.innerWidth;
+      const dividerWidth = divider.offsetWidth;
+
+      // Determine current mode based on active button
+      const currentMode = getCurrentMode();
+
+      switch(currentMode) {
+        case '3D':
+          rightFrame.style.width = minWidth + 'px';
+          leftFrame.style.width = `calc(100% - ${minWidth + dividerWidth}px)`;
+          break;
+        case '2D':
+          leftFrame.style.width = minWidth + 'px';
+          rightFrame.style.width = `calc(100% - ${minWidth + dividerWidth}px)`;
+          break;
+        default: // 2D/3D mode
+          // Use the stored percentage for 2D/3D mode
+          leftFrame.style.width = currentLeftFramePercentage + '%';
+          rightFrame.style.width = (100 - currentLeftFramePercentage) + '%';
+      }
+    }
+
+    // Always update dropdown panel position and width on window resize
+    if (titleDropdownPanel.classList.contains('visible')) {
+      const titleButtonRect = titleButton.getBoundingClientRect();
+      titleDropdownPanel.style.width = titleButtonRect.width + 'px'; // Set width to match button
+      // Ensure the width doesn't exceed max-width
+      if (titleButtonRect.width > 600) {
+          titleDropdownPanel.style.width = '600px';
+      }
+      titleDropdownPanel.style.left = titleButtonRect.left + 'px'; // Align to left edge of button
+    }
+  }
+
+  // Event listener for window resize
+  window.addEventListener('resize', handleWindowResize);
+
+  /* Fullscreen Functionality */
+  fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      // If not in fullscreen, request fullscreen for the entire document
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
+      });
+    } else {
+      // If in fullscreen, exit fullscreen
+      document.exitFullscreen().catch(err => {
+        console.error(`Error attempting to disable fullscreen: ${err.message} (${err.name})`);
+      });
+    }
+  });
+
+  // Event listener for fullscreenchange to update button state and tooltip
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+      fullscreenBtn.classList.add('active');
+      fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
+    } else {
+      fullscreenBtn.classList.remove('active');
+      fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+    }
+  });
+
+  // Initialize tooltip on load
+  document.addEventListener('DOMContentLoaded', () => {
+      if (document.fullscreenElement) {
+          fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
+      } else {
+          fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+      }
+  });
+</script>
+
+</body>
+</html>
