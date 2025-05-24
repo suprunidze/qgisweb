@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Червона Слобода — 2D/3D панель керування</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+
+<style>
+  /* Base styles for HTML and body */
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Montserrat', Arial, sans-serif;
+    background: #f9f9f9;
+  }
+
+  /* Top navigation bar styling */
+  #topBar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background-color: white;
+    color: #333;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    user-select: none;
+    z-index: 1000;
+  }
+
+  /* Logo styling */
+  #logo {
+    margin-right: 5px;
+    flex-shrink: 0;
+  }
+
+  #logo img {
+    height: 40px;
+    width: 40px;
+    vertical-align: middle;
+    border-radius: 5px;
+    object-fit: contain;
+  }
+
+  /* Title button styling - now styled like mode buttons */
+  #titleButton {
+    background-color: #e0e0e0;
+    border: none;
+    color: #333;
+    padding: 9px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex: 1; /* Allows the button to take available space */
+    margin: 0 5px;
+    font-family: 'Montserrat', Arial, sans-serif;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+    position: relative;
+    text-align: left;
+    padding-right: 45px;
+    display: block;
+  }
+
+  #titleButton:hover {
+    background-color: #c0c0c0;
+  }
+
+  /* Pseudo-element for the triangle icon */
+  #titleButton::after {
+    content: "\25BC";
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #333;
+    background-color: #e0e0e0;
+    padding-left: 15px;
+    padding-right: 8px;
+    padding-top: 9px;
+    padding-bottom: 9px;
+    pointer-events: none;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Hover effect for the triangle's background */
+  #titleButton:hover::after {
+    background-color: #c0c0c0;
+  }
+
+  /* Mode label styling */
+  .mode-label {
+    font-weight: 600;
+    margin-left: 20px;
+    margin-right: 10px;
+    color: #444;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  /* Buttons container styling */
+  .buttons-group {
+    display: flex;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .buttons-group button {
+    background-color: #e0e0e0;
+    border: none;
+    color: #333;
+    padding: 9px 18px;
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: 'Montserrat', Arial, sans-serif;
+  }
+
+  /* Specific border-radius for the first and last button */
+  .buttons-group button:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+  }
+
+  .buttons-group button:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+  }
+
+  .buttons-group button.active {
+    background-color: #007bff;
+    color: white;
+  }
+
+  .buttons-group button:hover:not(.active) {
+    background-color: #c0c0c0;
+  }
+
+  /* Styles for the new Fullscreen button */
+  #fullscreenBtn {
+    background-color: #e0e0e0;
+    border: none;
+    color: #333;
+    padding: 9px 12px;
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: 'Montserrat', Arial, sans-serif;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  #fullscreenBtn:hover {
+    background-color: #c0c0c0;
+  }
+
+  #fullscreenBtn svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+  }
+
+  /* Tooltip styles for fullscreen button */
+  #fullscreenBtn::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: -30px;
+    right: 0;
+    left: auto;
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1001;
+  }
+
+  #fullscreenBtn:hover::before {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Active state for fullscreen button */
+  #fullscreenBtn.active {
+    background-color: #007bff;
+    color: white;
+  }
+
+
+  /* Main content container for iframes */
+  #container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    margin-top: 0;
+  }
+
+  /* Iframe base styling */
+  iframe {
+    border: none;
+    height: 100%;
+    width: 100%;
+    display: block;
+  }
+
+  /* Wrapper for iframes to handle overflow and transitions */
+  .frameWrapper {
+    position: relative;
+    overflow: hidden;
+    height: 100vh;
+    transition: width 0.5s ease;
+    background: white;
+  }
+
+  /* Minimum width for frames */
+  #leftFrame, #rightFrame {
+    min-width: 1px;
+  }
+
+  /* Divider styling */
+  #divider {
+    width: 8px;
+    background-color: #e0e0e0;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 2;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Стилі для трьох вертикальних крапок на слайдері */
+  #divider::before {
+    content: "\22EE";
+    font-size: 20px;
+    color: #333333;
+    pointer-events: none;
+  }
+
+  /* Hover effect for the divider */
+  #divider:hover {
+    background-color: #c0c0c0;
+  }
+
+  /* Overlay for resizing */
+  #overlay {
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    cursor: col-resize;
+    z-index: 10;
+  }
+
+  /* Spinner overlay for loading states */
+  .spinner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.7);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+    font-size: 18px;
+    color: #3498db;
+    font-weight: bold;
+    border-radius: 8px;
+  }
+
+  /* Spinner animation */
+  .spinner {
+    border: 6px solid #e0e0e0;
+    border-top: 6px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Utility class for hiding elements */
+  .hidden {
+    display: none;
+  }
+
+  /* Utility class to disable transitions */
+  .no-transition {
+    transition: none !important;
+  }
+
+  /* Project Info Dropdown Panel (new) */
+  #titleDropdownPanel {
+    position: absolute;
+    top: 56px;
+    max-width: 600px;
+    background-color: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    border-radius: 0 0 8px 8px;
+    padding: 15px 20px;
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  #titleDropdownPanel.visible {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .dropdown-title-full {
+    font-size: 18px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .dropdown-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: calc(6 * (32px + 10px + 20px));
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+
+  .dropdown-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    text-decoration: none;
+    color: #333;
+    font-size: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .dropdown-link:hover {
+    background-color: #e0e0e0;
+  }
+
+  /* Base file icon style for PDF, DOC, and Web */
+  .file-icon-base {
+    width: 32px;
+    height: 32px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+
+  .external-link-icon {
+    width: 16px;
+    height: 16px;
+    fill: #666;
+    margin-left: 10px;
+    flex-shrink: 0;
+  }
+
+  /* Close button for the dropdown panel */
+  #closeDropdownPanel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #888;
+    transition: color 0.3s ease, background-color 0.3s ease;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1002;
+  }
+
+  #closeDropdownPanel:hover {
+    color: #333;
+    background-color: #f0f0f0;
+  }
+
+  /* --- Mobile Specific Styles --- */
+  @media (max-width: 768px) {
+    #topBar {
+      padding: 0 5px; /* Reduce padding for mobile */
+      justify-content: space-between; /* Distribute items evenly */
+      flex-wrap: nowrap; /* Prevent wrapping */
+    }
+
+    #logo {
+      margin-right: 5px;
+    }
+
+    #titleButton {
+      flex: 0 1 auto; /* Don't grow, allow shrinking, base width auto */
+      max-width: 150px; /* Limit width on mobile */
+      padding: 9px 10px; /* Adjust padding */
+      margin: 0 5px;
+      font-size: 13px; /* Smaller font size */
+      padding-right: 30px; /* Adjust for triangle */
+    }
+
+    #titleButton::after {
+      padding-left: 5px; /* Adjust for triangle */
+      padding-right: 5px; /* Adjust for triangle */
+    }
+
+    .mode-label {
+      display: none; /* Hide mode label on mobile */
+    }
+
+    #desktop-mode-buttons {
+      display: none; /* Hide desktop buttons on mobile */
+    }
+
+    #mobile-mode-buttons {
+      display: flex; /* Show mobile buttons on mobile */
+      margin-left: 5px; /* Add some space */
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    #fullscreenBtn {
+      margin-left: 5px; /* Reduce margin for mobile */
+      flex-shrink: 0; /* Prevent shrinking */
+    }
+
+    /* Adjust dropdown panel for mobile */
+    #titleDropdownPanel {
+      left: 5px !important; /* Align to left edge of screen */
+      right: 5px !important; /* Align to right edge of screen */
+      width: auto !important; /* Let it be fluid */
+      max-width: none; /* Remove max-width constraint */
+    }
+  }
+
+  /* --- Desktop Specific Styles (ensure mobile buttons are hidden) --- */
+  @media (min-width: 769px) {
+    #desktop-mode-buttons {
+      display: flex; /* Show desktop buttons on desktop */
+    }
+
+    #mobile-mode-buttons {
+      display: none; /* Hide mobile buttons on desktop */
+    }
+  }
+</style>
+</head>
+<body>
+
+  <div id="topBar">
+    <a href="#" id="logo">
+      <img src="https://www.logoai.com/oss/icons/2021/12/02/SU8HhT2n6tL-p-_.png" alt="Company Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=Logo+Error';" />
+    </a>
+    <button id="titleButton" title="Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області для будівництва свинарника та складських приміщень.">
+      Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області для будівництва свинарника та складських приміщень.
+    </button>
+    <div class="mode-label" id="desktopModeLabel">Режим:</div>
+    <div id="desktop-mode-buttons" class="buttons-group">
+      <button id="btn3D">3D</button>
+      <button id="btn2D3D">2D/3D</button>
+      <button id="btn2D">2D</button>
+    </div>
+    <div id="mobile-mode-buttons" class="buttons-group">
+        <button id="btnMobile2D">2D</button>
+        <button id="btnMobile3D">3D</button>
+    </div>
+    <button id="fullscreenBtn" data-tooltip="На весь екран">
+      <svg class="fullscreen-icon" viewBox="0 0 24 24">
+        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+      </svg>
+    </button>
+  </div>
+
+  <div id="titleDropdownPanel">
+    <button id="closeDropdownPanel">&times;</button>
+    <div class="dropdown-title-full">
+      Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області для будівництва свинарника та складських приміщень.
+    </div>
+    <div class="dropdown-links">
+      <a href="https://www.example.com/document1.pdf" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/pdf.png" alt="PDF icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/dc3545/ffffff?text=PDF';" />
+        <span>Документ 1: Генеральний план</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/document2.doc" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/word.png" alt="DOC icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/007bff/ffffff?text=DOC';" />
+        <span>Документ 2: Пояснювальна записка</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/webpage" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/domain--v1.png" alt="Web page icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/17a2b8/ffffff?text=WEB';" />
+        <span>Документ 3: Схема інженерних мереж</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/archive.zip" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/zip.png" alt="ZIP icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/808080/ffffff?text=ZIP';" />
+        <span>Документ 4: Архів ZIP</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/googledrive" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/google-drive--v2.png" alt="Google Drive icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/4285F4/ffffff?text=Drive';" />
+        <span>Документ 5: Google Drive</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/onedrive" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/microsoft-onedrive-2019.png" alt="OneDrive icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/0F6FBF/ffffff?text=OneDrive';" />
+        <span>Документ 6: OneDrive</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+      <a href="https://www.example.com/document7.xls" target="_blank" class="dropdown-link">
+        <img class="file-icon-base" src="https://img.icons8.com/color/48/xls.png" alt="Excel icon" onerror="this.onerror=null;this.src='https://placehold.co/20x20/217346/ffffff?text=XLS';" />
+        <span>Документ 7: Бюджетний план</span>
+        <svg class="external-link-icon" viewBox="0 0 24 24">
+          <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <div id="container">
+    <div id="leftFrame" class="frameWrapper" style="width: 50%;">
+      <div class="spinner-overlay" id="spinnerLeft">
+        <div class="spinner"></div>
+        <div>3D модель</div>
+      </div>
+      <iframe
+        title="Червона Слобода Гонти Максименко"
+        src="https://sketchfab.com/models/fd0dd06dda734ac595220546aaa56597/embed?autostart=1"
+        allowfullscreen
+        mozallowfullscreen="true"
+        webkitallowfullscreen="true"
+        allow="autoplay; fullscreen; xr-spatial-tracking"
+        onload="hideSpinnerLeft()"
+      ></iframe>
+    </div>
+
+    <div id="divider"></div>
+
+    <div id="rightFrame" class="frameWrapper" style="width: 50%;">
+      <div class="spinner-overlay" id="spinnerRight">
+        <div class="spinner"></div>
+        <div>2D карта</div>
+      </div>
+      <iframe
+        src="https://qgiscloud.com/suprun/web1/"
+        allowfullscreen
+        mozallowfullscreen="true"
+        webkitallowfullscreen="true"
+        onload="hideSpinnerRight()"
+      ></iframe>
+    </div>
+  </div>
+
+  <div id="overlay"></div>
+
+<script>
+  const divider = document.getElementById('divider');
+  const leftFrame = document.getElementById('leftFrame');
+  const rightFrame = document.getElementById('rightFrame');
+  const overlay = document.getElementById('overlay');
+
+  // Desktop mode buttons
+  const desktopModeButtons = document.getElementById('desktop-mode-buttons');
+  const btn3D = document.getElementById('btn3D');
+  const btn2D3D = document.getElementById('btn2D3D');
+  const btn2D = document.getElementById('btn2D');
+
+  // Mobile mode buttons
+  const mobileModeButtons = document.getElementById('mobile-mode-buttons');
+  const btnMobile2D = document.getElementById('btnMobile2D');
+  const btnMobile3D = document.getElementById('btnMobile3D');
+
+  const spinnerLeft = document.getElementById('spinnerLeft');
+  const spinnerRight = document.getElementById('spinnerRight');
+
+  const titleButton = document.getElementById('titleButton');
+  const titleDropdownPanel = document.getElementById('titleDropdownPanel');
+  const closeDropdownPanel = document.getElementById('closeDropdownPanel');
+
+  // Fullscreen button element
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+  const minWidth = 1;
+  let currentDesktopMode = '2D3D'; // Stores the last active desktop mode
+  let currentMobileMode = '2D'; // Stores the last active mobile mode
+  let currentLeftFramePercentage = 50; // Stores the percentage width of the left frame in 2D/3D mode
+
+  /**
+   * Helper function to determine if the current view is mobile.
+   * @returns {boolean} - True if mobile view (screen width <= 768px), false otherwise.
+   */
+  function isMobileView() {
+    return window.innerWidth <= 768;
+  }
+
+  /**
+   * Hides the spinner for the left frame.
+   */
+  function hideSpinnerLeft() {
+    spinnerLeft.style.opacity = '0';
+    setTimeout(() => {
+      spinnerLeft.classList.add('hidden');
+      spinnerLeft.style.opacity = '1'; // Reset opacity for next use
+    }, 500);
+  }
+
+  /**
+   * Hides the spinner for the right frame.
+   */
+  function hideSpinnerRight() {
+    spinnerRight.style.opacity = '0';
+    setTimeout(() => {
+      spinnerRight.classList.add('hidden');
+      spinnerRight.style.opacity = '1'; // Reset opacity for next use
+    }, 500);
+  }
+
+  /**
+   * Shows the left spinner temporarily for 3 seconds.
+   */
+  function showSpinnerTemporaryLeft() {
+    spinnerLeft.classList.remove('hidden');
+    spinnerLeft.style.opacity = '1';
+    setTimeout(() => {
+      spinnerLeft.style.opacity = '0';
+      setTimeout(() => {
+        spinnerLeft.classList.add('hidden');
+        spinnerLeft.style.opacity = '1';
+      }, 500);
+    }, 3000); // Show for 3 seconds
+  }
+
+  /**
+   * Sets the display mode for the frames in desktop view.
+   * @param {string} mode - The desired mode ('3D', '2D', or '2D3D').
+   */
+  function setDesktopMode(mode) {
+    // Remove active class from all desktop buttons
+    btn2D.classList.remove('active');
+    btn3D.classList.remove('active');
+    btn2D3D.classList.remove('active');
+
+    // Add active class to the current mode button
+    if (mode === '2D') btn2D.classList.add('active');
+    else if (mode === '3D') btn3D.classList.add('active');
+    else btn2D3D.classList.add('active');
+
+    // Adjust frame widths based on the selected mode
+    switch(mode) {
+      case '3D':
+        rightFrame.style.width = minWidth + 'px';
+        leftFrame.style.width = `calc(100% - ${minWidth + divider.offsetWidth}px)`;
+        divider.style.display = 'flex'; // Ensure divider is visible
+        if (currentDesktopMode === '2D') { // Only show spinner if coming from 2D
+          showSpinnerTemporaryLeft();
+        }
+        break;
+      case '2D':
+        leftFrame.style.width = minWidth + 'px';
+        rightFrame.style.width = `calc(100% - ${minWidth + divider.offsetWidth}px)`;
+        divider.style.display = 'flex'; // Ensure divider is visible
+        // No spinner needed for 2D transition
+        break;
+      default: // 2D/3D mode
+        // Always reset to 50/50 when the 2D/3D button is clicked
+        leftFrame.style.width = '50%';
+        rightFrame.style.width = '50%';
+        currentLeftFramePercentage = 50; // Reset the stored percentage
+        divider.style.display = 'flex'; // Ensure divider is visible
+        if (currentDesktopMode === '2D') { // Only show spinner if coming from 2D
+          showSpinnerTemporaryLeft();
+        }
+    }
+    currentDesktopMode = mode; // Update current desktop mode
+  }
+
+  /**
+   * Sets the display mode for the frames in mobile view.
+   * @param {string} mode - The desired mode ('2D' or '3D').
+   */
+  function setMobileMode(mode) {
+    // Remove active class from all mobile buttons
+    btnMobile2D.classList.remove('active');
+    btnMobile3D.classList.remove('active');
+
+    // Add active class to the current mode button
+    if (mode === '2D') btnMobile2D.classList.add('active');
+    else if (mode === '3D') btnMobile3D.classList.add('active');
+
+    // Adjust frame widths based on the selected mode
+    switch(mode) {
+      case '2D':
+        leftFrame.style.width = '0%'; // Hide 3D frame
+        rightFrame.style.width = '100%'; // Show 2D frame full width
+        divider.style.display = 'none'; // Hide divider
+        break;
+      case '3D':
+        rightFrame.style.width = '0%'; // Hide 2D frame
+        leftFrame.style.width = '100%'; // Show 3D frame full width
+        divider.style.display = 'none'; // Hide divider
+        showSpinnerTemporaryLeft(); // Show spinner for 3D model load
+        break;
+    }
+    currentMobileMode = mode; // Update current mobile mode
+  }
+
+  /**
+   * Updates the active state of the desktop mode toggle buttons based on frame widths.
+   * This is only relevant for desktop view.
+   */
+  function updateDesktopToggleButtons() {
+    const leftWidth = leftFrame.getBoundingClientRect().width;
+    const rightWidth = rightFrame.getBoundingClientRect().width;
+
+    // Remove active class from all buttons
+    btn2D.classList.remove('active');
+    btn3D.classList.remove('active');
+    btn2D3D.classList.remove('active');
+
+    // Add active class to the appropriate button based on frame widths
+    if (leftWidth <= minWidth + 1) {
+      btn2D.classList.add('active');
+    } else if (rightWidth <= minWidth + 1) {
+      btn3D.classList.add('active');
+    } else {
+      btn2D3D.classList.add('active');
+    }
+  }
+
+  // Event listeners for desktop mode buttons
+  btn3D.addEventListener('click', () => setDesktopMode('3D'));
+  btn2D.addEventListener('click', () => setDesktopMode('2D'));
+  btn2D3D.addEventListener('click', () => setDesktopMode('2D3D'));
+
+  // Event listeners for mobile mode buttons
+  btnMobile2D.addEventListener('click', () => setMobileMode('2D'));
+  btnMobile3D.addEventListener('click', () => setMobileMode('3D'));
+
+
+  let isResizing = false;
+
+  // Function to handle resizing logic for both mouse and touch
+  function handleResize(clientX) {
+    const containerWidth = divider.parentNode.getBoundingClientRect().width;
+    let newLeftWidth = clientX;
+    let newRightWidth = containerWidth - newLeftWidth - divider.offsetWidth;
+
+    // Ensure minimum widths are maintained
+    if (newLeftWidth < minWidth) newLeftWidth = minWidth;
+    if (newRightWidth < minWidth) newRightWidth = minWidth;
+
+    leftFrame.style.width = newLeftWidth + 'px';
+    rightFrame.style.width = newRightWidth + 'px';
+
+    // Update the stored percentage only if in 2D/3D mode on desktop
+    if (!isMobileView() && currentDesktopMode === '2D3D') {
+        currentLeftFramePercentage = (newLeftWidth / containerWidth) * 100;
+    }
+
+    updateDesktopToggleButtons(); // Update desktop button active states
+  }
+
+  // Event listener for divider mousedown to start resizing
+  divider.addEventListener('mousedown', () => {
+    // Only allow resizing if not in mobile view
+    if (!isMobileView()) {
+      isResizing = true;
+      overlay.style.display = 'block'; // Show overlay to capture mouse events
+      document.body.style.userSelect = 'none'; // Disable text selection during resize
+
+      // Add no-transition class to frames to prevent animation during resize
+      leftFrame.classList.add('no-transition');
+      rightFrame.classList.add('no-transition');
+    }
+  });
+
+  // Event listener for divider touchstart to start resizing
+  divider.addEventListener('touchstart', (e) => {
+    // Only allow resizing if not in mobile view
+    if (!isMobileView()) {
+      isResizing = true;
+      overlay.style.display = 'block'; // Show overlay to capture touch events
+      document.body.style.userSelect = 'none'; // Disable text selection during resize
+      e.preventDefault(); // Prevent scrolling
+
+      // Add no-transition class to frames to prevent animation during resize
+      leftFrame.classList.add('no-transition');
+      rightFrame.classList.add('no-transition');
+    }
+  });
+
+  // Event listener for overlay mousemove during resizing
+  overlay.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    handleResize(e.clientX);
+  });
+
+  // Event listener for overlay touchmove during resizing
+  overlay.addEventListener('touchmove', (e) => {
+    if (!isResizing || e.touches.length === 0) return;
+    e.preventDefault(); // Prevent scrolling
+    handleResize(e.touches[0].clientX);
+  });
+
+  // Event listener for overlay mouseup to stop resizing
+  mouseup = () => {
+    if (!isResizing) return;
+    isResizing = false;
+    overlay.style.display = 'none'; // Hide overlay
+    document.body.style.userSelect = 'auto'; // Re-enable text selection
+
+    // Remove no-transition class to re-enable animations
+    leftFrame.classList.remove('no-transition');
+    rightFrame.classList.remove('no-transition');
+  };
+  overlay.addEventListener('mouseup', mouseup);
+
+  // Event listener for overlay touchend to stop resizing
+  overlay.addEventListener('touchend', mouseup); // Re-use mouseup for touchend
+
+  // Global document mouseup listener to handle cases where mouse leaves overlay
+  document.addEventListener('mouseup', () => {
+    if (isResizing) {
+      isResizing = false;
+      overlay.style.display = 'none';
+      document.body.style.userSelect = 'auto';
+
+      leftFrame.classList.remove('no-transition');
+      rightFrame.classList.remove('no-transition');
+    }
+  });
+
+  // Global document touchend listener to handle cases where touch leaves overlay
+  document.addEventListener('touchend', () => {
+    if (isResizing) {
+      isResizing = false;
+      overlay.style.display = 'none';
+      document.body.style.userSelect = 'auto';
+
+      leftFrame.classList.remove('no-transition');
+      rightFrame.classList.remove('no-transition');
+    }
+  });
+
+  /* Title Dropdown Panel Functionality */
+
+  // Function to toggle dropdown panel visibility
+  function toggleDropdownPanel() {
+    if (titleDropdownPanel.classList.contains('visible')) {
+      titleDropdownPanel.classList.remove('visible');
+      titleButton.classList.remove('active'); // Remove active class from button
+    } else {
+      const titleButtonRect = titleButton.getBoundingClientRect();
+      // Set width to match button, but respect max-width for desktop
+      let panelWidth = titleButtonRect.width;
+      if (!isMobileView() && panelWidth > 600) {
+          panelWidth = 600;
+      } else if (isMobileView()) {
+          // On mobile, panel should span full width minus padding
+          panelWidth = window.innerWidth - 10; // 5px padding on each side
+      }
+      titleDropdownPanel.style.width = panelWidth + 'px';
+
+      // Position dropdown panel
+      if (isMobileView()) {
+          titleDropdownPanel.style.left = '5px'; // Align to left edge of screen with padding
+          titleDropdownPanel.style.right = '5px'; // Align to right edge of screen with padding
+      } else {
+          titleDropdownPanel.style.left = titleButtonRect.left + 'px'; // Align to left edge of button
+          titleDropdownPanel.style.right = 'auto'; // Reset right for desktop
+      }
+
+      titleDropdownPanel.classList.add('visible');
+      titleButton.classList.add('active'); // Add active class to button
+    }
+  }
+
+  // Event listener to open/close dropdown panel when title button is clicked
+  titleButton.addEventListener('click', toggleDropdownPanel);
+
+  // Event listener to close dropdown panel when close button is clicked
+  closeDropdownPanel.addEventListener('click', () => {
+    titleDropdownPanel.classList.remove('visible');
+    titleButton.classList.remove('active'); // Remove active class from button
+  });
+
+  // Event listener to close dropdown panel when clicking outside of it
+  document.addEventListener('click', (event) => {
+    if (!titleButton.contains(event.target) && !titleDropdownPanel.contains(event.target)) {
+      titleDropdownPanel.classList.remove('visible');
+      titleButton.classList.remove('active'); // Remove active class from button
+    }
+  });
+
+  /**
+   * Function to update the view (buttons, frames, divider) based on current screen width.
+   */
+  function updateViewBasedOnWidth() {
+    const mobile = isMobileView();
+
+    if (mobile) {
+      desktopModeButtons.style.display = 'none';
+      mobileModeButtons.style.display = 'flex';
+      // Apply mobile mode
+      setMobileMode(currentMobileMode);
+    } else {
+      desktopModeButtons.style.display = 'flex';
+      mobileModeButtons.style.display = 'none';
+      // Apply desktop mode
+      setDesktopMode(currentDesktopMode);
+    }
+
+    // Always update dropdown panel position and width on window resize
+    if (titleDropdownPanel.classList.contains('visible')) {
+      const titleButtonRect = titleButton.getBoundingClientRect();
+      let panelWidth = titleButtonRect.width;
+      if (!mobile && panelWidth > 600) {
+          panelWidth = 600;
+      } else if (mobile) {
+          panelWidth = window.innerWidth - 10;
+      }
+      titleDropdownPanel.style.width = panelWidth + 'px';
+
+      if (mobile) {
+          titleDropdownPanel.style.left = '5px';
+          titleDropdownPanel.style.right = '5px';
+      } else {
+          titleDropdownPanel.style.left = titleButtonRect.left + 'px';
+          titleDropdownPanel.style.right = 'auto';
+      }
+    }
+  }
+
+  // Event listener for window resize
+  window.addEventListener('resize', handleWindowResize);
+
+  // Modified handleWindowResize to call updateViewBasedOnWidth
+  function handleWindowResize() {
+    // Only adjust if not currently resizing with the divider
+    if (!isResizing) {
+      updateViewBasedOnWidth();
+    }
+  }
+
+  /* Fullscreen Functionality */
+  fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      // If not in fullscreen, request fullscreen for the entire document
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
+      });
+    } else {
+      // If in fullscreen, exit fullscreen
+      document.exitFullscreen().catch(err => {
+        console.error(`Error attempting to disable fullscreen: ${err.message} (${err.name})`);
+      });
+    }
+  });
+
+  // Event listener for fullscreenchange to update button state and tooltip
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) {
+      fullscreenBtn.classList.add('active');
+      fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
+    } else {
+      fullscreenBtn.classList.remove('active');
+      fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+    }
+  });
+
+  // Initialize tooltip and view on load
+  document.addEventListener('DOMContentLoaded', () => {
+      if (document.fullscreenElement) {
+          fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
+      } else {
+          fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+      }
+      updateViewBasedOnWidth(); // Set initial view based on screen size
+  });
+</script>
+
+</body>
+</html>
