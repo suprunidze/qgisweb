@@ -67,6 +67,12 @@
       "url": "https://www.example.com/document7.xls",
       "icon": "encrypted",
       "iconAlt": "encrypted icon"
+    },
+    {
+      "name": "Документ 7: Бюджетний план",
+      "url": "https://www.example.com/document7.xls",
+      "icon": "file",
+      "iconAlt": "file icon"
     }
   ],
   "iframes": {
