@@ -1,6 +1,6 @@
 {
   "projectTitle": "Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області.",
-  "has3D": false,
+  "has3D": true,
   "documents": [
     {
       "name": "Документ 1: Генеральний план",
@@ -21,7 +21,7 @@
       "iconAlt": "Web page icon"
     },
     {
-      "name": "Документ 4: Архів ZIP",
+      "name": "Документ 4: Архів ZIPe",
       "url": "https://www.example.com/archive.zip",
       "icon": "zip",
       "iconAlt": "ZIP icon"
