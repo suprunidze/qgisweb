@@ -6,43 +6,67 @@
       "name": "Документ 1: Генеральний план",
       "url": "https://www.example.com/document1.pdf",
       "icon": "pdf",
-      "iconAlt": "PDF icon"
+      "iconAlt": "pdf icon"
     },
     {
       "name": "Документ 2: Пояснювальна записка",
       "url": "https://www.example.com/document2.doc",
       "icon": "word",
-      "iconAlt": "DOC icon"
+      "iconAlt": "word icon"
     },
     {
       "name": "Документ 3: Схема інженерних мережs",
       "url": "https://www.example.com/webpage",
-      "icon": "file",
-      "iconAlt": "Web page icon"
+      "icon": "domain--v1",
+      "iconAlt": "domain--v1 icon"
     },
     {
-      "name": "Документ 4: Архів ZIPe",
+      "name": "Документ 4: Архів ZIP",
       "url": "https://www.example.com/archive.zip",
-      "icon": "image",
-      "iconAlt": "ZIP icon"
+      "icon": "zip",
+      "iconAlt": "zip icon"
     },
     {
       "name": "Документ 5: Google Drive",
       "url": "https://www.example.com/googledrive",
       "icon": "google-drive--v2",
-      "iconAlt": "Google Drive icon"
+      "iconAlt": "google-drive--v2 icon"
     },
     {
       "name": "Документ 6: OneDrive",
       "url": "https://www.example.com/onedrive",
       "icon": "microsoft-onedrive-2019",
-      "iconAlt": "OneDrive icon"
+      "iconAlt": "microsoft-onedrive-2019 icon"
     },
     {
       "name": "Документ 7: Бюджетний план",
       "url": "https://www.example.com/document7.xls",
       "icon": "xls",
-      "iconAlt": "Excel icon"
+      "iconAlt": "xls icon"
+    },
+    {
+      "name": "Документ 7: Бюджетний план",
+      "url": "https://www.example.com/document7.xls",
+      "icon": "image",
+      "iconAlt": "image icon"
+    },
+    {
+      "name": "Документ 3: Схема інженерних мережs",
+      "url": "https://www.example.com/document7.xls",
+      "icon": "code",
+      "iconAlt": "code icon"
+    },
+    {
+      "name": "Документ 7: Бюджетний план",
+      "url": "https://www.example.com/document7.xls",
+      "icon": "xml",
+      "iconAlt": "xml icon"
+    },
+    {
+      "name": "Документ 6: OneDrive",
+      "url": "https://www.example.com/document7.xls",
+      "icon": "encrypted",
+      "iconAlt": "encrypted icon"
     }
   ],
   "iframes": {
