@@ -17,13 +17,13 @@
     {
       "name": "Документ 3: Схема інженерних мережs",
       "url": "https://www.example.com/webpage",
-      "icon": "domain--v1",
+      "icon": "file",
       "iconAlt": "Web page icon"
     },
     {
       "name": "Документ 4: Архів ZIPe",
       "url": "https://www.example.com/archive.zip",
-      "icon": "zip",
+      "icon": "image",
       "iconAlt": "ZIP icon"
     },
     {
