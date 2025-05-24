@@ -1,10 +1,6 @@
 {
   "projectTitle": "Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області.",
   "has3D": true,
-  "iframes": {
-    "sketchfabUrl": "https://sketchfab.com/models/ba4f378036ee4f42b3ff0743b17c1626/embed?autospin=0&autostart=1&ui_controls=1&ui_infos=0&ui_inspector=0&ui_ar=0&ui_watermark=0&ui_help=0&ui_settings=0&ui_vr=0&ui_fullscreen=0&preload=1",
-    "qgisUrl": "https://qgis.cloud/map/d378036ee4f42b3ff0743b17c1626"
-  },
   "documents": [
     {
       "name": "Документ 1: Генеральний план",
@@ -25,7 +21,7 @@
       "iconAlt": "Web page icon"
     },
     {
-      "name": "Документ 4: Архів ZIPs",
+      "name": "Документ 4: Архів ZIP",
       "url": "https://www.example.com/archive.zip",
       "icon": "zip",
       "iconAlt": "ZIP icon"
@@ -48,5 +44,9 @@
       "icon": "xls",
       "iconAlt": "Excel icon"
     }
-  ]
+  ],
+  "iframes": {
+    "sketchfabUrl": "https://sketchfab.com/models/fd0dd06dda734ac595220546aaa56597/embed?autostart=1",
+    "qgisUrl": "https://qgiscloud.com/suprun/web1/"
+  }
 }
