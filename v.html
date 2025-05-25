@@ -745,14 +745,36 @@
   };
 
   /**
-   * Завантажує дані конфігурації з config.json.
-   * Примітка: Цей файл (config.json) та viewer6.html мають бути розміщені на веб-сервері
-   * (наприклад, за допомогою Python `http.server` або Node.js `serve`),
-   * оскільки браузери обмежують `fetch` API для локальних файлів з міркувань безпеки (CORS).
+   * Завантажує дані конфігурації з config.json або testconfig.json.
+   * Використовує параметр 'p' з URL для формування шляху до config.json.
+   * Якщо файл за вказаним шляхом недоступний, використовує резервний testconfig.json.
    */
   async function loadConfig() {
+    let configUrl = 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/testconfig.json'; // Резервний URL
+
+    // Отримати параметр 'p' з URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const pParam = urlParams.get('p');
+
+    if (pParam) {
+      // Сформувати URL на основі параметра 'p'
+      const dynamicConfigUrl = `${pParam}/config.json`;
+      try {
+        // Спробувати завантажити config.json за динамічним URL
+        const response = await fetch(dynamicConfigUrl);
+        if (response.ok) {
+          configUrl = dynamicConfigUrl; // Якщо успішно, використовувати цей URL
+        } else {
+          console.warn(`Файл конфігурації за адресою ${dynamicConfigUrl} недоступний. Використання резервного файлу.`);
+        }
+      } catch (error) {
+        console.error(`Помилка завантаження конфігурації з ${dynamicConfigUrl}:`, error);
+        console.warn('Використання резервного файлу конфігурації.');
+      }
+    }
+
     try {
-      const response = await fetch('https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/config.json');
+      const response = await fetch(configUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
