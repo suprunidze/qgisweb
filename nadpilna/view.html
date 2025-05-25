@@ -577,7 +577,7 @@
   </div>
 
   <div id="topBar" style="display: none;">
-    <a href="#" id="logo">
+    <a href="/" id="logo">
       <img src="https://www.logoai.com/oss/icons/2021/12/02/SU8HhT2n6tL-p-_.png" alt="Company Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=Logo+Error';" />
     </a>
     <button id="titleButton" title="">
@@ -752,7 +752,7 @@
    */
   async function loadConfig() {
     try {
-      const response = await fetch('config.json');
+      const response = await fetch('https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/config.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
