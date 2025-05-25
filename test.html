@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сторінка з параметрами URL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6;
+            color: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+        }
+        .content-box {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            max-width: 500px;
+            width: 100%;
+        }
+        h2 {
+            font-size: 2.25rem; /* text-4xl */
+            font-weight: 800; /* font-extrabold */
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: 1.125rem; /* text-lg */
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="content-box">
+        <h2>Привіт!</h2>
+        <p id="name-display">Ім'я: (не вказано)</p>
+        <p id="city-display">Місто: (не вказано)</p>
+        <p class="mt-4 text-sm text-gray-600">
+            Спробуйте додати параметри до URL, наприклад:
+            <br>
+            <code class="bg-gray-100 p-1 rounded">?name=ВашеІм'я&city=ВашеМісто</code>
+        </p>
+    </div>
+
+    <script>
+        // Отримуємо параметри URL
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Отримуємо значення параметра 'name'
+        const name = urlParams.get('name');
+        // Отримуємо значення параметра 'city'
+        const city = urlParams.get('city');
+
+        // Оновлюємо вміст сторінки, якщо параметри існують
+        if (name) {
+            document.getElementById('name-display').textContent = `Ім'я: ${name}`;
+        }
+        if (city) {
+            document.getElementById('city-display').textContent = `Місто: ${city}`;
+        }
+    </script>
+</body>
+</html>
+
