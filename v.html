@@ -750,7 +750,7 @@
    * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
    */
   async function loadConfig() {
-    let configUrl = 'config.json'; // За замовчуванням: config.json у поточній директорії
+    let configUrl = ''; // За замовчуванням: config.json у поточній директорії
 
     // Отримати параметр 'p' з URL
     const urlParams = new URLSearchParams(window.location.search);
