@@ -1,30 +1,60 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>Центроване посилання</title>
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-    }
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: Arial, sans-serif;
-    }
-    a {
-      text-decoration: none;
-      font-size: 24px;
-      color: #007BFF;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проектна компанія «Архітектурне бюро»</title>
+    <link rel="icon" href="pkfaviconblue.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f3f4f6; /* Світло-сірий фон для основної частини сторінки */
+            color: #1a1a1a; /* Чорний текст за замовчуванням */
+        }
+        /* Перевизначення кольору тексту для заголовків та абзаців, якщо Tailwind не застосовує чорний */
+        h1, h2, h3, p {
+            color: #1a1a1a; /* Забезпечення чорного кольору тексту для заголовків і абзаців */
+        }
+    </style>
 </head>
-<body>
-  <a href="nadpilna/view.html">Перейти до Надпільна</a>
+<body class="flex flex-col min-h-screen">
+    <header class="bg-white shadow-md py-4 px-6 md:px-8 flex flex-col items-center justify-center rounded-b-lg">
+        <div class="flex items-center">
+            <img src="buro.png" alt="Логотип Архітектурного бюро" class="h-12 w-12 mr-4">
+            <h1 class="text-3xl font-bold text-black">Проектна компанія «Архітектурне бюро»</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 md:py-12">
+        <h2 class="text-3xl font-extrabold text-center mb-10">Містобудівна документація</h2>
+
+        <div class="grid grid-cols-1 gap-8 max-w-xl mx-auto">
+            <div class="bg-white p-6 rounded-xl shadow-lg flex flex-col transition-transform transform hover:scale-105 hover:shadow-xl">
+                <div class="flex items-center mb-4">
+                    <img src="https://img.icons8.com/stickers/100/country.png" alt="Ілюстрація плану території" class="w-24 h-24 rounded-full mr-4 object-cover flex-shrink-0">
+                    <div class="flex-grow">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Детальний план території</h3>
+                        <p class="text-gray-700">в межах вулиць Байди Вишневецького, Надпільна та Остафія Дашковича в м. Черкаси</p>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <a href="nadpilna/view" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full transition-colors duration-300">
+                        Переглянути
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-blue-600 text-white py-6 px-4 md:px-8 text-center rounded-t-lg mt-8">
+        <p class="text-white">&copy; <span id="current-year"></span> Проектна компанія «Архітектурне бюро»</p>
+    </footer>
+
+    <script>
+        // Отримання поточного року та оновлення підвалу
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
 </body>
 </html>
