@@ -745,12 +745,12 @@
   };
 
   /**
-   * Завантажує дані конфігурації з config.json або testconfig.json.
+   * Завантажує дані конфігурації з config.json.
    * Використовує параметр 'p' з URL для формування шляху до config.json.
-   * Якщо файл за вказаним шляхом недоступний, використовує резервний testconfig.json.
+   * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
    */
   async function loadConfig() {
-    let configUrl = 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/testconfig.json'; // Резервний URL
+    let configUrl = 'config.json'; // За замовчуванням: config.json у поточній директорії
 
     // Отримати параметр 'p' з URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -758,19 +758,7 @@
 
     if (pParam) {
       // Сформувати URL на основі параметра 'p'
-      const dynamicConfigUrl = `${pParam}/config.json`;
-      try {
-        // Спробувати завантажити config.json за динамічним URL
-        const response = await fetch(dynamicConfigUrl);
-        if (response.ok) {
-          configUrl = dynamicConfigUrl; // Якщо успішно, використовувати цей URL
-        } else {
-          console.warn(`Файл конфігурації за адресою ${dynamicConfigUrl} недоступний. Використання резервного файлу.`);
-        }
-      } catch (error) {
-        console.error(`Помилка завантаження конфігурації з ${dynamicConfigUrl}:`, error);
-        console.warn('Використання резервного файлу конфігурації.');
-      }
+      configUrl = `${pParam}/config.json`;
     }
 
     try {
@@ -800,7 +788,7 @@
       // Показати повідомлення про помилку на оверлеї спінера
       const spinnerOverlayDiv = mainLoadingOverlay.querySelector('.spinner-overlay div:last-child');
       if (spinnerOverlayDiv) {
-        spinnerOverlayDiv.textContent = 'Помилка завантаження даних. Спробуйте оновити сторінку.';
+        spinnerOverlayDiv.textContent = `Помилка завантаження даних за адресою: ${configUrl}. Спробуйте оновити сторінку або перевірте параметр 'p'.`;
         mainLoadingOverlay.querySelector('.spinner').style.display = 'none'; // Приховати спінер
       }
       // Залишити оверлей видимим, щоб показати помилку
