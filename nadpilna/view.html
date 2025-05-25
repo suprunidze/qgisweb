@@ -745,14 +745,14 @@
   };
 
   /**
-   * Завантажує дані конфігурації з config.json.
-   * Примітка: Цей файл (config.json) та viewer6.html мають бути розміщені на веб-сервері
+   * Завантажує дані конфігурації з testconfig.json.
+   * Примітка: Цей файл (testconfig.json) та viewer6.html мають бути розміщені на веб-сервері
    * (наприклад, за допомогою Python `http.server` або Node.js `serve`),
    * оскільки браузери обмежують `fetch` API для локальних файлів з міркувань безпеки (CORS).
    */
   async function loadConfig() {
     try {
-      const response = await fetch('https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/config.json');
+      const response = await fetch('https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/testconfig.json');
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -790,6 +790,9 @@
    * @param {object} config - Об'єкт конфігурації.
    */
   function applyConfig(config) {
+    // Оновити заголовок сторінки у браузері
+    document.title = config.projectTitle;
+
     // Оновити заголовок кнопки
     titleButton.setAttribute('title', config.projectTitle);
     titleButton.textContent = config.projectTitle;
