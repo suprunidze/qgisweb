@@ -622,7 +622,6 @@
         mozallowfullscreen="true"
         webkitallowfullscreen="true"
         allow="autoplay; fullscreen; xr-spatial-tracking"
-        onload="hideSpinnerLeft()"
       ></iframe>
     </div>
 
@@ -639,7 +638,6 @@
         allowfullscreen
         mozallowfullscreen="true"
         webkitallowfullscreen="true"
-        onload="hideSpinnerRight()"
       ></iframe>
     </div>
   </div>
@@ -750,7 +748,7 @@
    * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
    */
   async function loadConfig() {
-    let configUrl = ''; // За замовчуванням: config.json у поточній директорії
+    let configUrl = 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/testconfig.json'; // За замовчуванням: config.json у поточній директорії
 
     // Отримати параметр 'p' з URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -788,7 +786,7 @@
       // Показати повідомлення про помилку на оверлеї спінера
       const spinnerOverlayDiv = mainLoadingOverlay.querySelector('.spinner-overlay div:last-child');
       if (spinnerOverlayDiv) {
-        spinnerOverlayDiv.textContent = `Помилка завантаження даних за адресою: ${configUrl}. Спробуйте оновити сторінку або перевірте параметр 'p'.`;
+        spinnerOverlayDiv.textContent = `Помилка завантаження даних. Спробуйте оновити сторінку.`;
         mainLoadingOverlay.querySelector('.spinner').style.display = 'none'; // Приховати спінер
       }
       // Залишити оверлей видимим, щоб показати помилку
@@ -1228,6 +1226,10 @@
           fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
       }
       loadConfig(); // Завантажити конфігурацію при завантаженні DOM
+
+      // Додати обробники подій onload для iframe після того, як функції визначені
+      leftIframe.addEventListener('load', hideSpinnerLeft);
+      rightIframe.addEventListener('load', hideSpinnerRight);
   });
 
   // Функціонал автоматичного приховування підказки
