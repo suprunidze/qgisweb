@@ -2,78 +2,7 @@
   "projectTitle": "Детальний план території за межами населеного пункту с. Будище Шевченківської сільської ради Звенигородського району Черкаської області.",
   "has3D": true,
   "documents": [
-    {
-      "name": "Документ 1: Генеральний план",
-      "url": "https://www.example.com/document1.pdf",
-      "icon": "pdf",
-      "iconAlt": "pdf icon"
-    },
-    {
-      "name": "Документ 2: Пояснювальна записка",
-      "url": "https://www.example.com/document2.doc",
-      "icon": "word",
-      "iconAlt": "word icon"
-    },
-    {
-      "name": "Документ 3: Схема інженерних мережs",
-      "url": "https://www.example.com/webpage",
-      "icon": "domain--v1",
-      "iconAlt": "domain--v1 icon"
-    },
-    {
-      "name": "Документ 4: Архів ZIP",
-      "url": "https://www.example.com/archive.zip",
-      "icon": "zip",
-      "iconAlt": "zip icon"
-    },
-    {
-      "name": "Документ 5: Google Drive",
-      "url": "https://www.example.com/googledrive",
-      "icon": "google-drive--v2",
-      "iconAlt": "google-drive--v2 icon"
-    },
-    {
-      "name": "Документ 6: OneDrive",
-      "url": "https://www.example.com/onedrive",
-      "icon": "microsoft-onedrive-2019",
-      "iconAlt": "microsoft-onedrive-2019 icon"
-    },
-    {
-      "name": "Документ 7: Бюджетний план",
-      "url": "https://www.example.com/document7.xls",
-      "icon": "xls",
-      "iconAlt": "xls icon"
-    },
-    {
-      "name": "Документ 7: Бюджетний план",
-      "url": "https://www.example.com/document7.xls",
-      "icon": "image",
-      "iconAlt": "image icon"
-    },
-    {
-      "name": "Документ 3: Схема інженерних мережs",
-      "url": "https://www.example.com/document7.xls",
-      "icon": "code",
-      "iconAlt": "code icon"
-    },
-    {
-      "name": "Документ 7: Бюджетний план",
-      "url": "https://www.example.com/document7.xls",
-      "icon": "xml",
-      "iconAlt": "xml icon"
-    },
-    {
-      "name": "Документ 6: OneDrive",
-      "url": "https://www.example.com/document7.xls",
-      "icon": "encrypted",
-      "iconAlt": "encrypted icon"
-    },
-    {
-      "name": "Документ 7: Бюджетний план",
-      "url": "https://www.example.com/document7.xls",
-      "icon": "file",
-      "iconAlt": "file icon"
-    }
+   
   ],
   "iframes": {
     "sketchfabUrl": "https://sketchfab.com/models/fd0dd06dda734ac595220546aaa56597/embed?autostart=1",
