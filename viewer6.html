@@ -492,8 +492,9 @@
       padding-right: 5px; /* Налаштувати для трикутника */
     }
 
+    /* Додано: Приховати мітку режиму на мобільних пристроях */
     .mode-label {
-      display: none; /* Приховати мітку режиму на мобільних пристроях */
+      display: none;
     }
 
     #desktop-mode-buttons {
@@ -1138,7 +1139,7 @@
 
     if (has3DContent) {
       // Показати елементи, пов'язані з 3D, та налаштувати подвійний/одиночний вигляд на основі поточного режиму
-      desktopModeLabel.style.display = 'block';
+      desktopModeLabel.style.display = mobile ? 'none' : 'block'; // Приховати на мобільних, показати на десктопі
       desktopModeButtons.style.display = mobile ? 'none' : 'flex';
       mobileModeButtons.style.display = mobile ? 'flex' : 'none';
       divider.style.display = 'flex'; // Розділювач актуальний для 2D/3D на десктопі
@@ -1152,7 +1153,7 @@
       }
     } else {
       // Приховати всі елементи, пов'язані з 3D, і показати лише QGIS.cloud на всю ширину
-      desktopModeLabel.style.display = 'none';
+      desktopModeLabel.style.display = 'none'; // Завжди приховати, якщо немає 3D-вмісту
       desktopModeButtons.style.display = 'none';
       mobileModeButtons.style.display = 'none';
       divider.style.display = 'none'; // Приховати розділювач
