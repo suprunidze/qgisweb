@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    height: 100vh; /* Займає 100% висоти вікна перегляду */
+    height: 100vh; /* Займає 100% висоти вікна перегляду */ 
     overflow: hidden;
     font-family: 'Montserrat', Arial, sans-serif;
     background: #f9f9f9;
@@ -274,6 +274,7 @@
     justify-content: center;
     align-items: center;
     transition: background-color 0.3s ease;
+    touch-action: none; /* Додано для покращення взаємодії на сенсорних пристроях */
   }
 
   /* Стилі для трьох вертикальних крапок на слайдері */
@@ -299,6 +300,7 @@
     bottom: 0;
     cursor: col-resize;
     z-index: 10;
+    touch-action: none; /* Додано для покращення взаємодії на сенсорних пристроях */
   }
 
   /* Накладання спінера для станів завантаження */
