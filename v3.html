@@ -16,6 +16,7 @@
     overflow: hidden;
     font-family: 'Montserrat', Arial, sans-serif;
     background: #f9f9f9;
+    touch-action: none; /* Додано: Запобігає стандартній поведінці дотику на всій сторінці */
   }
 
   /* Стилі для верхньої панелі навігації */
@@ -24,7 +25,7 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 50px;
+    height: 56px; /* Змінено з 50px на 56px для узгодженості з overlay top */
     background-color: white;
     color: #333;
     display: flex;
@@ -1000,7 +1001,6 @@
 
   // Обробник події mousedown розділювача для початку зміни розміру
   divider.addEventListener('mousedown', () => {
-    console.log('mousedown на divider');
     // Дозволити зміну розміру лише якщо не в мобільному вигляді та якщо є 3D-вміст
     if (!isMobileView() && has3DContent) {
       isResizing = true;
@@ -1011,30 +1011,22 @@
       // Додати клас no-transition до фреймів, щоб запобігти анімації під час зміни розміру
       leftFrame.classList.add('no-transition');
       rightFrame.classList.add('no-transition');
-      console.log('mousedown: isResizing = true');
-    } else {
-      console.log('mousedown: Умова не виконана. isMobileView():', isMobileView(), 'has3DContent:', has3DContent);
     }
   });
 
   // Обробник події touchstart розділювача для початку зміни розміру
   divider.addEventListener('touchstart', (e) => {
-    console.log('touchstart на divider. Кількість дотиків:', e.touches.length);
-    console.log('isMobileView():', isMobileView(), 'has3DContent:', has3DContent);
     // Дозволити зміну розміру лише якщо не в мобільному вигляді та якщо є 3D-вміст
     if (!isMobileView() && has3DContent) {
       isResizing = true;
       isDragging = false; // Скинути прапорець перетягування на початку потенційного перетягування
       overlay.style.display = 'block'; // Показати накладання для захоплення подій дотику
-      document.body.style.userSelect = 'none'; // Вимкнути виділення тексту під час зміни розміру
       e.preventDefault(); // Запобігти прокручуванню
       e.stopPropagation(); // Зупинити розповсюдження, щоб запобігти обробці дотику іншими елементами
+      document.body.style.userSelect = 'none'; // Вимкнути виділення тексту під час зміни розміру
       // Додати клас no-transition до фреймів, щоб запобігти анімації під час зміни розміру
       leftFrame.classList.add('no-transition');
       rightFrame.classList.add('no-transition');
-      console.log('touchstart: isResizing = true');
-    } else {
-      console.log('touchstart: Умова не виконана. isMobileView():', isMobileView(), 'has3DContent:', has3DContent);
     }
   }, { passive: false }); // Використовувати passive: false, щоб переконатися, що preventDefault працює
 
@@ -1047,21 +1039,17 @@
 
   // Обробник події touchmove накладання під час зміни розміру
   overlay.addEventListener('touchmove', (e) => {
-    console.log('touchmove на overlay. isResizing:', isResizing, 'Кількість дотиків:', e.touches.length);
     if (!isResizing || e.touches.length === 0) {
-      console.log('touchmove: Умова не виконана. isResizing:', isResizing, 'e.touches.length:', e.touches.length);
       return;
     }
     isDragging = true; // Встановити прапорець перетягування, якщо дотик рухається під час зміни розміру
     e.preventDefault(); // Запобігти прокручуванню
     e.stopPropagation(); // Зупинити розповсюдження, щоб запобігти обробці дотику іншими елементами
     handleResize(e.touches[0].clientX);
-    console.log('touchmove: Слайдер переміщено.');
   }, { passive: false }); // Використовувати passive: false, щоб переконатися, що preventDefault працює
 
   // Функція для обробки закінчення зміни розміру (відпускання миші або закінчення дотику)
   function endResize() {
-    console.log('endResize викликано. isResizing:', isResizing, 'isDragging:', isDragging);
     if (!isResizing) return;
 
     // Логіка прив'язки слайдера
@@ -1086,7 +1074,6 @@
     // Видалити клас no-transition, щоб повторно увімкнути анімації
     leftFrame.classList.remove('no-transition');
     rightFrame.classList.remove('no-transition');
-    console.log('endResize: Зміна розміру завершена.');
   }
 
   // Обробник події mouseup накладання для зупинки зміни розміру
@@ -1281,4 +1268,3 @@
 
 </body>
 </html>
-
