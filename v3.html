@@ -302,7 +302,7 @@
     color: white;
     font-size: 24px;
     font-weight: bold;
-    cursor: grab; /* Курсор для перетягування */
+    cursor: col-resize; /* Курсор для перетягування */
     position: absolute; /* Позиціонування всередині розділювача */
     top: 50%;
     left: 50%;
@@ -654,7 +654,8 @@
     </div>
 
     <div id="divider">
-      <div id="draggableHandle" style="display: flex;"></div> </div>
+      <div id="draggableHandle" style="display: flex;"></div>
+    </div>
 
     <div id="rightFrame" class="frameWrapper" style="width: 50%;">
       <div class="spinner-overlay" id="spinnerRight">
@@ -1051,8 +1052,8 @@
     }
   });
 
-  // Обробник події touchstart розділювача для початку зміни розміру
-  divider.addEventListener('touchstart', (e) => {
+  // Обробник події touchstart для draggableHandle
+  draggableHandle.addEventListener('touchstart', (e) => {
     // Дозволити зміну розміру лише якщо не в мобільному вигляді та якщо є 3D-вміст
     if (!isMobileView() && has3DContent) {
       isResizing = true;
@@ -1064,6 +1065,9 @@
       // Додати клас no-transition до фреймів, щоб запобігти анімації під час зміни розміру
       leftFrame.classList.add('no-transition');
       rightFrame.classList.add('no-transition');
+
+      // Виклик handleResize з початковою позицією дотику
+      handleResize(e.touches[0].clientX);
     }
   }, { passive: false }); // Використовувати passive: false, щоб переконатися, що preventDefault працює
 
