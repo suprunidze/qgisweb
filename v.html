@@ -151,12 +151,12 @@
     background-color: #c0c0c0;
   }
 
-  /* Стилі для нової кнопки повноекранного режиму */
+  /* Стилі для кнопки повноекранного режиму */
   #fullscreenBtn {
     background-color: #e0e0e0;
     border: none;
     color: #333;
-    padding: 9px 12px;
+    padding: 9px 12px; /* 9px top/bottom padding + 20px SVG height = 38px total height */
     font-size: 15px;
     cursor: pointer;
     border-radius: 5px;
@@ -171,7 +171,27 @@
     position: relative;
   }
 
-  #fullscreenBtn:hover {
+  /* Стилі для кнопки "Поділитись" */
+  #shareBtn {
+    background-color: #e0e0e0;
+    border: none;
+    color: #333;
+    padding: 11px 12px; /* Збільшено відступ, щоб відповідати висоті fullscreenBtn */
+    font-size: 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: 'Montserrat', Arial, sans-serif;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  #fullscreenBtn:hover, #shareBtn:hover {
     background-color: #c0c0c0;
   }
 
@@ -179,6 +199,12 @@
     width: 20px;
     height: 20px;
     fill: currentColor;
+  }
+
+  #shareBtn img {
+    width: 16px; /* Зменшено розмір іконки до 16px */
+    height: 16px; /* Зменшено розмір іконки до 16px */
+    margin-left: -2px; /* Зсув іконки лівіше */
   }
 
   /* Стилі підказки для кнопки повноекранного режиму */
@@ -479,7 +505,7 @@
   }
 
   /* Кнопка закриття для панелі випадаючого списку */
-  #closeDropdownPanel {
+  #closeDropdownPanel, #closeSharePanel {
     position: absolute; /* Змінено на absolute для забезпечення послідовного позиціонування */
     top: 10px;
     right: 10px;
@@ -498,9 +524,99 @@
     z-index: 1002;
   }
 
-  #closeDropdownPanel:hover {
+  #closeDropdownPanel:hover, #closeSharePanel:hover {
     color: #333;
     background-color: #f0f0f0;
+  }
+
+  /* Стилі для панелі Поділитись */
+  #shareDropdownPanel {
+    position: absolute;
+    top: 56px;
+    right: 10px; /* Відступ від правого краю */
+    width: 180px; /* Фіксована ширина для попапу, відповідає QR-коду */
+    background-color: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    border-radius: 0 0 8px 8px; /* Верхні кути не заокруглені */
+    padding: 15px;
+    z-index: 999;
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  #shareDropdownPanel.visible {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .share-panel-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: left; /* Вирівнювання по лівому краю */
+  }
+
+  #shareUrlContainer {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    width: 100%; /* Займає всю доступну ширину панелі */
+  }
+
+  #shareUrlInput {
+    flex-grow: 1;
+    min-width: 0; /* Додано для запобігання переповненню в flex-контейнерах */
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    background-color: #f5f5f5;
+    color: #555;
+    height: 38px; /* Низька висота */
+    box-sizing: border-box;
+    white-space: nowrap; /* Запобігає переносу тексту */
+    overflow: hidden; /* Обрізає текст, що виходить за межі */
+    text-overflow: ellipsis; /* Додає три крапки, якщо текст обрізаний */
+  }
+
+  #copyUrlBtn {
+    background-color: #e0e0e0;
+    border: none;
+    padding: 8px;
+    border-radius: 5px;
+    margin-left: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 38px;
+    width: 38px; /* Фіксована ширина для кнопки копіювання */
+    flex-shrink: 0; /* Запобігає зменшенню */
+    box-sizing: border-box;
+  }
+
+  #copyUrlBtn:hover {
+    background-color: #c0c0c0;
+  }
+
+  #copyUrlBtn img {
+    width: 16px;
+    height: 16px;
+  }
+
+  #qrCodeImage {
+    display: block;
+    margin: 0 auto;
+    width: 150px;
+    height: 150px;
+    border: 1px solid #eee;
+    border-radius: 5px;
   }
 
   /* --- Стилі, специфічні для мобільних пристроїв --- */
@@ -544,7 +660,7 @@
       flex-shrink: 0; /* Запобігти зменшенню */
     }
 
-    #fullscreenBtn {
+    #fullscreenBtn, #shareBtn {
       margin-left: 5px; /* Зменшити відступ для мобільних пристроїв */
       flex-shrink: 0; /* Запобігти зменшенню */
     }
@@ -567,6 +683,16 @@
     .dropdown-link span {
       text-align: center; /* Вирівнювання тексту в посиланнях випадаючого списку по центру на мобільних пристроях */
       flex-grow: 1; /* Дозволяє тексту займати доступний простір */
+    }
+
+    /* Налаштування панелі Поділитись для мобільних пристроїв */
+    #shareDropdownPanel {
+      left: 5px;
+      right: 5px;
+      width: auto;
+    }
+    #qrCodeImage {
+      display: none; /* Приховати QR-код на мобільних пристроях */
     }
   }
 
@@ -635,6 +761,9 @@
         <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
       </svg>
     </button>
+    <button id="shareBtn">
+      <img src="https://img.icons8.com/material-sharp/48/737373/share.png" alt="Поділитись" onerror="this.onerror=null;this.src='https://placehold.co/16x16/cccccc/333333?text=Share';"/>
+    </button>
   </div>
 
   <div id="titleDropdownPanel">
@@ -644,6 +773,18 @@
     </div>
     <div class="dropdown-links">
       </div>
+  </div>
+
+  <div id="shareDropdownPanel">
+    <button id="closeSharePanel">&times;</button>
+    <div class="share-panel-title">Поділитись</div>
+    <div id="shareUrlContainer">
+      <input type="text" id="shareUrlInput" readonly />
+      <button id="copyUrlBtn">
+        <img src="https://img.icons8.com/tiny-glyph/16/737373/documents.png" alt="Копіювати" onerror="this.onerror=null;this.src='https://placehold.co/16x16/cccccc/333333?text=Copy';"/>
+      </button>
+    </div>
+    <img id="qrCodeImage" alt="QR Code" />
   </div>
 
   <div id="container" style="display: none;">
@@ -741,9 +882,16 @@
   // Основний оверлей завантаження
   const mainLoadingOverlay = document.getElementById('mainLoadingOverlay');
 
-  // Елемент кнопки повноекранного режиму
+  // Елементи для функції "Поділитись"
   const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const shareBtn = document.getElementById('shareBtn');
+  const shareDropdownPanel = document.getElementById('shareDropdownPanel');
+  const closeSharePanel = document.getElementById('closeSharePanel');
+  const shareUrlInput = document.getElementById('shareUrlInput');
+  const copyUrlBtn = document.getElementById('copyUrlBtn');
+  const qrCodeImage = document.getElementById('qrCodeImage');
   let tooltipTimeout; // Змінна для зберігання таймера підказки
+
 
   const minWidth = 0;
   let currentDesktopMode = '2D3D'; // Зберігає останній активний режим робочого столу
@@ -829,7 +977,7 @@
         // updateViewBasedOnWidth() тепер не потрібен тут, оскільки updateUIBasedOn3D вже встановлює початковий вигляд
       }, 500); // Дозволити завершитись переходу
     } catch (error) {
-      console.error('Помилка завантаження конфігурації:', error);
+      console.error(`Помилка завантаження конфігурації: ${error.message}`);
       has3DContent = false; // Припустити відсутність 3D, якщо конфігурація не завантажилася
       updateUIBasedOn3D(); // Застосувати зміни інтерфейсу на основі припущення про відсутність 3D
       // Показати повідомлення про помилку на оверлеї спінера
@@ -914,15 +1062,11 @@
    * Тимчасово показує лівий спінер протягом 3 секунд.
    */
   function showSpinnerTemporaryLeft() {
-    spinnerLeft.classList.remove('hidden');
-    spinnerLeft.style.opacity = '1';
+    spinnerLeft.style.opacity = '0';
     setTimeout(() => {
-      spinnerLeft.style.opacity = '0';
-      setTimeout(() => {
-        spinnerLeft.classList.add('hidden');
-        spinnerLeft.style.opacity = '1';
-      }, 500);
-    }, 3000); // Показати протягом 3 секунд
+      spinnerLeft.classList.add('hidden');
+      spinnerLeft.style.opacity = '1'; // Скинути непрозорість для наступного використання
+    }, 500);
   }
 
   /**
@@ -950,7 +1094,11 @@
         break;
       case '2D':
         // В режимі 2D лівий фрейм займає 0% ширини, правий - 100% мінус ширина розділювача
-        leftFrame.style.width = '0px';
+        // Додаємо невелику затримку перед встановленням ширини лівого фрейма в 0
+        // щоб дати браузеру час на плавніший перехід для 3D-контенту.
+        setTimeout(() => {
+          leftFrame.style.width = '0px';
+        }, 50); // Можна експериментувати з цією затримкою (наприклад, 20-100 мс)
         rightFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
         divider.style.display = 'flex'; // Завжди показувати розділювач
         break;
@@ -1048,7 +1196,6 @@
     if (!isMobileView() && currentDesktopMode === '2D3D') {
         currentLeftFramePercentage = (newLeftWidth / containerWidth) * 100;
     }
-
     // updateDesktopToggleButtons() викликається лише якщо has3DContent є true
     if (has3DContent) {
         updateDesktopToggleButtons();
@@ -1157,6 +1304,11 @@
       titleDropdownPanel.classList.remove('visible');
       titleButton.classList.remove('active'); // Видалити активний клас з кнопки
     } else {
+      // Закрити панель "Поділитись", якщо вона відкрита
+      if (shareDropdownPanel.classList.contains('visible')) {
+        shareDropdownPanel.classList.remove('visible');
+      }
+
       const titleButtonRect = titleButton.getBoundingClientRect();
       // Встановити ширину, щоб відповідати кнопці, але дотримуватися максимальної ширини для настільних ПК
       let panelWidth = titleButtonRect.width;
@@ -1193,9 +1345,11 @@
 
   // Обробник події для закриття панелі випадаючого списку при натисканні за її межами
   document.addEventListener('click', (event) => {
-    if (!titleButton.contains(event.target) && !titleDropdownPanel.contains(event.target)) {
+    if (!titleButton.contains(event.target) && !titleDropdownPanel.contains(event.target) &&
+        !shareBtn.contains(event.target) && !shareDropdownPanel.contains(event.target)) {
       titleDropdownPanel.classList.remove('visible');
       titleButton.classList.remove('active'); // Видалити активний клас з кнопки
+      shareDropdownPanel.classList.remove('visible'); // Закрити панель "Поділитись"
     }
   });
 
@@ -1305,6 +1459,69 @@
       fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
     }
   });
+
+  // Функціонал кнопки "Поділитись"
+  shareBtn.addEventListener('click', () => {
+    toggleShareDropdownPanel();
+  });
+
+  function toggleShareDropdownPanel() {
+    if (shareDropdownPanel.classList.contains('visible')) {
+      shareDropdownPanel.classList.remove('visible');
+    } else {
+      // Закрити панель заголовка, якщо вона відкрита
+      if (titleDropdownPanel.classList.contains('visible')) {
+        titleDropdownPanel.classList.remove('visible');
+        titleButton.classList.remove('active');
+      }
+
+      const currentUrl = window.location.href;
+      shareUrlInput.value = currentUrl;
+      // Приховати QR-код на мобільних пристроях
+      if (isMobileView()) {
+        qrCodeImage.style.display = 'none';
+      } else {
+        qrCodeImage.style.display = 'block';
+        qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`;
+      }
+
+
+      // Позиціонування панелі "Поділитись"
+      const shareBtnRect = shareBtn.getBoundingClientRect();
+      if (isMobileView()) {
+        shareDropdownPanel.style.left = '5px';
+        shareDropdownPanel.style.right = '5px';
+        shareDropdownPanel.style.width = 'auto';
+      } else {
+        shareDropdownPanel.style.left = 'auto';
+        shareDropdownPanel.style.right = (window.innerWidth - shareBtnRect.right) + 'px';
+        shareDropdownPanel.style.width = '180px'; /* Ширина відповідає QR-коду */
+      }
+
+      shareDropdownPanel.classList.add('visible');
+    }
+  }
+
+  closeSharePanel.addEventListener('click', () => {
+    shareDropdownPanel.classList.remove('visible');
+  });
+
+  copyUrlBtn.addEventListener('click', () => {
+    shareUrlInput.select();
+    shareUrlInput.setSelectionRange(0, 99999); // Для мобільних пристроїв
+    try {
+      document.execCommand('copy');
+      const copyIconImg = copyUrlBtn.querySelector('img');
+      const originalSrc = 'https://img.icons8.com/tiny-glyph/16/737373/documents.png'; // Store original src
+      copyIconImg.src = 'https://img.icons8.com/tiny-color/16/checked--v1.png'; // Change to checked icon
+      setTimeout(() => {
+        copyIconImg.src = originalSrc; // Revert to original icon
+      }, 1500);
+    } catch (err) {
+      console.error('Не вдалося скопіювати текст:', err);
+    }
+  });
+
 
   // Ініціалізувати підказку та вигляд при завантаженні
   document.addEventListener('DOMContentLoaded', () => {
