@@ -12,7 +12,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    height: 100vh; /* Займає 100% висоти вікна перегляду */
+    height: 100vh; /* Займає 100% висоти вікна перегляду */ 
     overflow: hidden;
     font-family: 'Montserrat', Arial, sans-serif;
     background: #f9f9f9;
@@ -263,7 +263,7 @@
     min-width: 0px;
   }
 
-  /* Стилі розділювача */
+  /* Стилі розділювача для миші (за замовчуванням) */
   #divider {
     width: 8px; /* Початкова ширина */
     background-color: #e0e0e0;
@@ -271,15 +271,30 @@
     user-select: none;
     z-index: 2;
     position: relative;
-    display: flex;
+    display: flex; /* За замовчуванням видимий */
     justify-content: center;
     align-items: center;
-    transition: background-color 0.3s ease, width 0.3s ease; /* Додано transition для width */
-    touch-action: none; /* Додано для покращення взаємодії на сенсорних пристроях */
+    transition: background-color 0.3s ease, width 0.3s ease;
+    touch-action: none; 
+  }
+
+  /* Стилі розділювача для сенсорного введення */
+  #touchDivider {
+    width: 20px; /* Ширший для сенсорного введення */
+    background-color: #007bff; /* Інший колір для візуального розрізнення */
+    cursor: col-resize;
+    user-select: none;
+    z-index: 2;
+    position: relative;
+    display: none; /* За замовчуванням прихований */
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.3s ease, width 0.3s ease;
+    touch-action: none; /* Обов'язково для сенсорного перетягування */
   }
 
   /* Стилі для трьох вертикальних крапок на слайдері */
-  #divider::before {
+  #divider::before, #touchDivider::before {
     content: "\22EE";
     font-size: 20px;
     color: #333333;
@@ -287,7 +302,7 @@
   }
 
   /* Ефект наведення для розділювача */
-  #divider:hover {
+  #divider:hover, #touchDivider:hover {
     background-color: #c0c0c0;
   }
 
@@ -629,6 +644,7 @@
     </div>
 
     <div id="divider"></div>
+    <div id="touchDivider"></div>
 
     <div id="rightFrame" class="frameWrapper" style="width: 50%;">
       <div class="spinner-overlay" id="spinnerRight">
@@ -673,6 +689,7 @@
 
   // Отримання елементів DOM
   const divider = document.getElementById('divider');
+  const touchDivider = document.getElementById('touchDivider'); // Отримання нового сенсорного розділювача
   const leftFrame = document.getElementById('leftFrame');
   const rightFrame = document.getElementById('rightFrame');
   const overlay = document.getElementById('overlay');
@@ -713,6 +730,9 @@
 
   // Глобальна змінна для відстеження наявності 3D-вмісту
   let has3DContent = true; // За замовчуванням true, буде оновлено після завантаження config.json
+
+  // Змінна для відстеження активного розділювача
+  let activeDivider = divider; // За замовчуванням - розділювач для миші
 
   // Мапування типів іконок на URL-адреси
   const iconMap = {
@@ -887,23 +907,23 @@
     // Налаштувати ширину фреймів залежно від вибраного режиму
     switch(mode) {
       case '3D':
-        // В режимі 3D лівий фрейм займає 100% ширини мінус ширина розділювача
-        leftFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
+        // В режимі 3D лівий фрейм займає 100% ширини мінус ширина активного розділювача
+        leftFrame.style.width = `calc(100% - ${activeDivider.offsetWidth}px)`;
         rightFrame.style.width = '0px';
-        divider.style.display = 'flex'; // Завжди показувати розділювач
+        activeDivider.style.display = 'flex'; // Завжди показувати активний розділювач
         break;
       case '2D':
-        // В режимі 2D лівий фрейм займає 0% ширини, правий - 100% мінус ширина розділювача
+        // В режимі 2D лівий фрейм займає 0% ширини, правий - 100% мінус ширина активного розділювача
         leftFrame.style.width = '0px';
-        rightFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
-        divider.style.display = 'flex'; // Завжди показувати розділювач
+        rightFrame.style.width = `calc(100% - ${activeDivider.offsetWidth}px)`;
+        activeDivider.style.display = 'flex'; // Завжди показувати активний розділювач
         break;
       default: // Режим 2D/3D
         // Завжди скидати до 50/50 при натисканні кнопки 2D/3D
         leftFrame.style.width = '50%';
         rightFrame.style.width = '50%';
         currentLeftFramePercentage = 50; // Скинути збережений відсоток
-        divider.style.display = 'flex'; // Переконатися, що розділювач видимий
+        activeDivider.style.display = 'flex'; // Переконатися, що активний розділювач видимий
     }
     currentDesktopMode = mode; // Оновити поточний режим робочого столу
   }
@@ -926,12 +946,12 @@
       case '2D':
         leftFrame.style.width = '0%'; // Приховати 3D фрейм
         rightFrame.style.width = '100%'; // Показати 2D фрейм на всю ширину
-        divider.style.display = 'none'; // Приховати розділювач
+        activeDivider.style.display = 'none'; // Приховати активний розділювач
         break;
       case '3D':
         rightFrame.style.width = '0%'; // Приховати 2D фрейм
         leftFrame.style.width = '100%'; // Показати 3D фрейм на всю ширину
-        divider.style.display = 'none'; // Приховати розділювач
+        activeDivider.style.display = 'none'; // Приховати активний розділювач
         // showSpinnerTemporaryLeft(); // Спінер більше не запускається при переході в 3D на мобільних пристроях
         break;
     }
@@ -977,13 +997,13 @@
 
   // Функція для обробки логіки зміни розміру як для миші, так і для дотику
   function handleResize(clientX) {
-    const containerWidth = divider.parentNode.getBoundingClientRect().width;
+    const containerWidth = activeDivider.parentNode.getBoundingClientRect().width; // Використовуємо activeDivider
     let newLeftWidth = clientX;
 
     // Переконайтеся, що newLeftWidth знаходиться в межах контейнера
-    newLeftWidth = Math.max(0, Math.min(newLeftWidth, containerWidth - divider.offsetWidth));
+    newLeftWidth = Math.max(0, Math.min(newLeftWidth, containerWidth - activeDivider.offsetWidth)); // Використовуємо activeDivider
 
-    let newRightWidth = containerWidth - newLeftWidth - divider.offsetWidth;
+    let newRightWidth = containerWidth - newLeftWidth - activeDivider.offsetWidth; // Використовуємо activeDivider
 
     leftFrame.style.width = newLeftWidth + 'px';
     rightFrame.style.width = newRightWidth + 'px';
@@ -999,7 +1019,7 @@
     }
   }
 
-  // Обробник події mousedown розділювача для початку зміни розміру
+  // Обробник події mousedown розділювача для початку зміни розміру (лише для #divider)
   divider.addEventListener('mousedown', () => {
     // Дозволити зміну розміру лише якщо не в мобільному вигляді та якщо є 3D-вміст
     if (!isMobileView() && has3DContent) {
@@ -1014,8 +1034,8 @@
     }
   });
 
-  // Обробник події touchstart розділювача для початку зміни розміру
-  divider.addEventListener('touchstart', (e) => {
+  // Обробник події touchstart розділювача для початку зміни розміру (лише для #touchDivider)
+  touchDivider.addEventListener('touchstart', (e) => {
     // Дозволити зміну розміру лише якщо не в мобільному вигляді та якщо є 3D-вміст
     if (!isMobileView() && has3DContent) {
       isResizing = true;
@@ -1054,7 +1074,7 @@
 
     // Логіка прив'язки слайдера
     if (!isMobileView() && isDragging && has3DContent) { // Застосовувати прив'язку лише на десктопі та якщо було перетягування та є 3D-вміст
-      const containerWidth = divider.parentNode.getBoundingClientRect().width;
+      const containerWidth = activeDivider.parentNode.getBoundingClientRect().width; // Використовуємо activeDivider
       const snapThreshold = 40; // Поріг прив'язки в пікселях
       const currentLeftWidth = leftFrame.getBoundingClientRect().width;
       const currentRightWidth = rightFrame.getBoundingClientRect().width;
@@ -1160,11 +1180,19 @@
     if (hasTouchSupport) {
       rightFrame.style.paddingTop = '50px';
       rightFrame.style.height = 'calc(100vh - 50px)';
-      divider.style.width = '20px'; // Збільшена ширина розділювача для сенсорних пристроїв
+      
+      // Показати touchDivider, приховати divider
+      divider.style.display = 'none';
+      touchDivider.style.display = 'flex';
+      activeDivider = touchDivider; // Оновити активний розділювач
     } else {
       rightFrame.style.paddingTop = '0';
       rightFrame.style.height = '100vh';
-      divider.style.width = '8px'; // Оригінальна ширина розділювача
+
+      // Показати divider, приховати touchDivider
+      divider.style.display = 'flex';
+      touchDivider.style.display = 'none';
+      activeDivider = divider; // Оновити активний розділювач
     }
 
     if (has3DContent) {
@@ -1172,7 +1200,9 @@
       desktopModeLabel.style.display = mobile ? 'none' : 'block'; // Приховати на мобільних, показати на десктопі
       desktopModeButtons.style.display = mobile ? 'none' : 'flex';
       mobileModeButtons.style.display = mobile ? 'flex' : 'none';
-      divider.style.display = 'flex'; // Розділювач актуальний для 2D/3D на десктопі
+      
+      // Розділювач завжди видимий, якщо є 3D-вміст (логіка display вже вгорі)
+      activeDivider.style.display = 'flex'; 
 
       if (!mobile) {
         // Застосувати десктопний режим
@@ -1186,7 +1216,10 @@
       desktopModeLabel.style.display = 'none'; // Завжди приховати, якщо немає 3D-вмісту
       desktopModeButtons.style.display = 'none';
       mobileModeButtons.style.display = 'none';
-      divider.style.display = 'none'; // Приховати розділювач
+      
+      // Приховати обидва розділювачі, якщо немає 3D-вмісту
+      divider.style.display = 'none'; 
+      touchDivider.style.display = 'none';
 
       // Примусово встановити фрейм QGIS.cloud на всю ширину, приховати фрейм Sketchfab
       leftFrame.style.width = '0%';
