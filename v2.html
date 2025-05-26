@@ -264,7 +264,7 @@
 
   /* Стилі розділювача */
   #divider {
-    width: 8px;
+    width: 8px; /* Початкова ширина */
     background-color: #e0e0e0;
     cursor: col-resize;
     user-select: none;
@@ -273,7 +273,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, width 0.3s ease; /* Додано transition для width */
     touch-action: none; /* Додано для покращення взаємодії на сенсорних пристроях */
   }
 
@@ -1153,12 +1153,15 @@
     // Перевірка підтримки сенсорного введення
     const hasTouchSupport = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 
+    // Встановлення висоти та відступу для фрейму QGIS.cloud залежно від підтримки сенсорного введення
     if (hasTouchSupport) {
       rightFrame.style.paddingTop = '50px';
       rightFrame.style.height = 'calc(100vh - 50px)';
+      divider.style.width = '20px'; // Збільшена ширина розділювача для сенсорних пристроїв
     } else {
       rightFrame.style.paddingTop = '0';
       rightFrame.style.height = '100vh';
+      divider.style.width = '8px'; // Оригінальна ширина розділювача
     }
 
     if (has3DContent) {
