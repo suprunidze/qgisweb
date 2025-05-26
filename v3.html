@@ -264,9 +264,9 @@
 
   /* Стилі розділювача */
   #divider {
-    width: 8px;
+    width: 4px; /* Зроблено тоншим */
     background-color: #e0e0e0;
-    cursor: col-resize;
+    cursor: col-resize; /* Змінено курсор на col-resize */
     user-select: none;
     z-index: 2;
     position: relative;
@@ -279,7 +279,7 @@
 
   /* Стилі для трьох вертикальних крапок на слайдері */
   #divider::before {
-    content: "\22EE";
+    content: ""; /* Приховано, оскільки тепер є кнопка */
     font-size: 20px;
     color: #333333;
     pointer-events: none;
@@ -292,29 +292,38 @@
 
   /* Стилі для кнопки перетягування */
   #draggableHandle {
-    width: 40px; /* Ширина кнопки */
-    height: 40px; /* Висота кнопки */
-    background-color: #007bff;
+    width: 24px; /* Менша ширина */
+    height: 24px; /* Менша висота */
+    background-color: #e0e0e0; /* Колір як у розділювача */
     border-radius: 50%; /* Кругла форма */
     display: flex;
     justify-content: center;
     align-items: center;
-    color: white;
-    font-size: 24px;
+    color: #333; /* Чорний колір для іконки */
+    font-size: 16px; /* Зменшений розмір шрифту для центрування */
     font-weight: bold;
     cursor: col-resize; /* Курсор для перетягування */
     position: absolute; /* Позиціонування всередині розділювача */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); /* Центрування */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: none; /* Тінь прибрана */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease; /* Додано перехід для розміру */
     z-index: 3; /* Переконайтеся, що вона над розділювачем */
   }
 
+  /* Стилі для кнопки перетягування при наведенні або коли розділювач наведений */
+  #draggableHandle.hovered,
   #draggableHandle:hover {
-    background-color: #0056b3;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    background-color: #c0c0c0; /* Колір як у розділювача при наведенні */
+    box-shadow: none; /* Тінь прибрана */
+  }
+
+  #draggableHandle .icon {
+    font-size: 16px; /* Розмір символу Unicode */
+    line-height: 1; /* Забезпечує правильне вертикальне вирівнювання */
+    position: relative; /* Додано для точного позиціонування */
+    top: -1px; /* Підняти іконку на 1px для меншого розміру */
   }
 
   /* Накладання для зміни розміру */
@@ -325,7 +334,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    cursor: col-resize;
+    cursor: col-resize; /* Змінено курсор на col-resize */
     z-index: 10;
   }
 
@@ -654,7 +663,9 @@
     </div>
 
     <div id="divider">
-      <div id="draggableHandle" style="display: flex;"></div>
+      <div id="draggableHandle" style="display: flex;">
+        <span class="icon">&#x2194;</span>
+      </div>
     </div>
 
     <div id="rightFrame" class="frameWrapper" style="width: 50%;">
@@ -807,6 +818,7 @@
 
       // Тепер, на основі has3DContent, налаштувати видимість та макет інтерфейсу
       updateUIBasedOn3D(); // Викликати нову функцію оновлення інтерфейсу
+      updateDraggableHandleSize(); // Оновити розмір кнопки слайдера
 
       // Приховати основний оверлей завантаження та показати вміст
       mainLoadingOverlay.classList.add('hidden');
@@ -1041,7 +1053,6 @@
     if (has3DContent) {
         updateDesktopToggleButtons();
     }
-    console.log('handleMove: currentClientX =', currentClientX, 'newLeftWidth =', newLeftWidth);
   }
 
   // Функція для початку зміни розміру
@@ -1060,20 +1071,16 @@
       // Додати глобальні обробники подій руху
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('touchmove', onTouchMove, { passive: false });
-
-      console.log('startResize: isResizing = true, initialPointerX =', initialPointerX, 'initialLeftFrameWidth =', initialLeftFrameWidth);
     }
   }
 
   // Обробник події mousedown розділювача для початку зміни розміру
   divider.addEventListener('mousedown', (e) => {
-    console.log('mousedown on divider');
     startResize(e.clientX);
   });
 
   // Обробник події touchstart для draggableHandle
   draggableHandle.addEventListener('touchstart', (e) => {
-    console.log('touchstart on draggableHandle');
     e.preventDefault(); // Запобігти поведінці дотику за замовчуванням (наприклад, прокручуванню)
     startResize(e.touches[0].clientX);
   }, { passive: false });
@@ -1081,7 +1088,6 @@
   // Обробник події touchstart для divider (якщо драг починається не з handle)
   divider.addEventListener('touchstart', (e) => {
     if (!isMobileView() && has3DContent && e.target !== draggableHandle) { // Перевірка, щоб уникнути подвійного запуску
-      console.log('touchstart on divider (not handle)');
       e.preventDefault(); // Запобігти поведінці дотику за замовчуванням
       startResize(e.touches[0].clientX);
     }
@@ -1102,7 +1108,6 @@
   // Функція для обробки закінчення зміни розміру (відпускання миші або закінчення дотику)
   function endResize() {
     if (!isResizing) return;
-    console.log('endResize called, isDragging:', isDragging); // Додано для налагодження
 
     // Видалити глобальні обробники подій руху
     document.removeEventListener('mousemove', onMouseMove);
@@ -1200,6 +1205,7 @@
    */
   function updateViewBasedOnWidth() {
     updateUIBasedOn3D();
+    updateDraggableHandleSize(); // Оновити розмір кнопки слайдера при зміні ширини вікна
   }
 
   /**
@@ -1237,6 +1243,28 @@
       // Примусово встановити фрейм QGIS.cloud на всю ширину, приховати фрейм Sketchfab
       leftFrame.style.width = '0%';
       rightFrame.style.width = '100%';
+    }
+  }
+
+  /**
+   * Оновлює розмір кнопки перетягування залежно від того, чи є пристрій сенсорним.
+   */
+  function updateDraggableHandleSize() {
+    const iconElement = draggableHandle.querySelector('.icon');
+    if (isTouchDevice()) {
+      draggableHandle.style.width = '48px';
+      draggableHandle.style.height = '48px';
+      if (iconElement) {
+        iconElement.style.fontSize = '32px'; // Збільшити розмір символу Unicode
+        iconElement.style.top = '-3px'; // Додаткове коригування для центрування
+      }
+    } else {
+      draggableHandle.style.width = '24px';
+      draggableHandle.style.height = '24px';
+      if (iconElement) {
+        iconElement.style.fontSize = '16px'; // Повернути початковий розмір символу Unicode
+        iconElement.style.top = '-1px'; // Повернути початкове коригування
+      }
     }
   }
 
@@ -1295,6 +1323,14 @@
       // Додати обробники подій onload для iframe після того, як функції визначені
       leftIframe.addEventListener('load', hideSpinnerLeft);
       rightIframe.addEventListener('load', hideSpinnerRight);
+
+      // Додати обробники подій для наведення на розділювач
+      divider.addEventListener('mouseenter', () => {
+        draggableHandle.classList.add('hovered');
+      });
+      divider.addEventListener('mouseleave', () => {
+        draggableHandle.classList.remove('hovered');
+      });
   });
 
   // Функціонал автоматичного приховування підказки
