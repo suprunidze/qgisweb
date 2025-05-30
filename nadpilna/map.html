@@ -1,105 +1,175 @@
 <!DOCTYPE html>
+
 <html>
+
 <head>
-    <title>OpenLayers: Статичне зображення з відступом зверху</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-            overflow: hidden; /* Запобігає появі смуг прокрутки */
-        }
-        #map {
-            position: absolute; /* Абсолютне позиціонування */
-            top: 56px;         /* Відступ 56 пікселів від верхнього краю */
-            left: 0;           /* До лівого краю */
-            right: 0;          /* До правого краю */
-            bottom: 0;         /* До нижнього краю, розтягуючи по висоті */
-            background-color: #f0f0f0; /* Легкий сірий фон */
-        }
-    </style>
+
+    <title>OpenLayers: Статичне зображення без базової карти (збереження пропорцій)</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+
+    <style>
+
+        body {
+
+            margin: 0;
+
+            padding: 0;
+
+            font-family: sans-serif;
+
+            overflow: hidden;
+
+        }
+
+        #map {
+
+            width: 100vw;
+
+            height: 100vh;
+
+            background-color: #f0f0f0; /* Легкий сірий фон */
+
+        }
+
+    </style>
+
 </head>
+
 <body>
-    <div style="height: 56px; width: 100%; background-color: #f0f0f0; color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5em;">
-        Ваш верхній блок (56px)
-    </div>
 
-    <div id="map"></div>
+    <div id="map"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
-    <script>
-        function initMap() {
-            // Шлях до вашого статичного зображення
-            // Ви можете змінити його на 'proj.png', якщо файл знаходиться поруч
-            const imageUrl = 'proj.png';
 
-            // Створюємо тимчасовий об'єкт Image для отримання розмірів
-            const img = new Image();
-            img.onload = function() {
-                const imageWidth = img.width;
-                const imageHeight = img.height;
 
-                // Визначаємо imageExtent так, щоб воно відповідало розмірам зображення
-                // Почнемо з того, що лівий нижній кут буде [0,0]
-                // А правий верхній кут буде [imageWidth, imageHeight]
-                const imageExtent = [0, 0, imageWidth, imageHeight];
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
 
-                // Створюємо View з проекцією, яка використовує пікселі як одиниці
-                // Це дозволяє нам відображати зображення в його "власних" піксельних координатах
-                const projection = new ol.proj.Projection({
-                    code: 'pixel-projection', // Унікальний код для вашої проекції
-                    units: 'pixels',         // Одиниці виміру - пікселі
-                    extent: imageExtent      // Обмеження проекції за розмірами зображення
-                });
+    <script>
 
-                const view = new ol.View({
-                    projection: projection,
-                    center: ol.extent.getCenter(imageExtent), // Центруємо на середині зображення
-                    zoom: 0, // Початковий зум, 0 означає "весь екстент"
-                    maxZoom: 8 // Можна встановити максимальний зум для більшого наближення
-                });
+        function initMap() {
 
-                // Створюємо джерело шару для статичного зображення
-                const imageSource = new ol.source.ImageStatic({
-                    url: imageUrl,
-                    projection: projection, // Використовуємо нашу піксельну проекцію
-                    imageExtent: imageExtent
-                });
+            // Шлях до вашого статичного зображення
 
-                // Створюємо шар зображення
-                const imageLayer = new ol.layer.Image({
-                    source: imageSource
-                });
+            // Обов'язково ЗАМІНІТЬ ЦЕЙ ШЛЯХ НА ВАШ ВЛАСНИЙ!
 
-                // Створюємо об'єкт Map
-                const map = new ol.Map({
-                    target: 'map',
-                    layers: [
-                        imageLayer
-                    ],
-                    view: view
-                });
+            const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/OpenLayers_logo.svg/1200px-OpenLayers_logo.svg.png';
 
-                // Додатково: підлаштовуємо view до розмірів зображення при завантаженні
-                map.getView().fit(imageExtent, {
-                    size: map.getSize(),
-                    padding: [0, 0, 0, 0] // Без відступів, щоб зображення займало весь простір
-                });
 
-                // Якщо розміри вікна змінюються, повторно підлаштовуємо карту
-                window.addEventListener('resize', function() {
-                    map.updateSize(); // Оновлюємо розмір карти після зміни розміру вікна
-                    map.getView().fit(imageExtent, {
-                        size: map.getSize(),
-                        padding: [0, 0, 0, 0]
-                    });
-                });
-            };
-            img.src = imageUrl; // Запускаємо завантаження зображення
-        }
 
-        document.addEventListener('DOMContentLoaded', initMap);
-    </script>
+            // Створюємо тимчасовий об'єкт Image для отримання розмірів
+
+            const img = new Image();
+
+            img.onload = function() {
+
+                const imageWidth = img.width;
+
+                const imageHeight = img.height;
+
+
+
+                // Визначаємо imageExtent так, щоб воно відповідало розмірам зображення
+
+                // Почнемо з того, що лівий нижній кут буде [0,0]
+
+                // А правий верхній кут буде [imageWidth, imageHeight]
+
+                const imageExtent = [0, 0, imageWidth, imageHeight];
+
+
+
+                // Створюємо View з проекцією, яка використовує пікселі як одиниці
+
+                // Це дозволяє нам відображати зображення в його "власних" піксельних координатах
+
+                const projection = new ol.proj.Projection({
+
+                    code: 'pixel-projection', // Унікальний код для вашої проекції
+
+                    units: 'pixels',         // Одиниці виміру - пікселі
+
+                    extent: imageExtent      // Обмеження проекції за розмірами зображення
+
+                });
+
+
+
+                const view = new ol.View({
+
+                    projection: projection,
+
+                    center: ol.extent.getCenter(imageExtent), // Центруємо на середині зображення
+
+                    zoom: 0, // Початковий зум, 0 означає "весь екстент"
+
+                    maxZoom: 8 // Можна встановити максимальний зум для більшого наближення
+
+                });
+
+
+
+                // Створюємо джерело шару для статичного зображення
+
+                const imageSource = new ol.source.ImageStatic({
+
+                    url: imageUrl,
+
+                    projection: projection, // Використовуємо нашу піксельну проекцію
+
+                    imageExtent: imageExtent
+
+                });
+
+
+
+                // Створюємо шар зображення
+
+                const imageLayer = new ol.layer.Image({
+
+                    source: imageSource
+
+                });
+
+
+
+                // Створюємо об'єкт Map
+
+                const map = new ol.Map({
+
+                    target: 'map',
+
+                    layers: [
+
+                        imageLayer
+
+                    ],
+
+                    view: view
+
+                });
+
+
+
+                // Додатково: підлаштовуємо view до розмірів зображення при завантаженні
+
+                map.getView().fit(imageExtent, {
+
+                    size: map.getSize(),
+
+                    padding: [100, 0, 0, 0] // Без відступів, щоб зображення займало весь простір
+
+                });
+
+            };
+
+            img.src = imageUrl; // Запускаємо завантаження зображення
+
+        }
+
+        document.addEventListener('DOMContentLoaded', initMap);
+
+    </script>
+
 </body>
+
 </html>
