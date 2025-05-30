@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OpenLayers: Статичне зображення як джерело шару</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <script>
+        // Функція для ініціалізації карти OpenLayers
+        function initMap() {
+            // Створюємо об'єкт View, який визначає центр, масштаб та проекцію карти
+            const view = new ol.View({
+                center: [0, 0], // Початковий центр карти
+                zoom: 2,        // Початковий масштаб
+                projection: 'EPSG:3857' // Стандартна проекція для веб-карт
+            });
+
+            // Створюємо джерело шару для статичного зображення
+            // Примітка: Вам потрібно замінити 'path/to/your/image.png' на фактичний шлях до вашого зображення
+            // та налаштувати extent відповідно до координат вашого зображення.
+            // extent: [minX, minY, maxX, maxY] - це координати лівого нижнього та правого верхнього кута зображення.
+            const imageSource = new ol.source.ImageStatic({
+                url: 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/nadpilna/proj.png', // Приклад зображення: логотип OpenLayers
+                projection: 'EPSG:3857', // Проекція зображення
+                imageExtent: [-2000000, -2000000, 2000000, 2000000] // Координати, які охоплює зображення (потрібно налаштувати)
+            });
+
+            // Створюємо шар зображення
+            const imageLayer = new ol.layer.Image({
+                source: imageSource
+            });
+
+            // Створюємо об'єкт Map
+            const map = new ol.Map({
+                target: 'map', // ID елементу HTML, куди буде завантажена карта
+                layers: [
+                    // Додаємо базовий шар Tile (наприклад, OpenStreetMap) для контексту
+                    new ol.layer.Tile({
+                        source: new ol.source.OSM()
+                    }),
+                    imageLayer // Додаємо наш шар із зображенням
+                ],
+                view: view
+            });
+
+            // Центруємо карту на зображенні після його завантаження
+            imageSource.on('imageloadend', function() {
+                map.getView().fit(imageSource.getImageExtent(), {
+                    size: map.getSize(),
+                    padding: [100, 100, 100, 100] // Додаємо відступи
+                });
+            });
+        }
+
+        // Запускаємо ініціалізацію карти після завантаження DOM
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
+</body>
+</html>
