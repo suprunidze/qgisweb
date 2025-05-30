@@ -9,14 +9,44 @@
       "iconAlt": "pdf"
     },
     {
-      "name": "Документ 2: Пояснювальна запискас",
+      "name": "Документ 2: Пояснювальна запискаі",
       "url": "https://www.example.com/document2.doc",
       "icon": "word",
       "iconAlt": "word"
+    },
+    {
+      "name": "Документ 3: Схема інженерних мережs",
+      "url": "https://www.example.com/webpage",
+      "icon": "domain--v1",
+      "iconAlt": "domain--v1"
+    },
+    {
+      "name": "Документ 7: Бюджетний план",
+      "url": "https://www.example.com/document7.xls",
+      "icon": "xls",
+      "iconAlt": "xls"
+    },
+    {
+      "name": "Документ 4: Архів ZIP",
+      "url": "https://www.example.com/archive.zip",
+      "icon": "zip",
+      "iconAlt": "zip"
+    },
+    {
+      "name": "Документ 5: Google Drive",
+      "url": "https://www.example.com/googledrive",
+      "icon": "google-drive--v2",
+      "iconAlt": "google-drive--v2"
+    },
+    {
+      "name": "Документ 4: Архів ZIP",
+      "url": "https://www.example.com/onedrive.xml",
+      "icon": "xml",
+      "iconAlt": "xml"
     }
   ],
   "iframes": {
-    "sketchfabUrl": "https://sketchfab.com/models/d16bd86447774231b152b3c3cb1a0276/embed?autostart=1",
+    "sketchfabUrl": "https://sketchfab.com/models/fd0dd06dda734ac595220546aaa56597/embed?autostart=1",
     "qgisUrl": "https://qgiscloud.com/suprun/web1/"
   }
 }
