@@ -1,175 +1,89 @@
 <!DOCTYPE html>
-
 <html>
-
 <head>
-
-    <title>OpenLayers: Статичне зображення без базової карти (збереження пропорцій)</title>
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-
-    <style>
-
-        body {
-
-            margin: 0;
-
-            padding: 0;
-
-            font-family: sans-serif;
-
-            overflow: hidden;
-
-        }
-
-        #map {
-
-            width: 100vw;
-
-            height: 100vh;
-
-            background-color: #f0f0f0; /* Легкий сірий фон */
-
-        }
-
-    </style>
-
+    <title>OpenLayers: Статичне зображення без базової карти (збереження пропорцій)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+            overflow: hidden;
+        }
+        #map {
+            width: 100vw;
+            height: 100vh;
+            background-color: #f0f0f0; /* Легкий сірий фон */
+        }
+    </style>
 </head>
-
 <body>
-
-    <div id="map"></div>
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
-
-    <script>
-
-        function initMap() {
-
-            // Шлях до вашого статичного зображення
-
-            // Обов'язково ЗАМІНІТЬ ЦЕЙ ШЛЯХ НА ВАШ ВЛАСНИЙ!
-
-            const imageUrl = 'proj.png';
-
-
-
-            // Створюємо тимчасовий об'єкт Image для отримання розмірів
-
-            const img = new Image();
-
-            img.onload = function() {
-
-                const imageWidth = img.width;
-
-                const imageHeight = img.height;
-
-
-
-                // Визначаємо imageExtent так, щоб воно відповідало розмірам зображення
-
-                // Почнемо з того, що лівий нижній кут буде [0,0]
-
-                // А правий верхній кут буде [imageWidth, imageHeight]
-
-                const imageExtent = [0, 0, imageWidth, imageHeight];
-
-
-
-                // Створюємо View з проекцією, яка використовує пікселі як одиниці
-
-                // Це дозволяє нам відображати зображення в його "власних" піксельних координатах
-
-                const projection = new ol.proj.Projection({
-
-                    code: 'pixel-projection', // Унікальний код для вашої проекції
-
-                    units: 'pixels',         // Одиниці виміру - пікселі
-
-                    extent: imageExtent      // Обмеження проекції за розмірами зображення
-
-                });
-
-
-
-                const view = new ol.View({
-
-                    projection: projection,
-
-                    center: ol.extent.getCenter(imageExtent), // Центруємо на середині зображення
-
-                    zoom: 0, // Початковий зум, 0 означає "весь екстент"
-
-                    maxZoom: 8 // Можна встановити максимальний зум для більшого наближення
-
-                });
-
-
-
-                // Створюємо джерело шару для статичного зображення
-
-                const imageSource = new ol.source.ImageStatic({
-
-                    url: imageUrl,
-
-                    projection: projection, // Використовуємо нашу піксельну проекцію
-
-                    imageExtent: imageExtent
-
-                });
-
-
-
-                // Створюємо шар зображення
-
-                const imageLayer = new ol.layer.Image({
-
-                    source: imageSource
-
-                });
-
-
-
-                // Створюємо об'єкт Map
-
-                const map = new ol.Map({
-
-                    target: 'map',
-
-                    layers: [
-
-                        imageLayer
-
-                    ],
-
-                    view: view
-
-                });
-
-
-
-                // Додатково: підлаштовуємо view до розмірів зображення при завантаженні
-
-                map.getView().fit(imageExtent, {
-
-                    size: map.getSize(),
-
-                    padding: [100, 0, 0, 0] // Без відступів, щоб зображення займало весь простір
-
-                });
-
-            };
-
-            img.src = imageUrl; // Запускаємо завантаження зображення
-
-        }
-
-        document.addEventListener('DOMContentLoaded', initMap);
-
-    </script>
-
+    <div id="map"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <script>
+        function initMap() {
+            // Шлях до вашого статичного зображення
+            // Обов'язково ЗАМІНІТЬ ЦЕЙ ШЛЯХ НА ВАШ ВЛАСНИЙ!
+            const imageUrl = 'proj.png';
+
+            // Створюємо тимчасовий об'єкт Image для отримання розмірів
+            const img = new Image();
+            img.onload = function() {
+                const imageWidth = img.width;
+                const imageHeight = img.height;
+
+                // Визначаємо imageExtent так, щоб воно відповідало розмірам зображення
+                // Почнемо з того, що лівий нижній кут буде [0,0]
+                // А правий верхній кут буде [imageWidth, imageHeight]
+                const imageExtent = [0, 0, imageWidth, imageHeight];
+
+                // Створюємо View з проекцією, яка використовує пікселі як одиниці
+                // Це дозволяє нам відображати зображення в його "власних" піксельних координатах
+                const projection = new ol.proj.Projection({
+                    code: 'pixel-projection', // Унікальний код для вашої проекції
+                    units: 'pixels',         // Одиниці виміру - пікселі
+                    extent: imageExtent      // Обмеження проекції за розмірами зображення
+                });
+
+                const view = new ol.View({
+                    projection: projection,
+                    center: ol.extent.getCenter(imageExtent), // Центруємо на середині зображення
+                    zoom: 0, // Початковий зум, 0 означає "весь екстент"
+                    maxZoom: 8 // Можна встановити максимальний зум для більшого наближення
+                });
+
+                // Створюємо джерело шару для статичного зображення
+                const imageSource = new ol.source.ImageStatic({
+                    url: imageUrl,
+                    projection: projection, // Використовуємо нашу піксельну проекцію
+                    imageExtent: imageExtent
+                });
+
+                // Створюємо шар зображення
+                const imageLayer = new ol.layer.Image({
+                    source: imageSource
+                });
+
+                // Створюємо об'єкт Map
+                const map = new ol.Map({
+                    target: 'map',
+                    layers: [
+                        imageLayer
+                    ],
+                    view: view
+                });
+
+                // Додатково: підлаштовуємо view до розмірів зображення при завантаженні
+                map.getView().fit(imageExtent, {
+                    size: map.getSize(),
+                    padding: [0, 0, 0, 0] // Без відступів, щоб зображення займало весь простір
+                });
+            };
+            img.src = imageUrl; // Запускаємо завантаження зображення
+        }
+
+        document.addEventListener('DOMContentLoaded', initMap);
+    </script>
 </body>
-
 </html>
