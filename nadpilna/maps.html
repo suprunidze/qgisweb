@@ -303,6 +303,7 @@
 
         // Змінні для сенсорних подій
         let initialPinchDistance = null;
+        let initialScaleForPinch = 1; // Зберігає масштаб на початку щипка
         let lastTouchX = 0;
         let lastTouchY = 0;
 
@@ -492,13 +493,15 @@
 
             if (e.touches.length === 2) {
                 // Початок масштабування щипком
-                isZooming = true;
-                initialPinchDistance = Math.hypot(
-                    e.touches[1].clientX - e.touches[0].clientX,
-                    e.touches[1].clientY - e.touches[0].clientY
-                );
-                initialScale = scale;
-                console.log('Pinch zoom started.');
+                if (initialPinchDistance === null) { // Встановлюємо лише на початку нового жесту
+                    isZooming = true;
+                    initialPinchDistance = Math.hypot(
+                        e.touches[1].clientX - e.touches[0].clientX,
+                        e.touches[1].clientY - e.touches[0].clientY
+                    );
+                    initialScaleForPinch = scale; // Зберігаємо поточний масштаб
+                    console.log('Pinch zoom started with initial distance:', initialPinchDistance);
+                }
             } else if (e.touches.length === 1) {
                 // Початок перетягування
                 isDragging = true;
@@ -511,15 +514,20 @@
         viewerContainer.addEventListener('touchmove', (e) => {
             e.preventDefault(); // Запобігаємо прокручуванню сторінки під час перетягування/зуму
 
-            if (e.touches.length === 2 && initialPinchDistance) {
+            if (e.touches.length === 2 && initialPinchDistance !== null) {
                 // Масштабування щипком
                 const currentPinchDistance = Math.hypot(
                     e.touches[1].clientX - e.touches[0].clientX,
                     e.touches[1].clientY - e.touches[0].clientY
                 );
-                const pinchFactor = currentPinchDistance / initialPinchDistance;
 
-                const newScale = initialScale * pinchFactor;
+                if (initialPinchDistance === 0) { // Захист від ділення на нуль
+                    console.warn('Initial pinch distance is zero, cannot zoom.');
+                    return;
+                }
+
+                const pinchFactor = currentPinchDistance / initialPinchDistance;
+                const newScale = initialScaleForPinch * pinchFactor; // Використовуємо initialScaleForPinch
 
                 // Обмежуємо масштаб
                 const maxScale = 2;
@@ -535,8 +543,9 @@
                 const relativePinchCenterY = pinchCenterY - viewerRect.top;
 
                 // Корекція позиції для збільшення/зменшення до центру щипка
-                posX = relativePinchCenterX - ((relativePinchCenterX - posX) / initialScale) * scale;
-                posY = relativePinchCenterY - ((relativePinchCenterY - posY) / initialScale) * scale;
+                // Використовуємо initialScaleForPinch для коректного обрахунку зміщення
+                posX = relativePinchCenterX - ((relativePinchCenterX - posX) / initialScaleForPinch) * scale;
+                posY = relativePinchCenterY - ((relativePinchCenterY - posY) / initialScaleForPinch) * scale;
 
                 updateImageTransform();
                 console.log('Pinch zoom in progress, newScale:', scale);
@@ -553,14 +562,16 @@
         viewerContainer.addEventListener('touchend', () => {
             isDragging = false;
             isZooming = false;
-            initialPinchDistance = null;
+            initialPinchDistance = null; // Скидаємо для нового жесту
+            initialScaleForPinch = 1; // Скидаємо початковий масштаб для щипка
             draggableImage.classList.remove('no-transition'); // Вмикаємо анімацію після сенсорних жестів
             console.log('Touch gesture ended.');
         });
         viewerContainer.addEventListener('touchcancel', () => { // На випадок переривання жесту
             isDragging = false;
             isZooming = false;
-            initialPinchDistance = null;
+            initialPinchDistance = null; // Скидаємо для нового жесту
+            initialScaleForPinch = 1; // Скидаємо початковий масштаб для щипка
             draggableImage.classList.remove('no-transition');
             console.log('Touch gesture cancelled.');
         });
