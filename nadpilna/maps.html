@@ -28,6 +28,7 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             /* Додаємо перехід для розмиття */
             transition: filter 0.3s ease-out;
+            touch-action: none; /* Запобігає стандартному масштабуванню та прокручуванню браузера */
         }
 
         #viewer-container.blurred {
@@ -47,7 +48,7 @@
             user-select: none; /* Забороняємо виділення тексту на зображенні */
             -webkit-user-drag: none; /* Забороняємо перетягування зображення */
             /* Додаємо анімацію для трансформацій */
-            transition: transform 0.05s ease-out; /* Пришвидшений плавний перехід для зуму */
+            transition: transform 0.02s ease-out; /* Пришвидшений плавний перехід для зуму */
         }
 
         #draggable-image.no-transition {
@@ -104,7 +105,7 @@
         /* Стилі для кастомного випадаючого списку */
         #custom-dropdown {
             position: absolute;
-            top: 70px; /* Збільшено відстань зверху на 50px (20px + 50px) */
+            top: 70px; /* Відстань зверху для десктопу */
             left: 50%;
             transform: translateX(-50%);
             z-index: 100; /* Випадаючий список поверх усього контенту */
@@ -225,6 +226,25 @@
             color: #333;
             font-size: 1.2em;
         }
+
+        /* Мобільні стилі */
+        @media (max-width: 768px) {
+            #custom-dropdown {
+                top: 56px; /* Відстань зверху для мобільної версії */
+                width: calc(100% - 40px); /* Розтягуємо по ширині з відступами */
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            #dropdown-button {
+                border-radius: 0; /* Без заокруглених кутів для кнопки */
+                width: 100%; /* Розтягуємо кнопку на всю ширину контейнера */
+            }
+
+            #dropdown-content {
+                border-radius: 0; /* Без заокруглених кутів для вмісту списку */
+            }
+        }
     </style>
 </head>
 <body>
@@ -280,6 +300,11 @@
         let zoomInterval = null; // Для безперервного зуму
         let isZooming = false; // Флаг для блокування перетягування під час зуму
         let initialFitScale = 1; // Зберігає масштаб, при якому зображення вписується в контейнер
+
+        // Змінні для сенсорних подій
+        let initialPinchDistance = null;
+        let lastTouchX = 0;
+        let lastTouchY = 0;
 
         let imageOptions = []; // Цей масив буде заповнено з JSON
 
@@ -389,8 +414,13 @@
             console.log(`Zoom performed: direction=${direction}, amount=${zoomAmount}, newScale=${scale}`);
         }
 
-        // Перетягування
+        // Перетягування (для миші)
         viewerContainer.addEventListener('mousedown', (e) => {
+            // Перевіряємо, чи це не клік по кнопці або випадаючому списку
+            if (e.target.closest('.control-btn') || e.target.closest('#custom-dropdown')) {
+                return;
+            }
+
             if (isZooming) {
                 console.log('Dragging blocked: currently zooming.');
                 return; // Блокуємо перетягування під час зуму
@@ -400,7 +430,7 @@
             startY = e.clientY - posY;
             viewerContainer.style.cursor = 'grabbing';
             draggableImage.classList.add('no-transition'); // Вимикаємо анімацію під час перетягування
-            console.log('Dragging started.');
+            console.log('Dragging started (mouse).');
         });
 
         viewerContainer.addEventListener('mousemove', (e) => {
@@ -414,7 +444,7 @@
             isDragging = false;
             viewerContainer.style.cursor = 'grab';
             draggableImage.classList.remove('no-transition'); // Вмикаємо анімацію після перетягування
-            console.log('Dragging stopped.');
+            console.log('Dragging stopped (mouse).');
         });
 
         viewerContainer.addEventListener('mouseleave', () => {
@@ -431,8 +461,9 @@
             isZooming = true; // Починаємо зумування
             draggableImage.classList.remove('no-transition'); // Переконаємось, що анімація увімкнена
 
-            const mouseX = e.clientX - viewerContainer.getBoundingClientRect().left;
-            const mouseY = e.clientY - viewerContainer.getBoundingClientRect().top;
+            const viewerRect = viewerContainer.getBoundingClientRect();
+            const mouseX = e.clientX - viewerRect.left;
+            const mouseY = e.clientY - viewerRect.top;
 
             if (e.deltaY < 0) { // Збільшення
                 performZoom('in', mouseWheelZoomFactor, mouseX, mouseY);
@@ -448,6 +479,92 @@
             }, 50); // Скорочений час, щоб дозволити перетягування після завершення анімації
             console.log('Wheel zoom event.');
         });
+
+        // Сенсорні події для мобільних пристроїв
+        viewerContainer.addEventListener('touchstart', (e) => {
+            // Перевіряємо, чи це не торкання кнопки або випадаючого списку
+            if (e.target.closest('.control-btn') || e.target.closest('#custom-dropdown')) {
+                return;
+            }
+            e.preventDefault(); // Запобігаємо стандартній поведінці браузера (прокручування/зум)
+
+            draggableImage.classList.add('no-transition'); // Вимикаємо анімацію під час сенсорних жестів
+
+            if (e.touches.length === 2) {
+                // Початок масштабування щипком
+                isZooming = true;
+                initialPinchDistance = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                initialScale = scale;
+                console.log('Pinch zoom started.');
+            } else if (e.touches.length === 1) {
+                // Початок перетягування
+                isDragging = true;
+                lastTouchX = e.touches[0].clientX - posX;
+                lastTouchY = e.touches[0].clientY - posY;
+                console.log('Dragging started (touch).');
+            }
+        });
+
+        viewerContainer.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Запобігаємо прокручуванню сторінки під час перетягування/зуму
+
+            if (e.touches.length === 2 && initialPinchDistance) {
+                // Масштабування щипком
+                const currentPinchDistance = Math.hypot(
+                    e.touches[1].clientX - e.touches[0].clientX,
+                    e.touches[1].clientY - e.touches[0].clientY
+                );
+                const pinchFactor = currentPinchDistance / initialPinchDistance;
+
+                const newScale = initialScale * pinchFactor;
+
+                // Обмежуємо масштаб
+                const maxScale = 2;
+                const minScale = initialFitScale;
+                scale = Math.min(maxScale, Math.max(minScale, newScale));
+
+                // Обчислюємо центр щипка
+                const pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+
+                const viewerRect = viewerContainer.getBoundingClientRect();
+                const relativePinchCenterX = pinchCenterX - viewerRect.left;
+                const relativePinchCenterY = pinchCenterY - viewerRect.top;
+
+                // Корекція позиції для збільшення/зменшення до центру щипка
+                posX = relativePinchCenterX - ((relativePinchCenterX - posX) / initialScale) * scale;
+                posY = relativePinchCenterY - ((relativePinchCenterY - posY) / initialScale) * scale;
+
+                updateImageTransform();
+                console.log('Pinch zoom in progress, newScale:', scale);
+
+            } else if (e.touches.length === 1 && isDragging && !isZooming) {
+                // Перетягування одним пальцем
+                posX = e.touches[0].clientX - lastTouchX;
+                posY = e.touches[0].clientY - lastTouchY;
+                updateImageTransform();
+                console.log('Dragging in progress (touch).');
+            }
+        });
+
+        viewerContainer.addEventListener('touchend', () => {
+            isDragging = false;
+            isZooming = false;
+            initialPinchDistance = null;
+            draggableImage.classList.remove('no-transition'); // Вмикаємо анімацію після сенсорних жестів
+            console.log('Touch gesture ended.');
+        });
+        viewerContainer.addEventListener('touchcancel', () => { // На випадок переривання жесту
+            isDragging = false;
+            isZooming = false;
+            initialPinchDistance = null;
+            draggableImage.classList.remove('no-transition');
+            console.log('Touch gesture cancelled.');
+        });
+
 
         // Функція для запуску безперервного зуму
         function startContinuousZoom(direction) {
