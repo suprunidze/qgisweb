@@ -47,7 +47,7 @@
             z-index: 0; /* Забезпечує, що він знаходиться під grid-wrapper */
             display: block; /* Запобігає зайвим відступам */
             transform-origin: 0 0; /* Точка трансформації завжди верхній лівий кут */
-            transition: transform 0.2s ease-in-out, opacity 0.5s ease-in-out; /* Плавна анімація зуму та проявлення */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
             background-color: #f0f4f8; /* Колір, якщо зображення не завантажилось */
         }
 
@@ -65,7 +65,7 @@
             z-index: 2; /* Вище за grid-wrapper та background-canvas, коли видимий */
             display: block;
             transform-origin: 0 0;
-            transition: transform 0.2s ease-in-out, opacity 0.5s ease-in-out; /* Додано анімацію opacity */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
             background-color: #f0f4f8; /* Запасний колір */
         }
 
@@ -79,7 +79,7 @@
             z-index: 3; /* Вище за low-res та grid-wrapper */
             display: block;
             transform-origin: 0 0;
-            transition: transform 0.2s ease-in-out, opacity 0.5s ease-in-out; /* Додано анімацію opacity */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
             background-color: #f0f4f8; /* Запасний колір */
         }
 
@@ -88,7 +88,7 @@
             display: grid; /* Використовуємо CSS Grid для розташування плиток */
             gap: 0px; /* Відстань між плитками 0 пікселів */
             transform-origin: 0 0; /* Точка трансформації завжди верхній лівий кут */
-            transition: transform 0.2s ease-in-out, opacity 0.5s ease-in-out; /* Плавна анімація зуму та opacity */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
             position: absolute; /* Змінено з relative на absolute */
             top: 0; /* Додано для absolute позиціонування */
             left: 0; /* Додано для absolute позиціонування */
@@ -213,7 +213,7 @@
         /* Стилі для випадаючого списку */
         #drawing-selector-container {
             position: absolute;
-            top: 20px;
+            top: 76px; /* Змінено: 20px + 56px = 76px */
             left: 20px;
             z-index: 10;
             background-color: #ffffff;
@@ -299,7 +299,7 @@
         const fixedMinZoomLevel = 0.08; // Мінімальний рівень масштабування, щоб не зменшувати надто сильно
         const maxZoomLevel = 2.0; // Максимальний рівень масштабування до 200%
         const zoomStep = 0.25; // Крок зміни масштабу для кнопок
-        const mouseZoomFactor = 1.1; // Коефіцієнт зуму для коліщатка миші (Змінено на 1.1)
+        const mouseZoomFactor = 1.03; // Коефіцієнт зуму для коліщатка миші (Змінено на 1.03)
 
         let tileData = []; // Масив для зберігання даних про кожну плитку
         let imgGlobal = null; // Зберігаємо зображення після завантаження, щоб не завантажувати його знову
@@ -319,7 +319,7 @@
         let isPinching = false;
 
         // Флаг для відстеження анімації зуму
-        let isAnimatingZoom = false;
+        let isZooming = false; // Нова змінна для відстеження анімації зуму
 
         // Поріг масштабування для перемикання між шарами
         const lowResThreshold = 0.25; // 25% zoom level
@@ -647,6 +647,9 @@
                 return;
             }
 
+            // Встановлюємо isZooming на true, коли починається операція масштабування
+            isZooming = true;
+
             const viewportRect = canvasContainer.getBoundingClientRect();
             const viewportWidth = viewportRect.width;
             const viewportHeight = viewportRect.height;
@@ -710,11 +713,6 @@
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault(); // Запобігаємо прокручуванню сторінки
 
-            // Якщо йде анімація зуму, ігноруємо подальші події колеса
-            if (isAnimatingZoom) {
-                return;
-            }
-
             const delta = Math.sign(e.deltaY); // -1 для збільшення, 1 для зменшення
             let newZoom;
 
@@ -729,38 +727,35 @@
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
 
-            // Зберігаємо оригінальні переходи
-            const originalGridTransition = gridWrapper.style.transition;
-            const originalBackgroundTransition = backgroundCanvas.style.transition;
-            const originalLowResBackgroundTransition = lowResBackgroundCanvas.style.transition;
-            const originalMidResBackgroundTransition = midResBackgroundCanvas.style.transition;
-
-
-            // Застосовуємо швидші переходи для transform, зберігаючи переходи opacity
-            gridWrapper.style.transition = 'transform 0.05s ease-out, opacity 0.5s ease-in-out';
-            backgroundCanvas.style.transition = 'transform 0.05s ease-out, opacity 0.5s ease-in-out';
-            lowResBackgroundCanvas.style.transition = 'transform 0.05s ease-out, opacity 0.5s ease-in-out';
-            midResBackgroundCanvas.style.transition = 'transform 0.05s ease-out, opacity 0.5s ease-in-out';
-
-            // Встановлюємо флаг, що анімація зуму активна
-            isAnimatingZoom = true;
-
             handleZoom(newZoom, mouseX, mouseY);
-
-            // Скидаємо переходи та флаг після невеликої затримки
-            setTimeout(() => {
-                gridWrapper.style.transition = originalGridTransition;
-                backgroundCanvas.style.transition = originalBackgroundTransition;
-                lowResBackgroundCanvas.style.transition = originalLowResBackgroundTransition;
-                midResBackgroundCanvas.style.transition = originalMidResBackgroundTransition;
-                isAnimatingZoom = false; // Анімація завершена, дозволяємо перетягування
-            }, 60); // Трохи довше, ніж 0.05с, щоб перехід завершився
         });
+
+        // Додаємо обробники transitionend для скидання isZooming
+        gridWrapper.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'transform') {
+                isZooming = false;
+            }
+        });
+        backgroundCanvas.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'transform') {
+                isZooming = false;
+            }
+        });
+        lowResBackgroundCanvas.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'transform') {
+                isZooming = false;
+            }
+        });
+        midResBackgroundCanvas.addEventListener('transitionend', (e) => {
+            if (e.propertyName === 'transform') {
+                isZooming = false;
+            }
+        });
+
 
         // Обробники подій для перетягування
         canvasContainer.addEventListener('mousedown', (e) => {
-            // Запобігаємо перетягуванню, якщо йде анімація зуму
-            if (isAnimatingZoom) {
+            if (isZooming) { // Забороняємо перетягування, якщо триває анімація масштабування
                 return;
             }
             isDragging = true;
@@ -769,10 +764,11 @@
             startY = e.clientY;
             initialPanX = currentPanX; // Зберігаємо поточну позицію gridWrapper
             initialPanY = currentPanY;
-            gridWrapper.style.transition = 'none'; // Вимикаємо перехід під час перетягування
-            backgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для фонового canvas
-            lowResBackgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для low-res canvas
-            midResBackgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для mid-res canvas
+            // Вимикаємо перехід під час перетягування, щоб уникнути затримок
+            gridWrapper.style.transition = 'none'; 
+            backgroundCanvas.style.transition = 'none'; 
+            lowResBackgroundCanvas.style.transition = 'none'; 
+            midResBackgroundCanvas.style.transition = 'none'; 
         });
 
         document.addEventListener('mousemove', (e) => {
@@ -789,10 +785,11 @@
         document.addEventListener('mouseup', () => {
             isDragging = false;
             canvasContainer.classList.remove('dragging');
-            gridWrapper.style.transition = ''; // Повертаємося до CSS-визначеного переходу
-            backgroundCanvas.style.transition = ''; // Повертаємося до CSS-визначеного переходу
-            lowResBackgroundCanvas.style.transition = ''; // Повертаємося до CSS-визначеного переходу
-            midResBackgroundCanvas.style.transition = ''; // Повертаємося до CSS-визначеного переходу
+            // Повертаємо CSS-визначений перехід після завершення перетягування
+            gridWrapper.style.transition = ''; 
+            backgroundCanvas.style.transition = ''; 
+            lowResBackgroundCanvas.style.transition = ''; 
+            midResBackgroundCanvas.style.transition = ''; 
             // Після завершення перетягування, перемальовуємо видимі плитки
             if (observer && imgGlobal && currentZoomLevel >= midResThreshold) {
                 gridWrapper.querySelectorAll('canvas').forEach(canvas => {
@@ -810,8 +807,7 @@
 
         // Обробники подій для тач-скрінів (мобільні пристрої)
         canvasContainer.addEventListener('touchstart', (e) => {
-            // Запобігаємо перетягуванню, якщо йде анімація зуму
-            if (isAnimatingZoom) {
+            if (isZooming) { // Забороняємо перетягування, якщо триває анімація масштабування
                 return;
             }
 
