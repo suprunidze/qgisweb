@@ -328,6 +328,7 @@
         const lowResCanvasResolutionFactor = 0.25; // Коефіцієнт роздільної здатності для low-res canvas (25%)
         const midResCanvasResolutionFactor = 0.50; // Коефіцієнт роздільної здатності для mid-res canvas (50%)
 
+        let resizeZoomTimeout = null; // Змінна для зберігання ID таймера для zoom to fit при зміні розміру вікна
 
         // Функція для малювання плитки на canvas
         function drawTile(canvas, img, sx, sy, sWidth, sHeight) {
@@ -954,6 +955,60 @@
             processImage(); // Перезавантажуємо зображення
         });
 
+        // Функція для обробки зміни розміру вікна з умовною логікою масштабування
+        function handleResizeZoom() {
+            if (!imgGlobal) return;
+
+            const imgWidth = imgGlobal.width;
+            const imgHeight = imgGlobal.height;
+
+            const cols = Math.ceil(imgWidth / baseTileSize);
+            const rows = Math.ceil(imgHeight / baseTileSize);
+
+            const totalGridWidth = cols * baseTileSize;
+            const totalGridHeight = rows * baseTileSize;
+
+            const viewportWidth = canvasContainer.clientWidth;
+            const viewportHeight = canvasContainer.clientHeight;
+
+            let fitScaleX = viewportWidth / totalGridWidth;
+            let fitScaleY = viewportHeight / totalGridHeight;
+            let calculatedMinZoom = Math.min(fitScaleX, fitScaleY);
+
+            // Переконуємося, що calculatedMinZoom знаходиться в допустимих межах
+            calculatedMinZoom = Math.max(fixedMinZoomLevel, calculatedMinZoom);
+            calculatedMinZoom = Math.min(calculatedMinZoom, maxZoomLevel);
+
+            const tolerance = 0.01; // 1% похибка для "точно відповідає"
+
+            // Очищаємо будь-який існуючий таймер, щоб запобігти багаторазовим викликам, якщо розмір швидко змінюється
+            if (resizeZoomTimeout) {
+                clearTimeout(resizeZoomTimeout);
+                resizeZoomTimeout = null;
+            }
+
+            // Перевіряємо, чи поточний рівень масштабування є станом "zoom to fit" (в межах похибки)
+            if (Math.abs(currentZoomLevel - calculatedMinZoom) < tolerance) {
+                // Якщо це стан "zoom to fit", застосовуємо відкладений анімований zoom to fit
+                isZooming = true; // Вказуємо, що починається анімація масштабування
+                resizeZoomTimeout = setTimeout(() => {
+                    calculateInitialZoomAndPan(imgGlobal); // Це застосує zoom to fit з анімацією
+                    resizeZoomTimeout = null; // Очищаємо ID таймера
+                }, 1000); // Затримка 1 секунда
+            } else {
+                // Якщо це НЕ стан "zoom to fit" (користувач вручну збільшив/зменшив масштаб),
+                // просто перецентровуємо поточний вигляд без зміни рівня масштабування.
+                // Нам потрібно перерахувати панорамування на основі поточного масштабу та нового розміру області перегляду.
+                const currentContentWidth = totalGridWidth * currentZoomLevel;
+                const currentContentHeight = totalGridHeight * currentZoomLevel;
+
+                currentPanX = (viewportWidth - currentContentWidth) / 2;
+                currentPanY = (viewportHeight - currentContentHeight) / 2;
+                applyTransform(currentZoomLevel, currentPanX, currentPanY);
+                renderTiles(imgGlobal); // Перемальовуємо видимі плитки, якщо потрібно (наприклад, якщо з'являються нові області)
+            }
+        }
+
 
         // Запуск обробки зображення після завантаження DOM
         document.addEventListener('DOMContentLoaded', () => {
@@ -963,7 +1018,7 @@
         // Додаємо обробник події resize для перерахунку початкового зуму та центрування
         window.addEventListener('resize', () => {
             if (imgGlobal) {
-                calculateInitialZoomAndPan(imgGlobal);
+                handleResizeZoom(); // Використовуємо нову функцію для умовної логіки масштабування
                 // Оновлюємо фон завантаження при зміні розміру вікна, якщо він ще видимий
                 if (!loadingBackgroundCanvas.classList.contains('hide-loading')) {
                     drawLoadingBackground(imgGlobal);
