@@ -230,7 +230,7 @@
 <body>
 
     <div id="viewer-container">
-        <img id="draggable-image" src="https://wgis.project.co.ua/nadpilna/proj.jpg" alt="Масштабоване зображення">
+        <img id="draggable-image" src="" alt="Масштабоване зображення">
         <div id="controls">
             <button class="control-btn" id="zoom-in" title="Збільшити">
                 <img src="https://img.icons8.com/android/48/737373/plus.png" alt="Збільшити">
@@ -244,7 +244,7 @@
         </div>
         <div id="custom-dropdown">
             <button id="dropdown-button">
-                <span id="selected-image-text">Креслення 1 (proj.jpg)</span>
+                <span id="selected-image-text">Завантаження креслень...</span>
                 <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M7 10l5 5 5-5z"/>
                 </svg>
@@ -281,12 +281,33 @@
         let isZooming = false; // Флаг для блокування перетягування під час зуму
         let initialFitScale = 1; // Зберігає масштаб, при якому зображення вписується в контейнер
 
-        const imageOptions = [
-            { name: 'Креслення 1 (proj.jpg)', url: 'https://wgis.project.co.ua/nadpilna/proj.jpg' },
-            { name: 'Приклад 1 (1200x800)', url: 'https://placehold.co/1200x800/FF5733/FFFFFF?text=Приклад+1' },
-            { name: 'Приклад 2 (800x600)', url: 'https://placehold.co/800x600/33FF57/000000?text=Приклад+2' },
-            { name: 'Приклад 3 (1600x900)', url: 'https://placehold.co/1600x900/3357FF/FFFFFF?text=Приклад+3' },
-        ];
+        let imageOptions = []; // Цей масив буде заповнено з JSON
+
+        // Функція для завантаження JSON-даних з файлу config.json
+        async function fetchImageData() {
+            try {
+                const response = await fetch('https://wgis.project.co.ua/nadpilna/config.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const config = await response.json();
+                if (config && Array.isArray(config.drawings)) {
+                    imageOptions = config.drawings;
+                    console.log('Image data loaded from config.json:', imageOptions);
+                } else {
+                    console.error('JSON data is missing "drawings" array or is malformed.');
+                    throw new Error('Invalid config.json structure');
+                }
+            } catch (error) {
+                console.error('Error loading image data from config.json:', error);
+                // Запасний варіант: якщо JSON не завантажився або має неправильну структуру
+                imageOptions = [
+                    { name: 'Креслення за замовчуванням', url: 'https://placehold.co/800x600/CCCCCC/000000?text=Помилка+завантаження+креслень' },
+                ];
+                selectedImageText.textContent = 'Помилка завантаження';
+            }
+        }
+
 
         // Функція для показу завантажувальної накладки
         function showLoadingOverlay() {
@@ -487,8 +508,24 @@
         });
 
         // Ініціалізація та керування кастомним випадаючим списком
-        function populateDropdown() {
+        async function populateDropdown() {
+            await fetchImageData(); // Завантажуємо дані перед заповненням
             dropdownContent.innerHTML = ''; // Очищаємо попередні елементи
+
+            if (imageOptions.length === 0) {
+                const noItems = document.createElement('div');
+                noItems.classList.add('dropdown-item');
+                noItems.textContent = 'Немає доступних креслень';
+                noItems.style.cursor = 'default';
+                noItems.style.backgroundColor = 'transparent';
+                dropdownContent.appendChild(noItems);
+                selectedImageText.textContent = 'Немає креслень';
+                dropdownButton.disabled = true; // Вимкнути кнопку, якщо немає креслень
+                draggableImage.src = ''; // Очистити зображення
+                hideLoadingOverlay();
+                return;
+            }
+
             imageOptions.forEach(option => {
                 const item = document.createElement('div');
                 item.classList.add('dropdown-item');
@@ -503,8 +540,9 @@
                 });
                 dropdownContent.appendChild(item);
             });
-            // Встановлюємо початковий текст кнопки
+            // Встановлюємо початковий текст кнопки та початкове зображення з першого елемента
             selectedImageText.textContent = imageOptions[0].name;
+            draggableImage.src = imageOptions[0].url;
         }
 
         dropdownButton.addEventListener('click', (e) => {
@@ -532,15 +570,15 @@
                 resetImagePosition();
             } else {
                 console.log('Image was manually zoomed/panned, maintaining current scale and position.');
-                // No change to scale, posX, posY. The image just stays where it is relative to the top-left of the viewer.
-                // The browser will re-render due to container resize.
+                // Browser will re-render due to container resize, image will maintain its position relative to viewer top-left.
             }
         });
 
         // Показуємо оверлей при першому завантаженні сторінки
-        document.addEventListener('DOMContentLoaded', () => {
-            populateDropdown(); // Заповнюємо випадаючий список
-            showLoadingOverlay();
+        document.addEventListener('DOMContentLoaded', async () => {
+            showLoadingOverlay(); // Показуємо оверлей одразу
+            await populateDropdown(); // Чекаємо, доки випадаючий список буде заповнений і початкове зображення встановлено
+            // hideLoadingOverlay() буде викликано draggableImage.onload або onerror
         });
 
     </script>
