@@ -104,7 +104,7 @@
         /* Стилі для кастомного випадаючого списку */
         #custom-dropdown {
             position: absolute;
-            top: 20px;
+            top: 70px; /* Збільшено відстань зверху на 50px (20px + 50px) */
             left: 50%;
             transform: translateX(-50%);
             z-index: 100; /* Випадаючий список поверх усього контенту */
@@ -523,8 +523,18 @@
 
         // Обробка зміни розміру вікна для адаптивності
         window.addEventListener('resize', () => {
-            console.log('Window resized, resetting image position.');
-            resetImagePosition();
+            console.log('Window resized.');
+            // Змінюємо поведінку: якщо зображення не було змінено вручну (тобто знаходиться в початковому масштабі),
+            // то перерахувати його позицію та масштаб. Інакше - залишати як є.
+            // Порівнюємо з невеликим допуском через можливі проблеми з плаваючою точкою
+            if (Math.abs(scale - initialFitScale) < 0.0001) {
+                console.log('Image was at initial fit scale, re-fitting to new window size.');
+                resetImagePosition();
+            } else {
+                console.log('Image was manually zoomed/panned, maintaining current scale and position.');
+                // No change to scale, posX, posY. The image just stays where it is relative to the top-left of the viewer.
+                // The browser will re-render due to container resize.
+            }
         });
 
         // Показуємо оверлей при першому завантаженні сторінки
