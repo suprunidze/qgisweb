@@ -231,9 +231,9 @@
         @media (max-width: 768px) {
             #custom-dropdown {
                 top: 56px; /* Відстань зверху для мобільної версії */
-                width: calc(100% - 40px); /* Розтягуємо по ширині з відступами */
-                left: 50%;
-                transform: translateX(-50%);
+                width: 100%; /* Розтягуємо по ширині на 100% */
+                left: 0; /* Вирівнюємо по лівому краю */
+                transform: translateX(0); /* Прибираємо трансформацію X */
             }
 
             #dropdown-button {
