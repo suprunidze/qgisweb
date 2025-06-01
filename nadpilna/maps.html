@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Роздільник зображень на плитки</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* Використання шрифту Inter */
+        /* Використання шрифту Montserrat */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', sans-serif; /* Змінено шрифт */
             background-color: #f0f4f8; /* Легкий сірий фон */
             margin: 0;
             padding: 0;
@@ -24,10 +26,10 @@
             height: 100vh; /* Займає всю доступну висоту */
             overflow: hidden; /* Приховуємо вміст, що виходить за межі контейнера */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Легка тінь */
-            background-color: #ffffff; /* Білий фон для контейнера */
+            background-color: #e0e0e0; /* Змінено на світло-сірий фон */
             padding: 5px; /* Внутрішній відступ */
             cursor: grab; /* Курсор для перетягування */
-            position: relative; /* Необхідно для абсолютно позиціонованого grid-wrapper та маркера */
+            position: relative; /* Необхідно для абсолютно позиціонованого grid-wrapper */
         }
 
         #canvas-container.dragging {
@@ -127,9 +129,10 @@
             background-color: #cccccc; /* Темніший сірий при наведенні */
         }
 
+        /* Змінено: Видалено box-shadow: none; для кнопки при фокусі, щоб тінь зберігалася */
         .zoom-button:focus {
             outline: none; /* Без стандартної рамки фокуса */
-            box-shadow: none; /* Видалено тінь при фокусі */
+            /* box-shadow: none; - ВИДАЛЕНО */
         }
 
         /* Стилі для іконок всередині кнопок */
@@ -145,8 +148,8 @@
                 height: 36px; /* Зменшена висота для дескропів */
             }
             .zoom-button img {
-                width: 18px; /* Зменшення розміру іконки для десктопів */
-                height: 18px; /* Зменшення розміру іконки для десктопів */
+                width: 18px; /* Зменшення розміру іконки для дескропів */
+                height: 18px; /* Зменшення розміру іконки для дескропів */
             }
         }
 
@@ -160,42 +163,6 @@
             flex-direction: column; /* Вертикальне розташування */
             gap: 15px; /* Відстань між кнопками */
             z-index: 10; /* Щоб кнопки були над контейнером */
-        }
-
-        /* Стилі для маркера центру зуму */
-        #zoom-center-marker {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%); /* Центруємо маркер точно по центру */
-            width: 20px; /* Розмір маркера */
-            height: 20px;
-            border: 2px solid red; /* Червоний хрестик */
-            border-radius: 50%; /* Круглий маркер */
-            opacity: 1; /* Маркер завжди видимий */
-            pointer-events: none; /* Не дозволяє маркеру блокувати події миші/дотику */
-            z-index: 101; /* Забезпечує, що маркер знаходиться поверх інших елементів */
-        }
-
-        #zoom-center-marker::before,
-        #zoom-center-marker::after {
-            content: '';
-            position: absolute;
-            background-color: red;
-        }
-
-        #zoom-center-marker::before {
-            width: 2px;
-            height: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        #zoom-center-marker::after {
-            width: 100%;
-            height: 2px;
-            top: 50%;
-            transform: translateY(-50%);
         }
 
         /* Стилі для фонового canvas завантаження */
@@ -242,6 +209,43 @@
             height: 60px;
             animation: spin 1s linear infinite;
         }
+
+        /* Стилі для випадаючого списку */
+        #drawing-selector-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background-color: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #drawing-selector-container label {
+            font-size: 1rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        #drawing-selector {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        #drawing-selector:focus {
+            border-color: #3b82f6;
+        }
     </style>
 </head>
 <body>
@@ -254,7 +258,6 @@
         <canvas id="low-res-background-canvas"></canvas>
         <canvas id="mid-res-background-canvas"></canvas> <div id="grid-wrapper">
         </div>
-        <div id="zoom-center-marker"></div>
     </div>
 
     <div id="button-controls">
@@ -265,8 +268,13 @@
             <img src="https://img.icons8.com/material-outlined/48/000000/minus.png" alt="Зменшити">
         </button>
         <button id="homeBtn" class="zoom-button" aria-label="Повернути початкове положення">
-            <img src="https://img.icons8.com/material-outlined/48/000000/home--v2.png" alt="Додому">
-        </button>
+            <img src="https://img.icons8.com/material-outlined/48/737373/collapse.png" alt="Додому"> </button>
+    </div>
+
+    <div id="drawing-selector-container">
+        <label for="drawing-selector">Виберіть план:</label>
+        <select id="drawing-selector">
+            </select>
     </div>
 
     <script>
@@ -281,15 +289,17 @@
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
         const homeBtn = document.getElementById('homeBtn'); // Нова кнопка "Додому"
-        const zoomCenterMarker = document.getElementById('zoom-center-marker'); // Маркер центру зуму
+        const drawingSelector = document.getElementById('drawing-selector'); // Випадаючий список
 
-        const imageUrl = 'https://wgis.project.co.ua/nadpilna/proj.jpg'; // URL зображення
+        let imageUrl = 'https://wgis.project.co.ua/nadpilna/proj.jpg'; // URL зображення (буде оновлюватися)
+        const configUrl = 'https://wgis.project.co.ua/nadpilna/config.json'; // URL файлу конфігурації
+
         const baseTileSize = 400; // Базовий розмір кожної плитки (в пікселях)
         let currentZoomLevel = 1.0; // Початковий рівень масштабування
         const fixedMinZoomLevel = 0.08; // Мінімальний рівень масштабування, щоб не зменшувати надто сильно
         const maxZoomLevel = 2.0; // Максимальний рівень масштабування до 200%
         const zoomStep = 0.25; // Крок зміни масштабу для кнопок
-        const mouseZoomFactor = 1.05; // Коефіцієнт зуму для коліщатка миші
+        const mouseZoomFactor = 1.1; // Коефіцієнт зуму для коліщатка миші (Змінено на 1.1)
 
         let tileData = []; // Масив для зберігання даних про кожну плитку
         let imgGlobal = null; // Зберігаємо зображення після завантаження, щоб не завантажувати його знову
@@ -918,9 +928,41 @@
             }
         });
 
+        // Функція для завантаження даних про креслення з config.json та заповнення випадаючого списку
+        async function loadDrawings() {
+            try {
+                const response = await fetch(configUrl);
+                const config = await response.json();
+                if (config && config.drawings && Array.isArray(config.drawings)) {
+                    drawingSelector.innerHTML = ''; // Очищаємо існуючі опції
+                    config.drawings.forEach(drawing => {
+                        const option = document.createElement('option');
+                        option.value = drawing.url;
+                        option.textContent = drawing.name;
+                        drawingSelector.appendChild(option);
+                    });
+                    // Встановлюємо початкове зображення на перше з конфігурації, якщо є
+                    if (config.drawings.length > 0) {
+                        imageUrl = config.drawings[0].url;
+                        processImage(); // Завантажуємо перше зображення
+                    }
+                }
+            } catch (error) {
+                console.error('Помилка завантаження конфігурації креслень:', error);
+            }
+        }
+
+        // Обробник подій для зміни вибору у випадаючому списку
+        drawingSelector.addEventListener('change', (e) => {
+            imageUrl = e.target.value; // Оновлюємо URL зображення
+            processImage(); // Перезавантажуємо зображення
+        });
+
 
         // Запуск обробки зображення після завантаження DOM
-        document.addEventListener('DOMContentLoaded', processImage);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDrawings(); // Завантажуємо креслення при завантаженні DOM
+        });
 
         // Додаємо обробник події resize для перерахунку початкового зуму та центрування
         window.addEventListener('resize', () => {
