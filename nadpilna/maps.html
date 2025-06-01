@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перегляд Креслення</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Приховуємо скроллбари сторінки */
+            font-family: 'Montserrat', sans-serif; /* Використовуємо шрифт Montserrat */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        #viewer-container {
+            width: 100vw; /* На весь екран */
+            height: 100vh; /* На весь екран */
+            border: none; /* Прибираємо рамку */
+            overflow: hidden; /* Приховуємо скроллбари контейнера */
+            position: relative;
+            background-color: #fff;
+            cursor: grab; /* Курсор при наведенні */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            /* Додаємо перехід для розмиття */
+            transition: filter 0.3s ease-out;
+        }
+
+        #viewer-container.blurred {
+            filter: blur(5px); /* Розмиття фону */
+            pointer-events: none; /* Блокуємо взаємодію під час розмиття */
+        }
+
+        #draggable-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; /* Початково заповнює контейнер */
+            height: 100%; /* Початково заповнює контейнер */
+            object-fit: contain; /* Масштабує зображення, щоб воно помістилося в контейнер, зберігаючи пропорції */
+            transform-origin: 0 0; /* Точка трансформації для масштабування */
+            will-change: transform; /* Оптимізація для анімації */
+            user-select: none; /* Забороняємо виділення тексту на зображенні */
+            -webkit-user-drag: none; /* Забороняємо перетягування зображення */
+            /* Додаємо анімацію для трансформацій */
+            transition: transform 0.05s ease-out; /* Пришвидшений плавний перехід для зуму */
+        }
+
+        #draggable-image.no-transition {
+            transition: none; /* Вимикаємо перехід під час перетягування */
+        }
+
+        #controls {
+            position: absolute;
+            top: 50%; /* Розміщуємо по центру вертикально */
+            right: 20px; /* Праворуч з відступом */
+            transform: translateY(-50%); /* Корекція для центрування */
+            padding: 0; /* Видаляємо padding */
+            border-radius: 0; /* Видаляємо заокруглення */
+            box-shadow: none; /* Видаляємо тінь */
+            display: flex;
+            flex-direction: column; /* Вертикальне розташування кнопок */
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .control-btn {
+            background-color: rgba(204, 204, 204, 0.9); /* Сірий колір з меншою прозорістю (майже непрозорий) */
+            color: white;
+            border: none;
+            padding: 12px; /* Рівномірний відступ для круглої форми */
+            font-size: 1.4em; /* Збільшуємо розмір шрифту */
+            cursor: pointer;
+            border-radius: 50%; /* Кругла форма */
+            transition: background-color 0.2s, transform 0.1s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: none; /* Без індивідуальної тіні для кнопок */
+            width: 48px; /* Фіксований розмір для іконок 48x48 */
+            height: 48px;
+        }
+
+        .control-btn:hover {
+            background-color: rgba(160, 160, 160, 0.95); /* Темніший сірий при наведенні, майже непрозорий */
+            transform: translateY(-2px); /* Легкий ефект підняття */
+        }
+
+        .control-btn:active {
+            background-color: rgba(128, 128, 128, 1); /* Ще темніший сірий при натисканні, повністю непрозорий */
+            transform: translateY(0); /* Повернення при натисканні */
+        }
+
+        .control-btn img {
+            width: 100%; /* Зображення заповнює кнопку */
+            height: 100%;
+            object-fit: contain; /* Зберігаємо пропорції іконки */
+        }
+
+        /* Стилі для кастомного випадаючого списку */
+        #custom-dropdown {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100; /* Випадаючий список поверх усього контенту */
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        #dropdown-button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #f5f5f5; /* Світло-сірий фон */
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            transition: box-shadow 0.3s ease-out, background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 180px; /* Мінімальна ширина для кнопки */
+            justify-content: space-between;
+            font-family: 'Montserrat', sans-serif; /* Застосовуємо шрифт Montserrat */
+        }
+
+        #dropdown-button:hover {
+            background-color: #e0e0e0; /* Темніший сірий при наведенні */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.20), 0 5px 10px rgba(0,0,0,0.25);
+        }
+
+        #dropdown-button:focus {
+            outline: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.20), 0 5px 10px rgba(0,0,0,0.25); /* Прибрано синю обводку */
+        }
+
+        #dropdown-button .arrow-icon {
+            width: 18px; /* Збільшений розмір стрілки */
+            height: 18px; /* Збільшений розмір стрілки */
+            transition: transform 0.2s ease-out;
+        }
+
+        #dropdown-button.active .arrow-icon {
+            transform: rotate(180deg); /* Обертаємо стрілку, коли меню відкрите */
+        }
+
+        #dropdown-content {
+            position: absolute;
+            top: calc(100% + 8px); /* Розміщуємо під кнопкою з невеликим відступом */
+            left: 0;
+            background-color: #ffffff;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            border-radius: 8px; /* Заокруглені кути для списку */
+            overflow: hidden; /* Для коректного відображення заокруглених кутів */
+            min-width: 100%; /* Ширина як у кнопки */
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px); /* Початкове положення для анімації */
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out, visibility 0.2s ease-out;
+            z-index: 101; /* Поверх кнопки */
+            font-family: 'Montserrat', sans-serif; /* Застосовуємо шрифт Montserrat */
+        }
+
+        #dropdown-content.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            white-space: nowrap; /* Запобігаємо переносу тексту */
+            transition: background-color 0.2s;
+            font-family: 'Montserrat', sans-serif; /* Застосовуємо шрифт Montserrat */
+        }
+
+        .dropdown-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        /* Стилі для завантажувальної накладки */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8); /* Напівпрозорий білий фон */
+            display: flex; /* За замовчуванням flex, щоб анімація opacity працювала */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Забезпечуємо, що накладка знаходиться поверх усіх елементів */
+            opacity: 0; /* Початково прихована */
+            pointer-events: none; /* Не блокує взаємодію, коли прихована */
+            transition: opacity 0.3s ease-out; /* Тільки анімація opacity */
+        }
+
+        #loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto; /* Блокує взаємодію, коли активна */
+        }
+
+        .spinner {
+            border: 8px solid #f3f3f3; /* Світло-сірий */
+            border-top: 8px solid #3498db; /* Синій */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #loading-overlay p {
+            color: #333;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="viewer-container">
+        <img id="draggable-image" src="https://wgis.project.co.ua/nadpilna/proj.jpg" alt="Масштабоване зображення">
+        <div id="controls">
+            <button class="control-btn" id="zoom-in" title="Збільшити">
+                <img src="https://img.icons8.com/android/48/737373/plus.png" alt="Збільшити">
+            </button>
+            <button class="control-btn" id="zoom-out" title="Зменшити">
+                <img src="https://img.icons8.com/material-outlined/48/737373/minus.png" alt="Зменшити">
+            </button>
+            <button class="control-btn" id="home-btn" title="Додому">
+                <img src="https://img.icons8.com/material-outlined/48/737373/home-page.png" alt="Додому">
+            </button>
+        </div>
+        <div id="custom-dropdown">
+            <button id="dropdown-button">
+                <span id="selected-image-text">Креслення 1 (proj.jpg)</span>
+                <svg class="arrow-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7 10l5 5 5-5z"/>
+                </svg>
+            </button>
+            <div id="dropdown-content">
+                </div>
+        </div>
+    </div>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p>Завантаження креслення...</p>
+    </div>
+
+    <script>
+        const viewerContainer = document.getElementById('viewer-container');
+        const draggableImage = document.getElementById('draggable-image');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const homeBtn = document.getElementById('home-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        const customDropdown = document.getElementById('custom-dropdown');
+        const dropdownButton = document.getElementById('dropdown-button');
+        const dropdownContent = document.getElementById('dropdown-content');
+        const selectedImageText = document.getElementById('selected-image-text');
+
+        let scale = 1;
+        let posX = 0;
+        let posY = 0;
+        let isDragging = false;
+        let startX, startY;
+        let zoomInterval = null; // Для безперервного зуму
+        let isZooming = false; // Флаг для блокування перетягування під час зуму
+        let initialFitScale = 1; // Зберігає масштаб, при якому зображення вписується в контейнер
+
+        const imageOptions = [
+            { name: 'Креслення 1 (proj.jpg)', url: 'https://wgis.project.co.ua/nadpilna/proj.jpg' },
+            { name: 'Приклад 1 (1200x800)', url: 'https://placehold.co/1200x800/FF5733/FFFFFF?text=Приклад+1' },
+            { name: 'Приклад 2 (800x600)', url: 'https://placehold.co/800x600/33FF57/000000?text=Приклад+2' },
+            { name: 'Приклад 3 (1600x900)', url: 'https://placehold.co/1600x900/3357FF/FFFFFF?text=Приклад+3' },
+        ];
+
+        // Функція для показу завантажувальної накладки
+        function showLoadingOverlay() {
+            loadingOverlay.style.display = 'flex'; // Робимо елемент видимим для анімації
+            setTimeout(() => { // Невелика затримка, щоб display:flex спрацював до opacity
+                loadingOverlay.classList.add('active');
+            }, 10);
+            viewerContainer.classList.add('blurred');
+            console.log('Loading overlay shown.');
+        }
+
+        // Функція для приховування завантажувальної накладки
+        function hideLoadingOverlay() {
+            loadingOverlay.classList.remove('active');
+            viewerContainer.classList.remove('blurred');
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none'; // Повністю приховуємо після анімації
+            }, 1000); // Час затримки 1 секунда
+            console.log('Loading overlay hidden.');
+        }
+
+        // Ініціалізація позиції зображення по центру
+        draggableImage.onload = () => {
+            console.log('Image loaded, resetting position.');
+            resetImagePosition();
+            hideLoadingOverlay(); // Приховуємо накладку після завантаження
+        };
+
+        // Обробник помилок завантаження зображення
+        draggableImage.onerror = () => {
+            console.error('Failed to load image.');
+            hideLoadingOverlay(); // Приховуємо накладку навіть при помилці
+            // Можна додати повідомлення про помилку користувачеві
+        };
+
+        function updateImageTransform() {
+            // Застосовуємо трансформації для позиції та масштабу
+            draggableImage.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+            // Після того, як JavaScript взяв керування, відключаємо object-fit
+            draggableImage.style.objectFit = 'initial';
+            draggableImage.style.width = 'auto';
+            draggableImage.style.height = 'auto';
+            console.log(`Transform updated: scale=${scale}, posX=${posX}, posY=${posY}`);
+        }
+
+        function resetImagePosition() {
+            const containerWidth = viewerContainer.clientWidth;
+            const containerHeight = viewerContainer.clientHeight;
+            const imageWidth = draggableImage.naturalWidth;
+            const imageHeight = draggableImage.naturalHeight;
+
+            // Початковий масштаб, щоб зображення поміщалося у контейнер
+            initialFitScale = Math.min(containerWidth / imageWidth, containerHeight / imageHeight);
+            scale = initialFitScale; // Встановлюємо поточний масштаб як початковий
+
+            posX = (containerWidth - imageWidth * scale) / 2;
+            posY = (containerHeight - imageHeight * scale) / 2;
+
+            updateImageTransform();
+            console.log('Image position reset. Initial fit scale:', initialFitScale);
+        }
+
+        // Функція зумування (для кнопок та колеса миші)
+        function performZoom(direction, zoomAmount, mouseX = viewerContainer.clientWidth / 2, mouseY = viewerContainer.clientHeight / 2) {
+            const oldScale = scale;
+            const maxScale = 2; // Максимальний рівень зуму (200%)
+
+            if (direction === 'in') {
+                scale = Math.min(maxScale, scale + zoomAmount); // Обмежуємо максимальний масштаб
+            } else { // 'out'
+                scale = Math.max(initialFitScale, scale - zoomAmount); // Мінімальний масштаб як на кнопці "Додому"
+            }
+
+            // Корекція позиції для збільшення/зменшення до курсору або центру
+            posX = mouseX - ((mouseX - posX) / oldScale) * scale;
+            posY = mouseY - ((mouseY - posY) / oldScale) * scale;
+
+            updateImageTransform();
+            console.log(`Zoom performed: direction=${direction}, amount=${zoomAmount}, newScale=${scale}`);
+        }
+
+        // Перетягування
+        viewerContainer.addEventListener('mousedown', (e) => {
+            if (isZooming) {
+                console.log('Dragging blocked: currently zooming.');
+                return; // Блокуємо перетягування під час зуму
+            }
+            isDragging = true;
+            startX = e.clientX - posX;
+            startY = e.clientY - posY;
+            viewerContainer.style.cursor = 'grabbing';
+            draggableImage.classList.add('no-transition'); // Вимикаємо анімацію під час перетягування
+            console.log('Dragging started.');
+        });
+
+        viewerContainer.addEventListener('mousemove', (e) => {
+            if (!isDragging || isZooming) return; // Блокуємо перетягування під час зуму
+            posX = e.clientX - startX;
+            posY = e.clientY - startY;
+            updateImageTransform();
+        });
+
+        viewerContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+            viewerContainer.style.cursor = 'grab';
+            draggableImage.classList.remove('no-transition'); // Вмикаємо анімацію після перетягування
+            console.log('Dragging stopped.');
+        });
+
+        viewerContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+            viewerContainer.style.cursor = 'grab';
+            draggableImage.classList.remove('no-transition'); // Вмикаємо анімацію після перетягування
+            console.log('Dragging stopped (mouseleave).');
+        });
+
+        // Масштабування колесом миші
+        viewerContainer.addEventListener('wheel', (e) => {
+            e.preventDefault(); // Запобігаємо прокручуванню сторінки
+            const mouseWheelZoomFactor = 0.01; // Зменшений крок зуму для колеса миші
+            isZooming = true; // Починаємо зумування
+            draggableImage.classList.remove('no-transition'); // Переконаємось, що анімація увімкнена
+
+            const mouseX = e.clientX - viewerContainer.getBoundingClientRect().left;
+            const mouseY = e.clientY - viewerContainer.getBoundingClientRect().top;
+
+            if (e.deltaY < 0) { // Збільшення
+                performZoom('in', mouseWheelZoomFactor, mouseX, mouseY);
+            } else { // Зменшення
+                performZoom('out', mouseWheelZoomFactor, mouseX, mouseY);
+            }
+
+            // Затримка для вимкнення isZooming після анімації
+            clearTimeout(viewerContainer.zoomTimeout);
+            viewerContainer.zoomTimeout = setTimeout(() => {
+                isZooming = false;
+                console.log('Zooming flag reset after wheel.');
+            }, 50); // Скорочений час, щоб дозволити перетягування після завершення анімації
+            console.log('Wheel zoom event.');
+        });
+
+        // Функція для запуску безперервного зуму
+        function startContinuousZoom(direction) {
+            const buttonZoomFactor = 0.05; // Крок зуму для кнопок
+            isZooming = true; // Блокуємо перетягування
+            draggableImage.classList.remove('no-transition'); // Вмикаємо анімацію для кнопок
+            performZoom(direction, buttonZoomFactor); // Перший зум
+            zoomInterval = setInterval(() => {
+                console.log('Continuous zoom interval firing.');
+                performZoom(direction, buttonZoomFactor);
+            }, 100); // Кожні 100 мс
+            console.log(`Starting continuous zoom: ${direction}`);
+        }
+
+        // Функція для зупинки безперервного зуму
+        function stopContinuousZoom() {
+            clearInterval(zoomInterval);
+            zoomInterval = null;
+            isZooming = false; // Дозволяємо перетягування
+            console.log('Continuous zoom stopped.');
+        }
+
+        // Кнопки збільшення/зменшення (з безперервним зумом)
+        zoomInBtn.addEventListener('mousedown', (e) => {
+            // Запобігаємо стандартній поведінці браузера (виділення тексту)
+            e.preventDefault();
+            console.log('Zoom In button mousedown.');
+            startContinuousZoom('in');
+        });
+        zoomInBtn.addEventListener('mouseup', () => {
+            console.log('Zoom In button mouseup.');
+            stopContinuousZoom();
+        });
+        zoomInBtn.addEventListener('mouseleave', () => {
+            console.log('Zoom In button mouseleave.');
+            stopContinuousZoom();
+        });
+
+        zoomOutBtn.addEventListener('mousedown', (e) => {
+            // Запобігаємо стандартній поведінці браузера (виділення тексту)
+            e.preventDefault();
+            console.log('Zoom Out button mousedown.');
+            startContinuousZoom('out');
+        });
+        zoomOutBtn.addEventListener('mouseup', () => {
+            console.log('Zoom Out button mouseup.');
+            stopContinuousZoom();
+        });
+        zoomOutBtn.addEventListener('mouseleave', () => {
+            console.log('Zoom Out button mouseleave.');
+            stopContinuousZoom();
+        });
+
+        // Кнопка "Додому"
+        homeBtn.addEventListener('click', () => {
+            console.log('Home button clicked.');
+            resetImagePosition();
+        });
+
+        // Ініціалізація та керування кастомним випадаючим списком
+        function populateDropdown() {
+            dropdownContent.innerHTML = ''; // Очищаємо попередні елементи
+            imageOptions.forEach(option => {
+                const item = document.createElement('div');
+                item.classList.add('dropdown-item');
+                item.textContent = option.name;
+                item.dataset.url = option.url;
+                item.addEventListener('click', () => {
+                    selectedImageText.textContent = option.name; // Оновлюємо текст кнопки
+                    draggableImage.src = option.url;
+                    showLoadingOverlay();
+                    dropdownContent.classList.remove('active'); // Закриваємо меню
+                    dropdownButton.classList.remove('active'); // Змінюємо стан кнопки
+                });
+                dropdownContent.appendChild(item);
+            });
+            // Встановлюємо початковий текст кнопки
+            selectedImageText.textContent = imageOptions[0].name;
+        }
+
+        dropdownButton.addEventListener('click', (e) => {
+            e.stopPropagation(); // Запобігаємо закриттю меню при кліку на кнопку
+            dropdownContent.classList.toggle('active');
+            dropdownButton.classList.toggle('active');
+        });
+
+        // Закриття меню при кліку поза ним
+        document.addEventListener('click', (e) => {
+            if (!customDropdown.contains(e.target)) {
+                dropdownContent.classList.remove('active');
+                dropdownButton.classList.remove('active');
+            }
+        });
+
+        // Обробка зміни розміру вікна для адаптивності
+        window.addEventListener('resize', () => {
+            console.log('Window resized, resetting image position.');
+            resetImagePosition();
+        });
+
+        // Показуємо оверлей при першому завантаженні сторінки
+        document.addEventListener('DOMContentLoaded', () => {
+            populateDropdown(); // Заповнюємо випадаючий список
+            showLoadingOverlay();
+        });
+
+    </script>
+</body>
+</html>
