@@ -320,15 +320,15 @@
         #symbols-iframe-container {
             position: fixed;
             right: 0;
-            top: 56px; /* Змінено: відступ зверху 56px */
-            height: calc(100vh - 56px); /* Змінено: висота з урахуванням верхнього відступу */
+            top: 56px; /* Відступ зверху 56px */
+            height: calc(100vh - 56px); /* Висота з урахуванням верхнього відступу */
             width: 30vw; /* Ширина панелі, буде динамічно змінюватися */
             min-width: 280px; /* Мінімальна ширина для мобільних */
             max-width: 400px; /* Максимальна ширина для десктопів */
             background-color: #f9f9f9;
             box-shadow: -5px 0 15px rgba(0,0,0,0.2);
             z-index: 20;
-            overflow: hidden;
+            overflow: hidden; /* Приховуємо вміст, що виходить за межі контейнера */
             display: flex;
             flex-direction: column;
             transform: translateX(100%); /* Початково прихований, висувається збоку */
@@ -339,48 +339,39 @@
             transform: translateX(0); /* Висувається на екран */
         }
 
-        /* Видалено #symbols-iframe-header, тому ці стилі більше не потрібні */
-        /*
-        #symbols-iframe-header {
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #e0e0e0;
-            border-bottom: 1px solid #ccc;
+        #symbols-iframe {
+            flex-grow: 1; /* Займає весь доступний простір */
+            width: 100%;
+            border: none;
         }
 
-        #symbols-iframe-header h3 {
-            margin: 0;
-            font-size: 1.1rem;
-            color: #333;
-        }
-
-        #closeSymbolsBtn {
+        /* Стилі для кнопки закриття на панелі */
+        #panelCloseBtn {
+            position: absolute;
+            top: 10px; /* Відступ від верхнього краю */
+            right: 20px; /* Змінено: відступ від правого краю на 20px */
             background: none;
             border: none;
-            font-size: 1.5rem;
             cursor: pointer;
-            color: #737373;
-            padding: 5px;
-            border-radius: 50%;
-            transition: background-color 0.2s ease;
+            z-index: 21; /* Вище за іфрейм */
             width: 36px;
             height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(224, 224, 224, 0.8); /* Напівпрозорий фон */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease;
         }
 
-        #closeSymbolsBtn:hover {
-            background-color: #cccccc;
+        #panelCloseBtn:hover {
+            background-color: rgba(204, 204, 204, 0.9);
         }
-        */
 
-        #symbols-iframe {
-            flex-grow: 1; /* Займає весь доступний простір */
-            width: 100%;
-            border: none;
+        #panelCloseBtn img {
+            width: 24px;
+            height: 24px;
         }
 
         /* Стилі для активного стану кнопки "Умовні позначення" */
@@ -431,7 +422,9 @@
     </div>
 
     <div id="symbols-iframe-container">
-        <!-- Заголовок панелі видалено -->
+        <button id="panelCloseBtn" aria-label="Закрити">
+            <img src="https://img.icons8.com/material-outlined/48/737373/delete-sign.png" alt="Закрити">
+        </button>
         <iframe id="symbols-iframe" src=""></iframe> <!-- src буде встановлено динамічно -->
     </div>
 
@@ -450,7 +443,7 @@
         const fitButton = document.getElementById('fitButton'); // Змінено ID кнопки "Припасувати"
         const symbolsBtn = document.getElementById('symbolsBtn'); // Кнопка "Умовні позначення"
         const symbolsIframeContainer = document.getElementById('symbols-iframe-container'); // Контейнер іфрейму
-        // closeSymbolsBtn більше не потрібна, оскільки заголовок видалено
+        const panelCloseBtn = document.getElementById('panelCloseBtn'); // Додано: Кнопка закриття панелі
         const drawingSelector = document.getElementById('drawing-selector'); // Випадаючий список (прихований)
         const buttonControls = document.getElementById('button-controls'); // Додано: Посилання на контейнер кнопок
         const symbolsIframe = document.getElementById('symbols-iframe'); // Додано: Посилання на іфрейм умовних позначень
@@ -1407,11 +1400,13 @@
                 // Умовне відображення кнопки "Умовні позначення"
                 if (config.hasList === true) {
                     symbolsBtn.style.display = 'flex'; // Показати кнопку
+                    panelCloseBtn.style.display = 'flex'; // Показати кнопку закриття
                     if (config.hasListUrl) {
                         symbolsIframe.src = config.hasListUrl; // Встановлюємо src для іфрейму
                     }
                 } else {
                     symbolsBtn.style.display = 'none'; // Приховати кнопку
+                    panelCloseBtn.style.display = 'none'; // Приховати кнопку закриття
                     symbolsIframeContainer.classList.remove('open'); // Закрити панель, якщо вона була відкрита
                     symbolsBtn.classList.remove('active'); // Зняти активний стан з кнопки
                     symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
@@ -1589,9 +1584,19 @@
             }
         });
 
-        // closeSymbolsBtn більше не потрібна, оскільки заголовок видалено.
-        // Функціонал закриття тепер повністю обробляється symbolsBtn.
-        // closeSymbolsBtn.addEventListener('click', () => { /* ... */ });
+        // Обробник для нової кнопки закриття на панелі
+        panelCloseBtn.addEventListener('click', () => {
+            symbolsIframeContainer.classList.remove('open');
+            symbolsBtn.classList.remove('active'); // Зняти активний стан з головної кнопки
+            symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
+            symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
+            symbolsBtn.title = 'Умовні позначення';
+
+            canvasContainer.style.width = '100%';
+            buttonControls.style.right = '20px';
+            updateFitButtonFunctionality();
+            updateHomeButtonState();
+        });
 
     </script>
 </body>
