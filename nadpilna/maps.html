@@ -215,7 +215,13 @@
             border-radius: 50%;
             width: 60px;
             height: 60px;
-            animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite; /* Додано анімацію */
+        }
+
+        /* Анімація для спінера */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         /* Стилі для кастомного випадаючого списку */
@@ -314,8 +320,8 @@
         #symbols-iframe-container {
             position: fixed;
             right: 0;
-            top: 0;
-            height: 100vh;
+            top: 56px; /* Змінено: відступ зверху 56px */
+            height: calc(100vh - 56px); /* Змінено: висота з урахуванням верхнього відступу */
             width: 30vw; /* Ширина панелі, буде динамічно змінюватися */
             min-width: 280px; /* Мінімальна ширина для мобільних */
             max-width: 400px; /* Максимальна ширина для десктопів */
@@ -333,6 +339,8 @@
             transform: translateX(0); /* Висувається на екран */
         }
 
+        /* Видалено #symbols-iframe-header, тому ці стилі більше не потрібні */
+        /*
         #symbols-iframe-header {
             padding: 15px;
             display: flex;
@@ -355,10 +363,10 @@
             cursor: pointer;
             color: #737373;
             padding: 5px;
-            border-radius: 50%; /* Зроблено круглою */
+            border-radius: 50%;
             transition: background-color 0.2s ease;
-            width: 36px; /* Задаємо розмір для круглої кнопки */
-            height: 36px; /* Задаємо розмір для круглої кнопки */
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -367,6 +375,7 @@
         #closeSymbolsBtn:hover {
             background-color: #cccccc;
         }
+        */
 
         #symbols-iframe {
             flex-grow: 1; /* Займає весь доступний простір */
@@ -422,13 +431,8 @@
     </div>
 
     <div id="symbols-iframe-container">
-        <div id="symbols-iframe-header">
-            <h3>Умовні позначення</h3>
-            <button id="closeSymbolsBtn" aria-label="Закрити">
-                &times;
-            </button>
-        </div>
-        <iframe id="symbols-iframe" srcdoc="<p style='font-family: Montserrat, sans-serif; padding: 15px;'>Зміст умовних позначень буде тут.</p>"></iframe>
+        <!-- Заголовок панелі видалено -->
+        <iframe id="symbols-iframe" src=""></iframe> <!-- src буде встановлено динамічно -->
     </div>
 
     <script>
@@ -446,9 +450,10 @@
         const fitButton = document.getElementById('fitButton'); // Змінено ID кнопки "Припасувати"
         const symbolsBtn = document.getElementById('symbolsBtn'); // Кнопка "Умовні позначення"
         const symbolsIframeContainer = document.getElementById('symbols-iframe-container'); // Контейнер іфрейму
-        const closeSymbolsBtn = document.getElementById('closeSymbolsBtn'); // Кнопка закриття іфрейму
+        // closeSymbolsBtn більше не потрібна, оскільки заголовок видалено
         const drawingSelector = document.getElementById('drawing-selector'); // Випадаючий список (прихований)
         const buttonControls = document.getElementById('button-controls'); // Додано: Посилання на контейнер кнопок
+        const symbolsIframe = document.getElementById('symbols-iframe'); // Додано: Посилання на іфрейм умовних позначень
 
 
         // Кастомні елементи селектора
@@ -1402,6 +1407,9 @@
                 // Умовне відображення кнопки "Умовні позначення"
                 if (config.hasList === true) {
                     symbolsBtn.style.display = 'flex'; // Показати кнопку
+                    if (config.hasListUrl) {
+                        symbolsIframe.src = config.hasListUrl; // Встановлюємо src для іфрейму
+                    }
                 } else {
                     symbolsBtn.style.display = 'none'; // Приховати кнопку
                     symbolsIframeContainer.classList.remove('open'); // Закрити панель, якщо вона була відкрита
@@ -1409,6 +1417,7 @@
                     symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
                     symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
                     symbolsBtn.title = 'Умовні позначення';
+                    symbolsIframe.src = ''; // Очищаємо src іфрейму
                 }
 
                 if (config && config.drawings && Array.isArray(config.drawings)) {
@@ -1580,19 +1589,9 @@
             }
         });
 
-        closeSymbolsBtn.addEventListener('click', () => {
-            symbolsIframeContainer.classList.remove('open');
-            symbolsBtn.classList.remove('active'); // Ensure button state is updated
-            symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
-            symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
-            symbolsBtn.title = 'Умовні позначення';
-
-            canvasContainer.style.width = '100%';
-            buttonControls.style.right = '20px';
-            // Update fit and home buttons after panel closes and canvas size changes
-            updateFitButtonFunctionality();
-            updateHomeButtonState();
-        });
+        // closeSymbolsBtn більше не потрібна, оскільки заголовок видалено.
+        // Функціонал закриття тепер повністю обробляється symbolsBtn.
+        // closeSymbolsBtn.addEventListener('click', () => { /* ... */ });
 
     </script>
 </body>
