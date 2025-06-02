@@ -155,14 +155,15 @@
         }
 
         /* Зменшення розміру кнопок та іконок для десктопів */
-        @media (hover: hover) and (pointer: fine) {
+        /* @media (hover: hover) and (pointer: fine) is too restrictive, use (min-width: 769px) for desktop */
+        @media (min-width: 769px) { /* Desktop styles */
             .zoom-button {
                 width: 36px; /* Зменшена ширина для десктопів */
-                height: 36px; /* Зменшена висота для дескропів */
+                height: 36px; /* Зменшена висота для десктопів */
             }
             .zoom-button img {
-                width: 18px; /* Зменшення розміру іконки для дескропів */
-                height: 18px; /* Зменшення розміру іконки для дескропів */
+                width: 18px; /* Зменшення розміру іконки для десктопів */
+                height: 18px; /* Зменшення розміру іконки для десктопів */
             }
         }
 
@@ -178,6 +179,103 @@
             z-index: 10; /* Щоб кнопки були над контейнером */
             transition: right 0.3s ease-out, transform 0.3s ease-out; /* Додано: Плавна зміна позиції */
         }
+
+        /* New styles for zoomModeBtn */
+        #zoomModeBtn {
+            display: none; /* Hidden by default, shown by JS on mobile */
+            /* Add styling similar to .zoom-button */
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: #e0e0e0;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease-in-out;
+            /* Order it last in the flex container for mobile */
+            order: 2;
+        }
+
+        #zoomModeBtn:hover {
+            background-color: #cccccc;
+        }
+
+        #zoomModeBtn img {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Container for expanded zoom buttons */
+        #zoom-controls-expanded {
+            display: flex;
+            flex-direction: column; /* Default for desktop */
+            gap: 15px;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+
+        /* Mobile-specific styles for button-controls and zoom-controls-expanded */
+        @media (max-width: 768px) { /* Mobile breakpoint */
+            #button-controls {
+                flex-direction: column; /* Already column for desktop, but confirming */
+                align-items: flex-end; /* Align to the right */
+                gap: 10px; /* Adjust gap for mobile */
+                /* Position at the bottom right corner for mobile */
+                top: auto;
+                bottom: 20px;
+                transform: translateY(0);
+                right: 20px;
+            }
+
+            .zoom-button { /* Apply larger size for all zoom/fit/home buttons on mobile */
+                width: 48px;
+                height: 48px;
+            }
+            .zoom-button img { /* Apply larger icon size on mobile */
+                width: 24px;
+                height: 24px;
+            }
+
+            #zoomModeBtn {
+                display: flex; /* Show zoomModeBtn on mobile */
+                order: 2; /* Ensure it's below the expanded controls */
+            }
+
+            #zoom-controls-expanded {
+                /* Position above zoomModeBtn */
+                position: absolute;
+                bottom: calc(100% + 10px); /* 100% of zoomModeBtn height + 10px gap */
+                right: 0;
+                transform-origin: bottom right; /* Transform from bottom right */
+                opacity: 0;
+                pointer-events: none;
+                transform: translateY(20px); /* Animate upwards from zoomModeBtn */
+                display: flex; /* Always display flex so that it can be transitioned */
+                flex-direction: column; /* Stack buttons vertically */
+                gap: 10px;
+            }
+
+            #zoom-controls-expanded.expanded {
+                opacity: 1;
+                pointer-events: auto;
+                transform: translateY(0);
+            }
+
+            /* Adjust symbols-iframe-container width for mobile */
+            #symbols-iframe-container {
+                width: calc(100vw - 80px); /* Default width, will be overridden by JS */
+                min-width: unset; /* Remove min-width constraint for mobile */
+                max-width: unset; /* Remove max-width constraint for mobile */
+                /* Add padding to the iframe to prevent content from being under the close button */
+                padding-top: 56px; /* Space for the close button */
+            }
+            #symbols-iframe {
+                height: calc(100% - 56px); /* Adjust iframe height to account for padding */
+            }
+        }
+
 
         /* Стилі для фонового canvas завантаження */
         #loading-background-canvas {
@@ -393,17 +491,22 @@
     </div>
 
     <div id="button-controls">
-        <button id="zoomInBtn" class="zoom-button" aria-label="Збільшити масштаб" title="Збільшити масштаб">
-            <img src="https://img.icons8.com/android/48/737373/plus.png" alt="Збільшити масштаб">
-        </button>
-        <button id="zoomOutBtn" class="zoom-button" aria-label="Зменшити масштаб" title="Зменшити масштаб">
-            <img src="https://img.icons8.com/material-sharp/48/737373/minus.png" alt="Зменшити масштаб">
-        </button>
-        <button id="homeBtn" class="zoom-button" aria-label="Повернути початкове положення" title="Повернути початкове положення">
-            <img src="https://img.icons8.com/material-outlined/48/737373/collapse.png" alt="Повернути початкове положення">
-        </button>
-        <button id="fitButton" class="zoom-button" aria-label="Припасувати контент" title="Припасувати контент">
-            <img src="https://img.icons8.com/material/48/737373/merge-horizontal--v1.png" alt="Припасувати контент">
+        <div id="zoom-controls-expanded">
+            <button id="zoomInBtn" class="zoom-button" aria-label="Збільшити масштаб" title="Збільшити масштаб">
+                <img src="https://img.icons8.com/android/48/737373/plus.png" alt="Збільшити масштаб">
+            </button>
+            <button id="zoomOutBtn" class="zoom-button" aria-label="Зменшити масштаб" title="Зменшити масштаб">
+                <img src="https://img.icons8.com/material-sharp/48/737373/minus.png" alt="Зменшити масштаб">
+            </button>
+            <button id="homeBtn" class="zoom-button" aria-label="Повернути початкове положення" title="Повернути початкове положення">
+                <img src="https://img.icons8.com/material-outlined/48/737373/collapse.png" alt="Повернути початкове положення">
+            </button>
+            <button id="fitButton" class="zoom-button" aria-label="Припасувати контент" title="Припасувати контент">
+                <img src="https://img.icons8.com/material/48/737373/merge-horizontal--v1.png" alt="Припасувати контент">
+            </button>
+        </div>
+        <button id="zoomModeBtn" class="zoom-button" aria-label="Розгорнути елементи керування масштабуванням" title="Розгорнути елементи керування масштабуванням">
+            <img src="https://img.icons8.com/fluency-systems-regular/48/737373/zoom-mode.png" alt="Елементи керування масштабуванням">
         </button>
         <button id="symbolsBtn" class="zoom-button" aria-label="Умовні позначення" title="Умовні позначення">
             <img src="https://img.icons8.com/material-sharp/48/737373/list.png" alt="Умовні позначення">
@@ -425,8 +528,7 @@
         <button id="panelCloseBtn" aria-label="Закрити">
             <img src="https://img.icons8.com/material-outlined/48/737373/delete-sign.png" alt="Закрити">
         </button>
-        <iframe id="symbols-iframe" src=""></iframe> <!-- src буде встановлено динамічно -->
-    </div>
+        <iframe id="symbols-iframe" src=""></iframe> </div>
 
     <script>
         // Отримання посилань на елементи DOM
@@ -447,6 +549,8 @@
         const drawingSelector = document.getElementById('drawing-selector'); // Випадаючий список (прихований)
         const buttonControls = document.getElementById('button-controls'); // Додано: Посилання на контейнер кнопок
         const symbolsIframe = document.getElementById('symbols-iframe'); // Додано: Посилання на іфрейм умовних позначень
+        const zoomModeBtn = document.getElementById('zoomModeBtn'); // Нова кнопка zoomMode
+        const zoomControlsExpanded = document.getElementById('zoom-controls-expanded'); // Контейнер для розгорнутих кнопок зуму
 
 
         // Кастомні елементи селектора
@@ -496,6 +600,14 @@
         const midResCanvasResolutionFactor = 0.50; // Коефіцієнт роздільної здатності для mid-res canvas (50%)
 
         let resizeZoomTimeout = null; // Змінна для зберігання ID таймера для zoom to fit при зміні розміру вікна
+
+        const MOBILE_BREAKPOINT_WIDTH = 768; // Define mobile breakpoint width
+        const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0; // Check for touch interface
+
+        // Function to determine if it's a mobile view
+        function isMobileView() {
+            return window.innerWidth <= MOBILE_BREAKPOINT_WIDTH && hasTouch;
+        }
 
         // Функція для малювання плитки на canvas
         function drawTile(canvas, img, sx, sy, sWidth, sHeight) {
@@ -906,7 +1018,7 @@
         function resetView() {
             if (imgGlobal) {
                 console.log('Кнопка "Додому" натиснута. Виконання "zoom to fit"...');
-                // Перед скиданням, переконаємося, що перехід повернено до стандартного
+                // Перед скиданням, переконаємося, що перехід повернуто до стандартного
                 gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
                 backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
                 lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
@@ -942,7 +1054,7 @@
             currentPanY = (viewportHeight - currentContentHeight) / 2; // Центрування по вертикалі
             currentZoomLevel = newZoom;
 
-            // Перед застосуванням, переконаємося, що перехід повернено до стандартного
+            // Перед застосуванням, переконаємося, що перехід повернуто до стандартного
             gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
@@ -981,7 +1093,7 @@
             currentPanY = (canvasContainer.clientHeight - currentContentHeight) / 2; // Центрування по вертикалі
             currentZoomLevel = newZoom;
 
-            // Перед застосуванням, переконаємося, що перехід повернено до стандартного
+            // Перед застосуванням, переконаємося, що перехід повернуто до стандартного
             gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
@@ -1391,6 +1503,102 @@
             updateHomeButtonState(); // Оновлюємо стан кнопки "Додому"
         });
 
+        // Function to adjust layout based on panel and zoom controls state
+        function adjustLayout() {
+            const isSymbolsPanelOpen = symbolsIframeContainer.classList.contains('open');
+            const isZoomControlsExpanded = zoomControlsExpanded.classList.contains('expanded');
+
+            let panelWidth = 0;
+            const buttonMargin = 20; // Margin from the right edge for button-controls
+            const zoomButtonDefaultWidth = 48; // Default mobile button width
+
+            if (isSymbolsPanelOpen) {
+                if (isMobileView()) {
+                    // In mobile view, symbols panel width is screen width - zoomModeBtn width - 2 * margin
+                    panelWidth = window.innerWidth - zoomButtonDefaultWidth - (2 * buttonMargin);
+                    panelWidth = Math.max(panelWidth, 280); // Ensure it doesn't get too small
+                    symbolsIframeContainer.style.width = `${panelWidth}px`;
+                } else {
+                    // Desktop view
+                    symbolsIframeContainer.style.width = '30vw';
+                    if (symbolsIframeContainer.offsetWidth > 400) {
+                        symbolsIframeContainer.style.width = '400px';
+                    }
+                    panelWidth = symbolsIframeContainer.offsetWidth;
+                }
+            }
+
+            canvasContainer.style.width = isSymbolsPanelOpen ? `calc(100% - ${panelWidth}px)` : '100%';
+            buttonControls.style.right = isSymbolsPanelOpen ? `${buttonMargin + panelWidth}px` : `${buttonMargin}px`;
+
+            // Handle visibility and layout of zoom controls based on screen size and touch
+            if (isMobileView()) {
+                zoomModeBtn.style.display = 'flex'; // Show zoomModeBtn on mobile
+                symbolsBtn.style.order = '1'; // Place symbolsBtn above zoomModeBtn
+                zoomModeBtn.style.order = '2'; // Place zoomModeBtn below symbolsBtn
+
+                if (isZoomControlsExpanded) {
+                    zoomControlsExpanded.style.display = 'flex';
+                    zoomControlsExpanded.style.opacity = 1;
+                    zoomControlsExpanded.style.pointerEvents = 'auto';
+                    zoomControlsExpanded.style.transform = 'translateY(0)';
+                } else {
+                    zoomControlsExpanded.style.opacity = 0;
+                    zoomControlsExpanded.style.pointerEvents = 'none';
+                    zoomControlsExpanded.style.transform = 'translateY(20px)';
+                    // To prevent flickering when resizing, set display to none after transition
+                    zoomControlsExpanded.addEventListener('transitionend', function handler() {
+                        if (!zoomControlsExpanded.classList.contains('expanded')) {
+                            zoomControlsExpanded.style.display = 'none';
+                        }
+                        zoomControlsExpanded.removeEventListener('transitionend', handler);
+                    });
+                }
+            } else {
+                // Desktop view
+                zoomModeBtn.style.display = 'none'; // Hide zoomModeBtn on desktop
+                zoomControlsExpanded.style.display = 'flex'; // Always visible on desktop
+                zoomControlsExpanded.style.opacity = 1;
+                zoomControlsExpanded.style.pointerEvents = 'auto';
+                zoomControlsExpanded.style.transform = 'translateY(0)';
+                // Ensure default order for desktop buttons
+                zoomInBtn.parentNode.insertBefore(zoomInBtn, zoomControlsExpanded.firstElementChild);
+                zoomOutBtn.parentNode.insertBefore(zoomOutBtn, zoomInBtn.nextSibling);
+                homeBtn.parentNode.insertBefore(homeBtn, zoomOutBtn.nextSibling);
+                fitButton.parentNode.insertBefore(fitButton, homeBtn.nextSibling);
+                symbolsBtn.style.order = 'unset'; // Reset order
+                zoomModeBtn.style.order = 'unset'; // Reset order
+            }
+
+            // Recalculate pan to center content after width change
+            if (imgGlobal) {
+                const imgWidth = imgGlobal.width;
+                const imgHeight = imgGlobal.height;
+
+                const cols = Math.ceil(imgWidth / baseTileSize);
+                const rows = Math.ceil(imgHeight / baseTileSize);
+
+                const totalGridWidth = cols * baseTileSize;
+                const totalGridHeight = rows * baseTileSize;
+
+                const viewportWidth = canvasContainer.clientWidth;
+                const viewportHeight = canvasContainer.clientHeight;
+
+                const currentContentWidth = totalGridWidth * currentZoomLevel;
+                const currentContentHeight = totalGridHeight * currentZoomLevel;
+
+                currentPanX = (viewportWidth - currentContentWidth) / 2;
+                currentPanY = (viewportHeight - currentContentHeight) / 2;
+                applyTransform(currentZoomLevel, currentPanX, currentPanY);
+                renderTiles(imgGlobal); // Re-render visible tiles if needed
+            }
+            updateZoomButtonStates();
+            updateFitButtonFunctionality();
+            updateHomeButtonIcon();
+            updateHomeButtonState();
+        }
+
+
         // Функція для завантаження даних про креслення з config.json та заповнення випадаючого списку
         async function loadDrawings() {
             try {
@@ -1492,112 +1700,64 @@
             // processImage(); // Перезавантажуємо зображення
         });
 
-        // Функція для обробки зміни розміру вікна без зміни рівня масштабування
-        function handleResizeZoom() {
-            if (!imgGlobal) return;
+        // Event Listeners
+        symbolsBtn.addEventListener('click', () => {
+            symbolsIframeContainer.classList.toggle('open');
+            symbolsBtn.classList.toggle('active'); // Toggle active state for symbols button
 
-            const imgWidth = imgGlobal.width;
-            const imgHeight = imgGlobal.height;
-
-            const cols = Math.ceil(imgWidth / baseTileSize);
-            const rows = Math.ceil(imgHeight / baseTileSize);
-
-            const totalGridWidth = cols * baseTileSize;
-            const totalGridHeight = rows * baseTileSize;
-
-            const viewportWidth = canvasContainer.clientWidth;
-            const viewportHeight = canvasContainer.clientHeight;
-
-            // Просто перецентровуємо вміст на основі поточного рівня масштабування
-            const currentContentWidth = totalGridWidth * currentZoomLevel;
-            const currentContentHeight = totalGridHeight * currentZoomLevel;
-
-            currentPanX = (viewportWidth - currentContentWidth) / 2;
-            currentPanY = (viewportHeight - currentContentHeight) / 2;
-            
-            applyTransform(currentZoomLevel, currentPanX, currentPanY);
-            renderTiles(imgGlobal); // Перемальовуємо видимі плитки, якщо потрібно
-            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
-            updateFitButtonFunctionality(); // Оновлюємо функціонал кнопки "Припасувати"
-            updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
-            updateHomeButtonState(); // Оновлюємо стан кнопки "Додому"
-
-            // Adjust canvasContainer width and buttonControls position if symbols panel is open
+            // Update symbols button icon based on panel state
             if (symbolsIframeContainer.classList.contains('open')) {
-                const panelWidth = symbolsIframeContainer.offsetWidth;
-                canvasContainer.style.width = `calc(100% - ${panelWidth}px)`;
-                buttonControls.style.right = `${20 + panelWidth}px`;
+                symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-outlined/48/FFFFFF/delete-sign.png';
+                symbolsBtn.setAttribute('aria-label', 'Закрити умовні позначення');
+                symbolsBtn.title = 'Закрити умовні позначення';
             } else {
-                canvasContainer.style.width = '100%';
-                buttonControls.style.right = '20px';
+                symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
+                symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
+                symbolsBtn.title = 'Умовні позначення';
             }
-        }
-
-
-        // Запуск обробки зображення після завантаження DOM
-        document.addEventListener('DOMContentLoaded', () => {
-            loadDrawings(); // Завантажуємо креслення при завантаженні DOM
+            requestAnimationFrame(adjustLayout); // Adjust layout after panel state changes
         });
 
-        // Додаємо обробник події resize для перерахунку початкового зуму та центрування
+        panelCloseBtn.addEventListener('click', () => {
+            symbolsIframeContainer.classList.remove('open');
+            symbolsBtn.classList.remove('active');
+            symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
+            symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
+            symbolsBtn.title = 'Умовні позначення';
+            requestAnimationFrame(adjustLayout); // Adjust layout after panel state changes
+        });
+
+        zoomModeBtn.addEventListener('click', () => {
+            zoomControlsExpanded.classList.toggle('expanded');
+            // Toggle icon of zoomModeBtn
+            const zoomModeImg = zoomModeBtn.querySelector('img');
+            if (zoomControlsExpanded.classList.contains('expanded')) {
+                zoomModeImg.src = 'https://img.icons8.com/material-outlined/48/737373/multiply.png'; // Example 'X' icon
+                zoomModeBtn.setAttribute('aria-label', 'Закрити елементи керування масштабуванням');
+                zoomModeBtn.title = 'Закрити елементи керування масштабуванням';
+            } else {
+                zoomModeImg.src = 'https://img.icons8.com/fluency-systems-regular/48/737373/zoom-mode.png';
+                zoomModeBtn.setAttribute('aria-label', 'Розгорнути елементи керування масштабуванням');
+                zoomModeBtn.title = 'Розгорнути елементи керування масштабуванням';
+            }
+            requestAnimationFrame(adjustLayout); // Adjust layout after zoom controls state changes
+        });
+
         window.addEventListener('resize', () => {
             if (imgGlobal) {
-                handleResizeZoom(); // Використовуємо нову функцію для умовної логіки масштабування
-                // Оновлюємо фон завантаження при зміні розміру вікна, якщо він ще видимий
+                adjustLayout(); // Use the unified adjustLayout function
                 if (!loadingBackgroundCanvas.classList.contains('hide-loading')) {
                     drawLoadingBackground(imgGlobal);
                 }
             }
         });
 
-        // Обробники для кнопки "Умовні позначення"
-        symbolsBtn.addEventListener('click', () => {
-            symbolsIframeContainer.classList.toggle('open');
-
-            if (symbolsIframeContainer.classList.contains('open')) {
-                // Panel is opening
-                symbolsBtn.classList.add('active');
-                symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-outlined/48/FFFFFF/delete-sign.png';
-                symbolsBtn.setAttribute('aria-label', 'Закрити умовні позначення');
-                symbolsBtn.title = 'Закрити умовні позначення';
-
-                requestAnimationFrame(() => {
-                    const panelWidth = symbolsIframeContainer.offsetWidth;
-                    canvasContainer.style.width = `calc(100% - ${panelWidth}px)`;
-                    buttonControls.style.right = `${20 + panelWidth}px`;
-                    // Update fit and home buttons after panel opens and canvas size changes
-                    updateFitButtonFunctionality();
-                    updateHomeButtonState();
-                });
-            } else {
-                // Panel is closing
-                symbolsBtn.classList.remove('active');
-                symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
-                symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
-                symbolsBtn.title = 'Умовні позначення';
-
-                canvasContainer.style.width = '100%';
-                buttonControls.style.right = '20px';
-                // Update fit and home buttons after panel closes and canvas size changes
-                updateFitButtonFunctionality();
-                updateHomeButtonState();
-            }
+        // Initial call on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDrawings().then(() => {
+                adjustLayout(); // Initial layout adjustment after drawings are loaded
+            });
         });
-
-        // Обробник для нової кнопки закриття на панелі
-        panelCloseBtn.addEventListener('click', () => {
-            symbolsIframeContainer.classList.remove('open');
-            symbolsBtn.classList.remove('active'); // Зняти активний стан з головної кнопки
-            symbolsBtn.querySelector('img').src = 'https://img.icons8.com/material-sharp/48/737373/list.png';
-            symbolsBtn.setAttribute('aria-label', 'Умовні позначення');
-            symbolsBtn.title = 'Умовні позначення';
-
-            canvasContainer.style.width = '100%';
-            buttonControls.style.right = '20px';
-            updateFitButtonFunctionality();
-            updateHomeButtonState();
-        });
-
     </script>
 </body>
 </html>
