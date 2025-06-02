@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Роздільник зображень на плитки</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         /* Використання шрифту Montserrat */
@@ -20,10 +19,10 @@
         /* Стилі для контейнера плиток (viewport) */
         #canvas-container {
             position: absolute; /* Абсолютне позиціонування для заповнення сторінки */
-            top: 0;
+            top: 56px; /* Змінено: 56px від верхнього краю */
             left: 0;
             width: 100%; /* Займає всю доступну ширину */
-            height: 100vh; /* Займає всю доступну висоту */
+            height: calc(100vh - 56px); /* Змінено: Висота збільшена на 56px, щоб компенсувати від'ємний top */
             overflow: hidden; /* Приховуємо вміст, що виходить за межі контейнера */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Легка тінь */
             background-color: #e0e0e0; /* Змінено на світло-сірий фон */
@@ -33,7 +32,7 @@
         }
 
         #canvas-container.dragging {
-            cursor: grabbing; /* Курсор при перетягуванні */
+            cursor: grabbing; /* Курсор при перетягування */
         }
 
         /* Стилі для фонового canvas (розмите зображення) */
@@ -47,7 +46,7 @@
             z-index: 0; /* Забезпечує, що він знаходиться під grid-wrapper */
             display: block; /* Запобігає зайвим відступам */
             transform-origin: 0 0; /* Точка трансформації завжди верхній лівий кут */
-            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Повернуто до стандартної анімації */
             background-color: #f0f4f8; /* Колір, якщо зображення не завантажилось */
         }
 
@@ -65,7 +64,7 @@
             z-index: 2; /* Вище за grid-wrapper та background-canvas, коли видимий */
             display: block;
             transform-origin: 0 0;
-            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Повернуто до стандартної анімації */
             background-color: #f0f4f8; /* Запасний колір */
         }
 
@@ -79,7 +78,7 @@
             z-index: 3; /* Вище за low-res та grid-wrapper */
             display: block;
             transform-origin: 0 0;
-            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Повернуто до стандартної анімації */
             background-color: #f0f4f8; /* Запасний колір */
         }
 
@@ -88,7 +87,7 @@
             display: grid; /* Використовуємо CSS Grid для розташування плиток */
             gap: 0px; /* Відстань між плитками 0 пікселів */
             transform-origin: 0 0; /* Точка трансформації завжди верхній лівий кут */
-            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Змінено на 0.3s для плавного зуму */
+            transition: transform 0.3s ease-out, opacity 0.5s ease-in-out; /* Повернуто до стандартної анімації */
             position: absolute; /* Змінено з relative на absolute */
             top: 0; /* Додано для absolute позиціонування */
             left: 0; /* Додано для absolute позиціонування */
@@ -110,6 +109,11 @@
             opacity: 1;
         }
 
+        /* Клас для тимчасового вимкнення переходів */
+        .no-transition {
+            transition: none !important;
+        }
+
         /* Стилі для кнопок */
         .zoom-button {
             width: 48px; /* Ширина кнопки за замовчуванням (для тач-пристроїв) */
@@ -122,11 +126,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out; /* Плавний перехід розмірів */
+            transition: background-color 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out, opacity 0.3s ease-in-out; /* Плавний перехід розмірів та прозорості */
         }
 
-        .zoom-button:hover {
+        .zoom-button:hover:not(.disabled) { /* Застосовуємо hover тільки якщо кнопка не disabled */
             background-color: #cccccc; /* Темніший сірий при наведенні */
+        }
+
+        /* Стилі для неактивних кнопок */
+        .zoom-button.disabled {
+            opacity: 0.5; /* Зменшена прозорість */
+            cursor: default; /* Змінено: Курсор за замовчуванням */
+            box-shadow: none; /* Прибираємо тінь для неактивних кнопок */
+            background-color: #f0f0f0; /* Світліший фон */
         }
 
         /* Змінено: Видалено box-shadow: none; для кнопки при фокусі, щоб тінь зберігалася */
@@ -210,41 +222,96 @@
             animation: spin 1s linear infinite;
         }
 
-        /* Стилі для випадаючого списку */
+        /* Стилі для кастомного випадаючого списку */
         #drawing-selector-container {
             position: absolute;
-            top: 76px; /* Змінено: 20px + 56px = 76px */
+            top: 66px;
             left: 20px;
             z-index: 10;
-            background-color: #ffffff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-family: 'Montserrat', sans-serif;
         }
 
-        #drawing-selector-container label {
-            font-size: 1rem;
-            color: #333;
-            font-weight: 500;
-        }
-
-        #drawing-selector {
+        .custom-select-display {
             padding: 8px 12px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1rem;
-            font-family: 'Montserrat', sans-serif;
-            background-color: #f9f9f9;
+            background-color: #f9f9f9; /* Плоский фон */
             cursor: pointer;
             outline: none;
-            transition: border-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Тінь */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            min-width: 150px; /* Мінімальна ширина для видимості */
         }
 
-        #drawing-selector:focus {
-            border-color: #3b82f6;
+        .custom-select-display:hover {
+            background-color: #e0e0e0; /* Сірий при наведенні */
+        }
+
+        .custom-select-display .arrow {
+            width: 8px; /* Зменшений розмір */
+            height: 8px; /* Зменшений розмір */
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292%22%20height%3D%22292%22%3E%3Cpath%20fill%3D%22%23737373%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.2c-6.8%200-13.3%202.8-17.7%208.4S.1%2082.5%204.5%2088l128%20127.9c3.9%203.9%209.7%206.2%2015.6%206.2%205.9%200%2011.7-2.3%2015.6-6.2l128-127.9c4.4-4.5%206.7-10.8%206.7-17.7z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: contain; /* Змінено на contain для кращого масштабування */
+        }
+
+        .custom-select-options {
+            position: absolute;
+            top: 100%; /* Розміщуємо під селектором */
+            left: 0;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 8px; /* Закруглені кути */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* Більш виражена тінь для меню */
+            max-height: 200px;
+            overflow-y: auto;
+            display: none; /* Приховано за замовчуванням */
+            flex-direction: column;
+            gap: 4px; /* Відстань між кнопками */
+            padding: 8px;
+            min-width: 100%; /* Мінімальна ширина як у батьківського селектора */
+            max-width: 600px; /* Максимальна ширина */
+            box-sizing: border-box; /* Враховуємо padding у ширині */
+        }
+
+        .custom-select-options.open {
+            display: flex;
+        }
+
+        .custom-select-option {
+            padding: 10px 12px;
+            background-color: #f0f0f0; /* Фон кнопки */
+            border: none;
+            border-radius: 6px; /* Закруглені кути кнопок */
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 0.95rem;
+            color: #333;
+            white-space: nowrap; /* Запобігаємо перенесенню тексту */
+            overflow: hidden; /* Обрізаємо, якщо текст занадто довгий */
+            text-overflow: ellipsis; /* Додаємо три крапки */
+        }
+
+        .custom-select-option:hover {
+            background-color: #e0e0e0; /* Сірий при наведенні */
+        }
+
+        .custom-select-option.selected {
+            background-color: #3b82f6; /* Синій фон для вибраного елемента */
+            color: #ffffff; /* Білий текст для вибраного елемента */
+            font-weight: 500;
+        }
+
+        /* Прихований нативний select */
+        #drawing-selector {
+            display: none;
         }
     </style>
 </head>
@@ -262,17 +329,26 @@
 
     <div id="button-controls">
         <button id="zoomInBtn" class="zoom-button" aria-label="Збільшити масштаб">
-            <img src="https://img.icons8.com/android/48/000000/plus.png" alt="Збільшити">
+            <img src="https://img.icons8.com/android/48/737373/plus.png" alt="Збільшити масштаб">
         </button>
         <button id="zoomOutBtn" class="zoom-button" aria-label="Зменшити масштаб">
-            <img src="https://img.icons8.com/material-outlined/48/000000/minus.png" alt="Зменшити">
+            <img src="https://img.icons8.com/material-sharp/48/737373/minus.png" alt="Зменшити масштаб">
         </button>
         <button id="homeBtn" class="zoom-button" aria-label="Повернути початкове положення">
-            <img src="https://img.icons8.com/material-outlined/48/737373/collapse.png" alt="Додому"> </button>
+            <img src="https://img.icons8.com/material-outlined/48/737373/collapse.png" alt="Повернути початкове положення">
+        </button>
+        <button id="fitButton" class="zoom-button" aria-label="Припасувати контент">
+            <img src="https://img.icons8.com/material/48/737373/merge-horizontal--v1.png" alt="Припасувати контент">
+        </button>
     </div>
 
     <div id="drawing-selector-container">
-        <label for="drawing-selector">Виберіть план:</label>
+        <div class="custom-select-display" tabindex="0">
+            <span class="selected-value">Виберіть план</span>
+            <div class="arrow"></div>
+        </div>
+        <div class="custom-select-options">
+            </div>
         <select id="drawing-selector">
             </select>
     </div>
@@ -288,8 +364,14 @@
         const loadingSpinner = document.getElementById('loading-spinner'); // Спінер завантаження
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const homeBtn = document.getElementById('homeBtn'); // Нова кнопка "Додому"
-        const drawingSelector = document.getElementById('drawing-selector'); // Випадаючий список
+        const homeBtn = document.getElementById('homeBtn'); // Кнопка "Додому"
+        const fitButton = document.getElementById('fitButton'); // Змінено ID кнопки "Припасувати"
+        const drawingSelector = document.getElementById('drawing-selector'); // Випадаючий список (прихований)
+
+        // Кастомні елементи селектора
+        const customSelectDisplay = document.querySelector('.custom-select-display');
+        const customSelectOptions = document.querySelector('.custom-select-options');
+        const selectedValueSpan = document.querySelector('.selected-value');
 
         let imageUrl = 'https://wgis.project.co.ua/nadpilna/proj.jpg'; // URL зображення (буде оновлюватися)
         const configUrl = 'https://wgis.project.co.ua/nadpilna/config.json'; // URL файлу конфігурації
@@ -298,8 +380,8 @@
         let currentZoomLevel = 1.0; // Початковий рівень масштабування
         const fixedMinZoomLevel = 0.08; // Мінімальний рівень масштабування, щоб не зменшувати надто сильно
         const maxZoomLevel = 2.0; // Максимальний рівень масштабування до 200%
-        const zoomStep = 0.25; // Крок зміни масштабу для кнопок
-        const mouseZoomFactor = 1.03; // Коефіцієнт зуму для коліщатка миші (Змінено на 1.03)
+        const buttonZoomFactor = 1.5; // Змінено: Сильно збільшений коефіцієнт зуму для кнопок
+        const mouseZoomFactor = 1.02; // Коефіцієнт зуму для коліщатка миші
 
         let tileData = []; // Масив для зберігання даних про кожну плитку
         let imgGlobal = null; // Зберігаємо зображення після завантаження, щоб не завантажувати його знову
@@ -450,7 +532,11 @@
                 // Приховуємо фоновий canvas завантаження та спінер
                 loadingBackgroundCanvas.classList.add('hide-loading');
                 loadingSpinner.classList.add('hidden');
-                // Видимість основного контенту (плиток/фону низької роздільної здатності) буде встановлена в applyTransform
+                // Видимість основного контенту ( плиток/фону низької роздільної здатності) буде встановлена в applyTransform
+
+                // Оновлюємо функціонал кнопки "Припасувати" залежно від орієнтації зображення
+                updateFitButtonFunctionality();
+                updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
             };
 
             img.onerror = () => {
@@ -496,6 +582,7 @@
 
             renderTiles(img); // Рендеримо плитки з новим масштабом
             applyTransform(currentZoomLevel, currentPanX, currentPanY); // Застосовуємо зум та панорамування, що також керує видимістю
+            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
         }
 
 
@@ -658,11 +745,23 @@
             let contentCenterX, contentCenterY;
 
             if (zoomCenterX !== null && zoomCenterY !== null) {
-                // Масштабування навколо конкретної точки (курсор миші або центр pinch-жесту)
+                // Це зум мишкою або pinch-to-zoom
+                // Пришвидшуємо анімацію для цього кроку
+                gridWrapper.style.transition = 'transform 0.05s ease-out, opacity 0.05s ease-in-out';
+                backgroundCanvas.style.transition = 'transform 0.05s ease-out, opacity 0.05s ease-in-out';
+                lowResBackgroundCanvas.style.transition = 'transform 0.05s ease-out, opacity 0.05s ease-in-out';
+                midResBackgroundCanvas.style.transition = 'transform 0.05s ease-out, opacity 0.05s ease-in-out';
+
                 // Перетворюємо координати області перегляду в координати вмісту до нового масштабу
                 contentCenterX = (zoomCenterX - currentPanX) / oldZoom;
                 contentCenterY = (zoomCenterY - currentPanY) / oldZoom;
             } else {
+                // Це зум кнопками або інший тип, повертаємо стандартну анімацію
+                gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+                backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+                lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+                midResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+
                 // Масштабування навколо центру області перегляду (для кнопок)
                 contentCenterX = (viewportWidth / 2 - currentPanX) / oldZoom;
                 contentCenterY = (viewportHeight / 2 - currentPanY) / oldZoom;
@@ -687,24 +786,214 @@
                     }
                 });
             }
+            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
+            updateFitButtonFunctionality(); // Оновлюємо функціонал кнопки "Припасувати"
+            updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
+        }
+
+        // Функція для оновлення стану кнопок зуму
+        function updateZoomButtonStates() {
+            if (currentZoomLevel <= fixedMinZoomLevel) {
+                zoomOutBtn.classList.add('disabled');
+                zoomOutBtn.disabled = true;
+            } else {
+                zoomOutBtn.classList.remove('disabled');
+                zoomOutBtn.disabled = false;
+            }
+
+            if (currentZoomLevel >= maxZoomLevel) {
+                zoomInBtn.classList.add('disabled');
+                zoomInBtn.disabled = true;
+            } else {
+                zoomInBtn.classList.remove('disabled');
+                zoomInBtn.disabled = false;
+            }
         }
 
         // Функція для повернення до початкового положення та розміру (zoom to fit)
         function resetView() {
             if (imgGlobal) {
                 console.log('Кнопка "Додому" натиснута. Виконання "zoom to fit"...');
+                // Перед скиданням, переконаємося, що перехід повернено до стандартного
+                gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+                backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+                lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+                midResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
                 calculateInitialZoomAndPan(imgGlobal); // Ця функція вже виконує "zoom to fit" і викликає applyTransform
+                updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому" після скидання
+                updateFitButtonFunctionality(); // Оновлюємо іконку кнопки "Припасувати" після скидання
+            }
+        }
+
+        // Функція для припасування контенту по висоті
+        function fitContentToHeight() {
+            if (!imgGlobal) return;
+
+            const imgHeight = imgGlobal.height;
+            const rows = Math.ceil(imgHeight / baseTileSize);
+            const totalGridHeight = rows * baseTileSize;
+            const viewportHeight = canvasContainer.clientHeight;
+
+            let newZoom = viewportHeight / totalGridHeight;
+            newZoom = Math.max(fixedMinZoomLevel, Math.min(maxZoomLevel, newZoom));
+
+            // Обчислюємо нове панорамування, щоб контент був по центру
+            const imgWidth = imgGlobal.width;
+            const cols = Math.ceil(imgWidth / baseTileSize);
+            const totalGridWidth = cols * baseTileSize;
+
+            const currentContentWidth = totalGridWidth * newZoom;
+            const currentContentHeight = totalGridHeight * newZoom;
+
+            currentPanX = (canvasContainer.clientWidth - currentContentWidth) / 2; // Центрування по горизонталі
+            currentPanY = (viewportHeight - currentContentHeight) / 2; // Центрування по вертикалі
+            currentZoomLevel = newZoom;
+
+            // Перед застосуванням, переконаємося, що перехід повернено до стандартного
+            gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            midResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+
+            applyTransform(currentZoomLevel, currentPanX, currentPanY);
+            renderTiles(imgGlobal);
+            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
+            updateFitButtonFunctionality(); // Оновлюємо іконку кнопки "Припасувати"
+            updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
+            console.log('Контент припасовано по висоті.');
+        }
+
+        // Функція для припасування контенту по ширині
+        function fitContentToWidth() {
+            if (!imgGlobal) return;
+
+            const imgWidth = imgGlobal.width;
+            const cols = Math.ceil(imgWidth / baseTileSize);
+            const totalGridWidth = cols * baseTileSize;
+            const viewportWidth = canvasContainer.clientWidth;
+
+            let newZoom = viewportWidth / totalGridWidth;
+            newZoom = Math.max(fixedMinZoomLevel, Math.min(maxZoomLevel, newZoom));
+
+            // Обчислюємо нове панорамування, щоб контент був по центру
+            const imgHeight = imgGlobal.height;
+            const rows = Math.ceil(imgHeight / baseTileSize);
+            const totalGridHeight = rows * baseTileSize;
+
+            const currentContentWidth = totalGridWidth * newZoom;
+            const currentContentHeight = totalGridHeight * newZoom;
+
+            currentPanX = (viewportWidth - currentContentWidth) / 2; // Центрування по горизонталі
+            currentPanY = (canvasContainer.clientHeight - currentContentHeight) / 2; // Центрування по вертикалі
+            currentZoomLevel = newZoom;
+
+            // Перед застосуванням, переконаємося, що перехід повернено до стандартного
+            gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            midResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+
+            applyTransform(currentZoomLevel, currentPanX, currentPanY);
+            renderTiles(imgGlobal);
+            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
+            updateFitButtonFunctionality(); // Оновлюємо іконку кнопки "Припасувати"
+            updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
+            console.log('Контент припасовано по ширині.');
+        }
+
+        // Функція для оновлення функціоналу кнопки "Припасувати" та її іконки
+        function updateFitButtonFunctionality() {
+            if (!imgGlobal) return;
+
+            const fitButtonImg = fitButton.querySelector('img');
+            const imgWidth = imgGlobal.width;
+            const imgHeight = imgGlobal.height;
+
+            const cols = Math.ceil(imgWidth / baseTileSize);
+            const rows = Math.ceil(imgHeight / baseTileSize);
+
+            const totalGridWidth = cols * baseTileSize;
+            const totalGridHeight = rows * baseTileSize;
+
+            const viewportWidth = canvasContainer.clientWidth;
+            const viewportHeight = canvasContainer.clientHeight;
+
+            const currentContentWidth = totalGridWidth * currentZoomLevel;
+            const currentContentHeight = totalGridHeight * currentZoomLevel;
+
+            // Визначаємо, чи вміст більший за контейнер з деяким допуском
+            const isContentTallerThanViewport = currentContentHeight > viewportHeight + 5; // +5px buffer
+            const isContentWiderThanViewport = currentContentWidth > viewportWidth + 5; // +5px buffer
+
+            if (imgHeight > imgWidth) { // Portrait orientation: default fit by width
+                fitButton.onclick = fitContentToWidth;
+                if (isContentTallerThanViewport) { // If content is taller than viewport, suggest splitting horizontally (expanding height)
+                    fitButtonImg.src = 'https://img.icons8.com/material-outlined/48/737373/split-horizontal.png';
+                    fitButton.setAttribute('aria-label', 'Розгорнути по висоті'); // Expanding height
+                    fitButtonImg.alt = 'Розгорнути по висоті';
+                } else { // Default merge-vertical for portrait when not taller
+                    fitButtonImg.src = 'https://img.icons8.com/material-sharp/48/737373/merge-vertical.png';
+                    fitButton.setAttribute('aria-label', 'Припасувати по ширині');
+                    fitButtonImg.alt = 'Припасувати по ширині';
+                }
+            } else { // Landscape or square orientation: default fit by height
+                fitButton.onclick = fitContentToHeight;
+                if (isContentWiderThanViewport) { // If content is wider than viewport, suggest splitting vertically (expanding width)
+                    fitButtonImg.src = 'https://img.icons8.com/material-two-tone/48/737373/split-vertical.png';
+                    fitButton.setAttribute('aria-label', 'Розгорнути по ширині'); // Expanding width
+                    fitButtonImg.alt = 'Розгорнути по ширині';
+                } else { // Default merge-horizontal for landscape/square when not wider
+                    fitButtonImg.src = 'https://img.icons8.com/material/48/737373/merge-horizontal--v1.png';
+                    fitButton.setAttribute('aria-label', 'Припасувати по висоті');
+                    fitButtonImg.alt = 'Припасувати по висоті';
+                }
+            }
+        }
+
+        // Функція для оновлення іконки кнопки "Додому"
+        function updateHomeButtonIcon() {
+            if (!imgGlobal) return;
+
+            const homeButtonImg = homeBtn.querySelector('img');
+            const imgWidth = imgGlobal.width;
+            const imgHeight = imgGlobal.height;
+
+            const cols = Math.ceil(imgWidth / baseTileSize);
+            const rows = Math.ceil(imgHeight / baseTileSize);
+
+            const totalGridWidth = cols * baseTileSize;
+            const totalGridHeight = rows * baseTileSize;
+
+            const viewportWidth = canvasContainer.clientWidth;
+            const viewportHeight = canvasContainer.clientHeight;
+
+            const currentContentWidth = totalGridWidth * currentZoomLevel;
+            const currentContentHeight = totalGridHeight * currentZoomLevel;
+
+            // Перевіряємо, чи вміст менший за контейнер з деяким допуском
+            const isContentSmallerThanViewport = currentContentWidth < viewportWidth - 5 && currentContentHeight < viewportHeight - 5; // -5px допуск
+
+            if (isContentSmallerThanViewport) {
+                homeButtonImg.src = 'https://img.icons8.com/material/48/737373/expand--v1.png';
+                homeBtn.setAttribute('aria-label', 'Розгорнути до початкового розміру');
+                homeButtonImg.alt = 'Розгорнути до початкового розміру';
+            } else {
+                homeButtonImg.src = 'https://img.icons8.com/material-outlined/48/737373/collapse.png';
+                homeBtn.setAttribute('aria-label', 'Повернути початкове положення');
+                homeButtonImg.alt = 'Повернути початкове положення';
             }
         }
 
         // Обробники подій для збільшення зуму (повернуто до кліку)
         zoomInBtn.addEventListener('click', () => {
-            handleZoom(currentZoomLevel + zoomStep);
+            if (zoomInBtn.disabled) return; // Запобігаємо дії, якщо кнопка неактивна
+            handleZoom(currentZoomLevel * buttonZoomFactor); // Змінено на динамічний крок
         });
 
         // Обробники подій для зменшення зуму (повернуто до кліку)
         zoomOutBtn.addEventListener('click', () => {
-            handleZoom(currentZoomLevel - zoomStep);
+            if (zoomOutBtn.disabled) return; // Запобігаємо дії, якщо кнопка неактивна
+            handleZoom(currentZoomLevel / buttonZoomFactor); // Змінено на динамічний крок
         });
 
         // Додаємо обробник подій для кнопки "Додому"
@@ -713,6 +1002,8 @@
         // Обробник подій для зуму коліщатком миші
         canvasContainer.addEventListener('wheel', (e) => {
             e.preventDefault(); // Запобігаємо прокручуванню сторінки
+
+            if (isDragging) return; // Заборонити зум мишкою під час перетягування
 
             const delta = Math.sign(e.deltaY); // -1 для збільшення, 1 для зменшення
             let newZoom;
@@ -735,21 +1026,39 @@
         gridWrapper.addEventListener('transitionend', (e) => {
             if (e.propertyName === 'transform') {
                 isZooming = false;
+                // Після завершення анімації, повертаємо стандартний перехід
+                gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            }
+            if (e.propertyName === 'opacity') {
+                // Також повертаємо стандартний перехід для opacity, якщо він був змінений
+                gridWrapper.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             }
         });
         backgroundCanvas.addEventListener('transitionend', (e) => {
             if (e.propertyName === 'transform') {
                 isZooming = false;
+                backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            }
+            if (e.propertyName === 'opacity') {
+                backgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             }
         });
         lowResBackgroundCanvas.addEventListener('transitionend', (e) => {
             if (e.propertyName === 'transform') {
                 isZooming = false;
+                lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            }
+            if (e.propertyName === 'opacity') {
+                lowResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             }
         });
         midResBackgroundCanvas.addEventListener('transitionend', (e) => {
             if (e.propertyName === 'transform') {
                 isZooming = false;
+                midResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
+            }
+            if (e.propertyName === 'opacity') {
+                midResBackgroundCanvas.style.transition = 'transform 0.3s ease-out, opacity 0.5s ease-in-out';
             }
         });
 
@@ -761,20 +1070,22 @@
             }
             isDragging = true;
             canvasContainer.classList.add('dragging');
+            // Додаємо клас, який вимикає переходи
+            gridWrapper.classList.add('no-transition');
+            backgroundCanvas.classList.add('no-transition');
+            lowResBackgroundCanvas.classList.add('no-transition');
+            midResBackgroundCanvas.classList.add('no-transition');
+
             startX = e.clientX;
             startY = e.clientY;
             initialPanX = currentPanX; // Зберігаємо поточну позицію gridWrapper
             initialPanY = currentPanY;
-            // Вимикаємо перехід під час перетягування, щоб уникнути затримок
-            gridWrapper.style.transition = 'none'; 
-            backgroundCanvas.style.transition = 'none'; 
-            lowResBackgroundCanvas.style.transition = 'none'; 
-            midResBackgroundCanvas.style.transition = 'none'; 
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
             e.preventDefault();
+            
             const dx = e.clientX - startX;
             const dy = e.clientY - startY;
 
@@ -786,11 +1097,11 @@
         document.addEventListener('mouseup', () => {
             isDragging = false;
             canvasContainer.classList.remove('dragging');
-            // Повертаємо CSS-визначений перехід після завершення перетягування
-            gridWrapper.style.transition = ''; 
-            backgroundCanvas.style.transition = ''; 
-            lowResBackgroundCanvas.style.transition = ''; 
-            midResBackgroundCanvas.style.transition = ''; 
+            // Видаляємо клас, який вимикав переходи
+            gridWrapper.classList.remove('no-transition');
+            backgroundCanvas.classList.remove('no-transition');
+            lowResBackgroundCanvas.classList.remove('no-transition');
+            midResBackgroundCanvas.classList.remove('no-transition');
             // Після завершення перетягування, перемальовуємо видимі плитки
             if (observer && imgGlobal && currentZoomLevel >= midResThreshold) {
                 gridWrapper.querySelectorAll('canvas').forEach(canvas => {
@@ -817,6 +1128,12 @@
                 isPinching = true;
                 e.preventDefault(); // Запобігаємо стандартній поведінці браузера
 
+                // Додаємо клас, який вимикає переходи
+                gridWrapper.classList.add('no-transition');
+                backgroundCanvas.classList.add('no-transition');
+                lowResBackgroundCanvas.classList.add('no-transition');
+                midResBackgroundCanvas.classList.add('no-transition');
+
                 const touch1 = e.touches[0];
                 const touch2 = e.touches[1];
 
@@ -827,21 +1144,19 @@
                 initialPanY = currentPanY;
                 initialZoomLevel = currentZoomLevel;
 
-                gridWrapper.style.transition = 'none'; // Вимикаємо перехід під час pinch
-                backgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для фонового canvas
-                lowResBackgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для low-res canvas
-                midResBackgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для mid-res canvas
             } else if (e.touches.length === 1) {
                 isDragging = true;
                 canvasContainer.classList.add('dragging');
+                // Додаємо клас, який вимикає переходи
+                gridWrapper.classList.add('no-transition');
+                backgroundCanvas.classList.add('no-transition');
+                lowResBackgroundCanvas.classList.add('no-transition');
+                midResBackgroundCanvas.classList.add('no-transition');
+
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
                 initialPanX = currentPanX;
                 initialPanY = currentPanY;
-                gridWrapper.style.transition = 'none'; // Вимикаємо перехід під час перетягування
-                backgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для фонового canvas
-                lowResBackgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для low-res canvas
-                midResBackgroundCanvas.style.transition = 'none'; // Вимикаємо перехід для mid-res canvas
             }
         }, { passive: false });
 
@@ -890,9 +1205,12 @@
                         }
                     });
                 }
-
+                updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
+                updateFitButtonFunctionality(); // Оновлюємо функціонал кнопки "Припасувати"
+                updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
             } else if (isDragging && e.touches.length === 1) {
                 e.preventDefault();
+                
                 const dx = e.touches[0].clientX - startX;
                 const dy = e.touches[0].clientY - startY;
 
@@ -906,10 +1224,11 @@
             isDragging = false;
             isPinching = false;
             canvasContainer.classList.remove('dragging');
-            gridWrapper.style.transition = ''; // Повертаємося до CSS-визначеного переходу
-            backgroundCanvas.style.transition = ''; // Повертаємося до CSS-визначеного переходу
-            lowResBackgroundCanvas.style.transition = ''; // Повертаємося до CSS-визначеного переходу
-            midResBackgroundCanvas.style.transition = ''; // Повертаємося до CSS-визначеного переходу
+            // Видаляємо клас, який вимикав переходи
+            gridWrapper.classList.remove('no-transition');
+            backgroundCanvas.classList.remove('no-transition');
+            lowResBackgroundCanvas.classList.remove('no-transition');
+            midResBackgroundCanvas.classList.remove('no-transition');
             // Після завершення перетягування, перемальовуємо видимі плитки
             if (observer && imgGlobal && currentZoomLevel >= midResThreshold) {
                 gridWrapper.querySelectorAll('canvas').forEach(canvas => {
@@ -923,6 +1242,9 @@
                     }
                 });
             }
+            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
+            updateFitButtonFunctionality(); // Оновлюємо функціонал кнопки "Припасувати"
+            updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
         });
 
         // Функція для завантаження даних про креслення з config.json та заповнення випадаючого списку
@@ -931,16 +1253,52 @@
                 const response = await fetch(configUrl);
                 const config = await response.json();
                 if (config && config.drawings && Array.isArray(config.drawings)) {
-                    drawingSelector.innerHTML = ''; // Очищаємо існуючі опції
-                    config.drawings.forEach(drawing => {
+                    // Очищаємо існуючі опції в прихованому select
+                    drawingSelector.innerHTML = ''; 
+                    // Очищаємо кастомні опції
+                    customSelectOptions.innerHTML = '';
+
+                    config.drawings.forEach((drawing, index) => {
+                        // Додаємо опцію до прихованого select
                         const option = document.createElement('option');
                         option.value = drawing.url;
                         option.textContent = drawing.name;
                         drawingSelector.appendChild(option);
+
+                        // Створюємо кнопку для кастомного меню
+                        const customOptionButton = document.createElement('button');
+                        customOptionButton.classList.add('custom-select-option');
+                        customOptionButton.textContent = drawing.name;
+                        customOptionButton.dataset.value = drawing.url;
+                        customOptionButton.dataset.index = index; // Зберігаємо індекс для синхронізації
+
+                        customOptionButton.addEventListener('click', () => {
+                            // Оновлюємо вибране значення в прихованому select
+                            drawingSelector.value = drawing.url;
+                            // Оновлюємо відображуваний текст
+                            selectedValueSpan.textContent = drawing.name;
+                            // Закриваємо меню
+                            customSelectOptions.classList.remove('open');
+                            customSelectDisplay.classList.remove('open');
+                            // Викликаємо зміну зображення
+                            imageUrl = drawing.url;
+                            processImage();
+
+                            // Видаляємо клас 'selected' з усіх кнопок
+                            document.querySelectorAll('.custom-select-option').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            // Додаємо клас 'selected' до вибраної кнопки
+                            customOptionButton.classList.add('selected');
+                        });
+                        customSelectOptions.appendChild(customOptionButton);
                     });
+
                     // Встановлюємо початкове зображення на перше з конфігурації, якщо є
                     if (config.drawings.length > 0) {
                         imageUrl = config.drawings[0].url;
+                        selectedValueSpan.textContent = config.drawings[0].name; // Встановлюємо початковий текст
+                        customSelectOptions.children[0].classList.add('selected'); // Позначаємо першу кнопку як вибрану
                         processImage(); // Завантажуємо перше зображення
                     }
                 }
@@ -949,13 +1307,29 @@
             }
         }
 
-        // Обробник подій для зміни вибору у випадаючому списку
-        drawingSelector.addEventListener('change', (e) => {
-            imageUrl = e.target.value; // Оновлюємо URL зображення
-            processImage(); // Перезавантажуємо зображення
+        // Обробник подій для відкриття/закриття кастомного селектора
+        customSelectDisplay.addEventListener('click', () => {
+            customSelectOptions.classList.toggle('open');
+            customSelectDisplay.classList.toggle('open');
         });
 
-        // Функція для обробки зміни розміру вікна з умовною логікою масштабування
+        // Закриття кастомного селектора при кліку поза ним
+        document.addEventListener('click', (e) => {
+            if (!drawingSelector.parentNode.contains(e.target) && customSelectOptions.classList.contains('open')) {
+                customSelectOptions.classList.remove('open');
+                customSelectDisplay.classList.remove('open');
+            }
+        });
+
+
+        // Обробник подій для зміни вибору у випадаючому списку (для прихованого select, якщо він все ще потрібен для інших цілей)
+        drawingSelector.addEventListener('change', (e) => {
+            // Цей обробник може бути видалений, якщо вся логіка перенесена на кастомний селектор
+            // imageUrl = e.target.value; // Оновлюємо URL зображення
+            // processImage(); // Перезавантажуємо зображення
+        });
+
+        // Функція для обробки зміни розміру вікна без зміни рівня масштабування
         function handleResizeZoom() {
             if (!imgGlobal) return;
 
@@ -971,42 +1345,18 @@
             const viewportWidth = canvasContainer.clientWidth;
             const viewportHeight = canvasContainer.clientHeight;
 
-            let fitScaleX = viewportWidth / totalGridWidth;
-            let fitScaleY = viewportHeight / totalGridHeight;
-            let calculatedMinZoom = Math.min(fitScaleX, fitScaleY);
+            // Просто перецентровуємо вміст на основі поточного рівня масштабування
+            const currentContentWidth = totalGridWidth * currentZoomLevel;
+            const currentContentHeight = totalGridHeight * currentZoomLevel;
 
-            // Переконуємося, що calculatedMinZoom знаходиться в допустимих межах
-            calculatedMinZoom = Math.max(fixedMinZoomLevel, calculatedMinZoom);
-            calculatedMinZoom = Math.min(calculatedMinZoom, maxZoomLevel);
-
-            const tolerance = 0.01; // 1% похибка для "точно відповідає"
-
-            // Очищаємо будь-який існуючий таймер, щоб запобігти багаторазовим викликам, якщо розмір швидко змінюється
-            if (resizeZoomTimeout) {
-                clearTimeout(resizeZoomTimeout);
-                resizeZoomTimeout = null;
-            }
-
-            // Перевіряємо, чи поточний рівень масштабування є станом "zoom to fit" (в межах похибки)
-            if (Math.abs(currentZoomLevel - calculatedMinZoom) < tolerance) {
-                // Якщо це стан "zoom to fit", застосовуємо відкладений анімований zoom to fit
-                isZooming = true; // Вказуємо, що починається анімація масштабування
-                resizeZoomTimeout = setTimeout(() => {
-                    calculateInitialZoomAndPan(imgGlobal); // Це застосує zoom to fit з анімацією
-                    resizeZoomTimeout = null; // Очищаємо ID таймера
-                }, 1000); // Затримка 1 секунда
-            } else {
-                // Якщо це НЕ стан "zoom to fit" (користувач вручну збільшив/зменшив масштаб),
-                // просто перецентровуємо поточний вигляд без зміни рівня масштабування.
-                // Нам потрібно перерахувати панорамування на основі поточного масштабу та нового розміру області перегляду.
-                const currentContentWidth = totalGridWidth * currentZoomLevel;
-                const currentContentHeight = totalGridHeight * currentZoomLevel;
-
-                currentPanX = (viewportWidth - currentContentWidth) / 2;
-                currentPanY = (viewportHeight - currentContentHeight) / 2;
-                applyTransform(currentZoomLevel, currentPanX, currentPanY);
-                renderTiles(imgGlobal); // Перемальовуємо видимі плитки, якщо потрібно (наприклад, якщо з'являються нові області)
-            }
+            currentPanX = (viewportWidth - currentContentWidth) / 2;
+            currentPanY = (viewportHeight - currentContentHeight) / 2;
+            
+            applyTransform(currentZoomLevel, currentPanX, currentPanY);
+            renderTiles(imgGlobal); // Перемальовуємо видимі плитки, якщо потрібно
+            updateZoomButtonStates(); // Оновлюємо стан кнопок зуму
+            updateFitButtonFunctionality(); // Оновлюємо функціонал кнопки "Припасувати"
+            updateHomeButtonIcon(); // Оновлюємо іконку кнопки "Додому"
         }
 
 
