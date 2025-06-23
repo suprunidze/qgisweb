@@ -30,7 +30,39 @@
       "country": null,
       "deleted_at": null,
       "calculated": null,
-      "location_oblast_uid": 153
+      "location_oblast_uid": 150
+    },
+    {
+      "id": 121676,
+      "location_title": "Золотоніський район",
+      "location_type": "raion",
+      "started_at": "2025-06-23T20:20:47.000Z",
+      "finished_at": null,
+      "updated_at": "2025-06-23T20:20:51.611Z",
+      "alert_type": "air_raid",
+      "location_oblast": "Черкаська область",
+      "location_uid": "159",
+      "notes": null,
+      "country": null,
+      "deleted_at": null,
+      "calculated": null,
+      "location_oblast_uid": 151
+    },
+    {
+      "id": 121676,
+      "location_title": "Золотоніський район",
+      "location_type": "raion",
+      "started_at": "2025-06-23T20:20:47.000Z",
+      "finished_at": null,
+      "updated_at": "2025-06-23T20:20:51.611Z",
+      "alert_type": "air_raid",
+      "location_oblast": "Черкаська область",
+      "location_uid": "159",
+      "notes": null,
+      "country": null,
+      "deleted_at": null,
+      "calculated": null,
+      "location_oblast_uid": 152
     },
     {
       "id": 121677,
@@ -41,12 +73,12 @@
       "updated_at": "2025-06-23T20:20:56.661Z",
       "alert_type": "air_raid",
       "location_oblast": "Черкаська область",
-      "location_uid": "158",
+      "location_uid": "153",
       "notes": null,
       "country": null,
       "deleted_at": null,
       "calculated": null,
-      "location_oblast_uid": 152
+      "location_oblast_uid": 153
     }
   ],
   "meta": {
