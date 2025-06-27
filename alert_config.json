@@ -7,7 +7,7 @@
     "lastUpdate": "2022-04-04T16:45:00Z",
     "activeAlerts": [
       {
-        "regionId": "16",
+        "regionId": "24",
         "regionType": "State",
         "type": "AIR",
         "lastUpdate": "2022-04-04T16:45:00Z"
@@ -30,14 +30,14 @@
     ]
   },
   {
-    "regionId": "151",
+    "regionId": "159",
     "regionType": "Community",
     "regionName": "Липецька територіальна громада",
     "regionEngName": "Lypetska community",
     "lastUpdate": "2024-05-12T08:37:29Z",
     "activeAlerts": [
       {
-        "regionId": "151",
+        "regionId": "159",
         "regionType": "Community",
         "type": "AIR",
         "lastUpdate": "2024-05-12T08:37:29Z"
@@ -45,26 +45,26 @@
     ]
   },
   {
-    "regionId": "150",
+    "regionId": "159",
     "regionType": "Community",
     "regionName": "Вовчанська територіальна громада",
     "regionEngName": "Vovchanska community",
     "lastUpdate": "2024-05-20T09:31:41Z",
     "activeAlerts": [
       {
-        "regionId": "150",
+        "regionId": "159",
         "regionType": "Community",
         "type": "AIR",
         "lastUpdate": "2024-05-12T08:37:57Z"
       },
       {
-        "regionId": "150",
+        "regionId": "159",
         "regionType": "Community",
         "type": "ARTILLERY",
         "lastUpdate": "2024-05-20T09:31:37Z"
       },
       {
-        "regionId": "150",
+        "regionId": "159",
         "regionType": "Community",
         "type": "URBAN_FIGHTS",
         "lastUpdate": "2024-05-20T09:31:41Z"
