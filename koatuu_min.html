@@ -414,16 +414,13 @@
         let scrollToTopBtn;
 
         // Initialize Web Worker
-        // !!! ВАЖЛИВО: Якщо файл koatuu_worker.js не знаходиться в тому ж домені, що й index.html,
-        // виникне помилка безпеки (CORS). Для розгортання переконайтеся, що вони розміщені разом
-        // або налаштуйте заголовки CORS на сервері, що надає koatuu_worker.js.
         const koatuuWorker = new Worker('koatuu_worker.js');
 
         /**
          * Debounce function to limit how often a function is called.
          * @param {Function} func The function to debounce.
          * @param {number} delay The delay in milliseconds.
-         * @returns {Function} The debounced function with a cancel method. 
+         * @returns {Function} The debounced function with a cancel method.
          */
         function debounce(func, delay) {
             let timeout;
