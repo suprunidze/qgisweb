@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>КОАТУУ Пошук</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for Montserrat font */
+        body {
+            font-family: 'Montserrat', sans-serif;
+            /* Added to prevent scrollbar flickering during transitions */
+            overflow-y: auto; 
+        }
+        body.no-scroll {
+            overflow-y: hidden;
+            height: 100vh; /* Force body height to prevent scrollbar during transition */
+        }
+
+        /* Hide scrollbar for suggestions, but allow scrolling */
+        .suggestions-container::-webkit-scrollbar {
+            display: none; /* For Chrome, Safari, Opera */
+        }
+        .suggestions-container {
+            -ms-overflow-style: none; /* For IE and Edge */
+            scrollbar-width: none; /* For Firefox */
+        }
+        /* Message box styling */
+        #messageBox {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffffff; /* White background for message box */
+            color: #1f2937; /* Dark text for general messages */
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #messageBox.show {
+            opacity: 1;
+        }
+        /* Specific text colors for message types - now all dark */
+        #messageBox.show.success {
+            /* color: #16a34a; Removed specific color, inheriting dark */
+        }
+        #messageBox.show.error {
+            /* color: #dc2626; Removed specific color, inheriting dark */
+        }
+
+
+        /* Loading spinner styling */
+        .loader {
+            border: 4px solid #e5e7eb; /* Darker light grey for spinner border */
+            border-top: 4px solid #1f2937; /* Darker blue/grey for spinner top border */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Loading overlay now fixed to viewport and dynamically sized */
+        #loadingOverlay {
+            position: fixed; /* Fixed to the viewport */
+            left: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20; /* Lower than searchFilterContainer (z-30) */
+        }
+        #loadingOverlay.hidden {
+            display: none;
+        }
+
+        /* Transition for collapsing/expanding search parameters container */
+        #searchParamsContainer {
+            max-height: 500px; /* Max height when expanded */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, margin-top 0.3s ease-out, margin-bottom 0.3s ease-out, padding-top 0.3s ease-out, padding-bottom 0.3s ease-out;
+            margin-top: 0.5rem; /* Reduced margin-top */
+            margin-bottom: 0.25rem; /* Reduced margin-bottom */
+            padding-top: 0.25rem; /* Reduced padding-top */
+            padding-bottom: 0.25rem; /* Reduced padding-bottom */
+        }
+        #searchParamsContainer.collapsed {
+            max-height: 0;
+            margin-top: 0; /* Remove top margin when collapsed */
+            margin-bottom: 0; /* Remove bottom margin when collapsed */
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+
+        /* Styling for the tree table rows */
+        .tree-table-row .toggle-icon {
+            width: 1rem; /* Fixed width for icon to prevent shifting */
+            text-align: center;
+            display: inline-block; /* Ensure it stays inline with text */
+            vertical-align: middle; /* Align with middle of text */
+        }
+        .tree-table-row .copy-button {
+            margin-left: auto; /* Push copy button to the right */
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.2s ease-in-out;
+            vertical-align: middle; /* Align with middle of text */
+        }
+        .tree-table-row:hover .copy-button {
+            opacity: 1; /* Show on hover */
+        }
+        .tree-table-row.selected {
+            background-color: #9ca3af; /* Darker grey for selected row */
+            color: #1f2937; /* Dark text for selected row */
+        }
+        /* Hover state for unselected rows */
+        .tree-table-row:not(.selected):hover {
+            background-color: #e5e7eb; /* Darker blue-50 for hover on unselected */
+        }
+        /* Hover state for selected rows - must be different */
+        .tree-table-row.selected:hover {
+            background-color: #88929e; /* Slightly darker grey for hover on selected */
+            color: #1f2937; /* Dark text for hover on selected */
+        }
+
+        /* Semi-transparent header with blur */
+        #tableHeadersContainer {
+            background-color: rgba(229, 231, 235, 0.8); /* bg-gray-200 with 80% opacity */
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px); /* For Safari support */
+            box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.1); /* Added subtle shadow to cover potential pixel gap */
+        }
+
+        /* Specific styles for table cells based on content requirements */
+        .koatuu-cell {
+            white-space: nowrap; /* Prevent wrapping for KOATUU cell */
+        }
+        .category-cell {
+            white-space: normal; /* Allow wrapping for category cell - changed */
+        }
+        /* Name cell allows wrapping by default (no nowrap) */
+
+        /* Sticky rows styles */
+        .sticky-row {
+            position: sticky;
+            z-index: 5; /* Below header, above other rows */
+            background-color: rgba(249, 250, 251, 0.95); /* bg-gray-50 with 95% opacity */
+            backdrop-filter: blur(3px); /* Added blur effect */
+            -webkit-backdrop-filter: blur(3px); /* For Safari support */
+            /* box-shadow: 0 1px 0 0 #4B5563; Removed from here */
+        }
+        /* New class for sticky row shadow */
+        .sticky-row-shadow {
+            box-shadow: 0 1px 0 0 #4B5563; /* Dark line at the bottom (gray-700) using box-shadow */
+        }
+
+        /* New rule to remove top border from tableBodyContainer */
+        #tableBodyContainer {
+            border-top: 0;
+            /* Custom scrollbar styles for tableBodyContainer */
+            scrollbar-width: auto; /* For Firefox */
+            scrollbar-color: #9ca3af #f3f4f6; /* Thumb color, Track color for Firefox */
+        }
+
+        /* For Webkit browsers (Chrome, Safari, Edge) */
+        #tableBodyContainer::-webkit-scrollbar {
+            width: 8px; /* Width of the vertical scrollbar */
+            height: 8px; /* Height of the horizontal scrollbar */
+        }
+
+        #tableBodyContainer::-webkit-scrollbar-track {
+            background: transparent; /* Make track transparent */
+        }
+
+        #tableBodyContainer::-webkit-scrollbar-thumb {
+            background-color: #9ca3af; /* Darker grey thumb */
+            border-radius: 10px;
+            border: 2px solid transparent; /* Transparent border to make it overlay */
+        }
+
+        #tableBodyContainer::-webkit-scrollbar-thumb:hover {
+            background-color: #6b7280; /* Even darker grey on hover */
+        }
+
+
+        /* Radio button styling */
+        .radio-button-container {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center text vertically and horizontally */
+            text-align: center; /* Ensure text is centered if it wraps */
+            padding: 0.5rem 0.75rem; /* Adjusted padding */
+            border-radius: 0.5rem; /* Rounded corners */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, outline-color 0.2s ease-in-out; /* Changed border-color to outline-color */
+            background-color: #ffffff; /* Always white background */
+            color: #4b5563; /* Default text color */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* medium font weight */
+            border: 1px solid #d1d5db; /* Default light gray border */
+            min-height: 2.5rem; /* Ensure consistent height (e.g., 40px) */
+            flex-grow: 1; /* Allow items to grow to fill space */
+            flex-basis: auto; /* Allow flexible sizing */
+        }
+
+        .radio-button-container:hover {
+            background-color: #f9fafb; /* Very light gray on hover, subtle */
+            border-color: #9ca3af; /* Slightly darker border on hover */
+        }
+
+        .radio-button-container.selected {
+            background-color: #ffffff; /* Still white when selected */
+            color: #1f2937; /* Darker text for selected */
+            border: 1px solid #d1d5db; /* Keep original 1px border */
+            outline: 2px solid #1f2937; /* Use outline for inner border */
+            outline-offset: -2px; /* Pull outline inside */
+            box-shadow: none; /* Ensure no shadow */
+        }
+
+        .radio-button-container.selected:hover {
+            background-color: #f9fafb; /* Keep subtle hover on selected */
+            outline-color: #1f2937; /* Keep dark outline on hover when selected */
+        }
+
+        /* Hide the actual radio input */
+        .radio-button-container input[type="radio"] {
+            display: none;
+        }
+
+        /* Style for highlighted suggestion item */
+        .suggestion-item.highlighted {
+            background-color: #d1d5db; /* gray-300 */
+        }
+        /* Hover for suggestion items */
+        .suggestion-item:hover {
+            background-color: #e5e7eb; /* gray-200 */
+        }
+
+        /* Scroll to top button styles */
+        #scrollToTopBtn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: #1f2937; /* Dark background */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+            z-index: 900; /* Ensure it's above other content but below message box */
+        }
+
+        #scrollToTopBtn.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #scrollToTopBtn:hover {
+            background-color: #374151; /* Slightly lighter dark on hover */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <div class="bg-white rounded-xl shadow-lg w-full flex flex-col relative">
+        <div id="searchFilterContainer" class="sticky top-0 bg-white z-30 pb-4 px-8 pt-8 rounded-t-xl shadow-md">
+            <div class="relative">
+                <label for="searchInput" class="block text-gray-700 text-sm font-medium mb-2">Пошук за КОАТУУ або назвою:</label>
+                <div class="relative flex items-center">
+                    <input type="text" id="searchInput" placeholder="Введіть запит (щонайменше 1 символ)..."
+                           class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-700 transition duration-200 ease-in-out pr-20">
+                    <button id="clearSearchButton" class="absolute right-10 p-2 text-gray-500 hover:text-red-600 focus:outline-none hidden">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <button id="searchButton" class="absolute right-0 p-2 bg-gray-800 text-white rounded-r-lg hover:bg-gray-900 focus:outline-none flex items-center justify-content-center h-full w-10">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <div id="suggestions" class="absolute z-100 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto suggestions-container hidden">
+                </div>
+            </div>
+
+            <div id="searchParamsContainer" class="collapsed"> <!-- Added 'collapsed' class -->
+                <label class="block text-gray-700 text-sm font-medium mb-2">Фільтр за адміністративно-територіальним рівнем:</label>
+                <div id="searchParamsRadios" class="flex gap-2 flex-wrap pb-1">
+                    <!-- Radio buttons will be populated here by JavaScript -->
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mt-2">
+                <div id="resultsCount" class="text-gray-600 text-sm"></div>
+                <div id="toggleControl" class="flex items-center cursor-pointer">
+                    <span id="paramsLabel" class="text-gray-700 text-sm mr-2">Параметри</span>
+                    <button id="toggleParamsButton" class="text-gray-700 hover:text-gray-900 focus:outline-none p-1 rounded-full">
+                        <i class="fas fa-chevron-down text-lg"></i> <!-- Changed to chevron-down -->
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="tableHeadersContainer" class="sticky bg-gray-200 z-10 px-8 py-2 shadow-sm" style="display: none;">
+            <div class="overflow-x-auto">
+                <table id="headerTable" class="divide-y divide-gray-200" style="table-layout: fixed;">
+                    <colgroup>
+                        <col> <col> <col> <col> <col id="header-scrollbar-col"> <!-- New col for scrollbar placeholder -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Назва</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Категорія</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">КОАТУУ</th>
+                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Дії</th>
+                            <th class="px-0 py-0 w-0"></th> <!-- New empty th for scrollbar placeholder -->
+                        </tr>
+                    </thead>
+                </table>
+            </div>
+        </div>
+
+        <div id="tableBodyContainer" class="flex-grow px-8 pb-8 bg-gray-50 rounded-b-xl border border-gray-200 relative" style="overflow-y: auto;">
+            <table id="bodyTable" class="divide-y divide-gray-200" style="table-layout: fixed;">
+                <colgroup>
+                    <col> <col> <col> <col> <col id="body-scrollbar-col"> <!-- New col for scrollbar placeholder -->
+                </colgroup>
+                <tbody>
+                </tbody>
+            </table>
+            <p id="initialResultMessage" class="text-gray-600 text-center p-4">Результати пошуку з'являться тут.</p>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="hidden">
+        <div class="loader"></div>
+    </div>
+
+    <div id="messageBox" class="hidden"></div>
+
+    <button id="scrollToTopBtn" class="hidden">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script type="module">
+        // Global variables (shared state and constants)
+        // Data processing logic moved to Web Worker.
+        // These global variables will now store results received from the worker.
+        let koatuuData = []; // Will be populated by worker for placeholder generation
+        let koatuuNodeMap = new Map(); // Map: nodeId -> nodeObject (from koatuuTree) - populated by worker results
+        let expandedNodeIds = new Set(); // Set to store IDs of manually expanded nodes (persists state across searches)
+        let highlightedSuggestionIndex = -1; // -1 means no suggestion is highlighted
+
+        const MIN_SEARCH_LENGTH = 2; // Minimum search query length
+
+        // Mapping for more descriptive parameter names (for column headers/tree display)
+        const paramNamesMap = {
+            "a": "Рівень 1 (АРК, Області, Міста спец. статусу)",
+            "b": "Рівень 2 (Міста обл. підп., Райони АРК/обл., Райони міст спец. статусу)",
+            "c": "Рівень 3 (Міста рай. підп., Райони міст обл. підп., СМТ, Сільські ради)",
+            "d": "Рівень 4 (Села, Селища)",
+            "categ": "Категорія",
+            "name": "Назва об'єкта"
+        };
+
+        // Mapping for category display names
+        const categoryDisplayMap = {
+            "О": "Область / АР Крим",
+            "К": "Місто зі спецстатусом",
+            "Р": "Район",
+            "Н": "Територіальна громада",
+            "М": "Місто",
+            "Т": "Селище міського типу",
+            "С": "Село",
+            "Х": "Селище",
+            "В": "Район у місті",
+            "": "" // Changed to empty string for "Не визначено"
+        };
+
+        // DOM element references (declared globally, assigned in DOMContentLoaded)
+        let searchInput;
+        let searchParamsRadiosDiv;
+        let suggestionsDiv;
+        let messageBox;
+        let loadingOverlay;
+        let resultsCountDiv;
+        let searchButton;
+        let clearSearchButton;
+        let toggleControl;
+        let toggleParamsButton;
+        let toggleParamsIcon;
+        let searchParamsContainer;
+        let paramsLabel;
+        let tableHeadersContainer; 
+        let headerTable; 
+        let bodyTable; 
+        let tableBodyContainer; 
+        let initialResultMessage;
+        let allRadio;
+        let scrollToTopBtn;
+
+        // Initialize Web Worker
+        // !!! ВАЖЛИВО: Якщо файл koatuu_worker.js не знаходиться в тому ж домені, що й index.html,
+        // виникне помилка безпеки (CORS). Для розгортання переконайтеся, що вони розміщені разом
+        // або налаштуйте заголовки CORS на сервері, що надає koatuu_worker.js.
+        const koatuuWorker = new Worker('koatuu_worker.js');
+
+        /**
+         * Debounce function to limit how often a function is called.
+         * @param {Function} func The function to debounce.
+         * @param {number} delay The delay in milliseconds.
+         * @returns {Function} The debounced function with a cancel method. 
+         */
+        function debounce(func, delay) {
+            let timeout;
+            const debounced = function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+            debounced.cancel = function() {
+                clearTimeout(timeout);
+            };
+            return debounced;
+        }
+
+        /**
+         * Displays a temporary message box with the given text.
+         * @param {string} message The message to display.
+         * @param {string} type 'success' or 'error' for styling.
+         */
+        function showMessageBox(message, type = 'success') {
+            messageBox.textContent = message;
+            messageBox.className = 'show'; 
+            // Set base class for styling
+            messageBox.classList.add(type); // Add 'success' or 'error' class
+
+            messageBox.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+                messageBox.classList.remove(type); // Remove type class when hiding
+                messageBox.classList.add('hidden');
+            }, 2000); 
+        }
+
+        /**
+         * Shows the loading overlay, dynamically positioning it below the search/filter container.
+         */
+        function showLoading() {
+            const searchFilterRect = searchFilterContainer.getBoundingClientRect();
+            loadingOverlay.style.top = `${searchFilterRect.bottom}px`; 
+            loadingOverlay.style.height = `calc(100vh - ${searchFilterRect.bottom}px)`; 
+            loadingOverlay.style.zIndex = '20'; // Explicitly set z-index here
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the loading overlay.
+         */
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        // Global to store calculated scrollbar width
+        let scrollbarWidth = 0;
+
+        /**
+         * Function to measure scrollbar width (only call once).
+         * @returns {number} The width of the scrollbar in pixels.
+         */
+        function getScrollbarWidth() {
+            if (scrollbarWidth === 0) { // Calculate only once
+                const outer = document.createElement('div');
+                outer.style.visibility = 'hidden';
+                outer.style.overflow = 'scroll'; // Force scrollbar
+                outer.style.msOverflowStyle = 'scrollbar'; // For IE/Edge
+                document.body.appendChild(outer);
+                const inner = document.createElement('div');
+                outer.appendChild(inner);
+                scrollbarWidth = (outer.offsetWidth - inner.offsetWidth);
+                outer.parentNode.removeChild(outer);
+                console.log('Ширина смуги прокрутки (currentScrollbarWidth):', scrollbarWidth, 'px'); // Log to console
+            }
+            return scrollbarWidth;
+        }
+
+        /**
+         * Updates the sticky top position for the search/filter container and sticky table rows.
+         * This ensures the header elements remain correctly positioned.
+         */
+        function updateStickyPositions() {
+            if (!loadingOverlay.classList.contains('hidden')) {
+                showLoading(); 
+            }
+
+            const searchFilterHeight = searchFilterContainer.offsetHeight;
+            const tableHeaderHeight = tableHeadersContainer.offsetHeight;
+
+            requestAnimationFrame(() => {
+                tableHeadersContainer.style.top = `${searchFilterHeight}px`;
+                tableBodyContainer.style.height = `calc(100vh - ${searchFilterHeight + tableHeaderHeight}px)`;
+
+                handleTableBodyScroll();
+                synchronizeColumnWidths(); // Call the synchronization function
+            });
+        }
+
+        /**
+         * Synchronizes the column widths between the header table and the body table.
+         * This function now handles the scrollbar placeholder column.
+         */
+        function synchronizeColumnWidths() {
+            const headerCols = headerTable.querySelectorAll('colgroup col');
+            const bodyCols = bodyTable.querySelectorAll('colgroup col');
+
+            const actionColumnWidth = 60; // Fixed width for action column
+            const categoryMinWidth = 150; // Fixed width for category column
+            const koatuuMinWidth = 120; // Fixed width for KOATUU column
+
+            // Set fixed widths for known columns
+            if (headerCols[3]) { // Дії
+                headerCols[3].style.width = `${actionColumnWidth}px`;
+                bodyCols[3].style.width = `${actionColumnWidth}px`;
+            }
+            if (headerCols[1]) { // Категорія
+                headerCols[1].style.width = `${categoryMinWidth}px`;
+                bodyCols[1].style.width = `${categoryMinWidth}px`;
+            }
+            if (headerCols[2]) { // КОАТУУ
+                headerCols[2].style.width = `${koatuuMinWidth}px`;
+                bodyCols[2].style.width = `${koatuuMinWidth}px`;
+            }
+
+            // The 'Назва' column (index 0) should take the remaining space
+            if (headerCols[0]) { // Назва
+                headerCols[0].style.width = 'auto'; // Let browser calculate
+                bodyCols[0].style.width = 'auto'; // Let browser calculate
+            }
+
+            // Handle the scrollbar placeholder column (index 4)
+            const currentScrollbarWidth = getScrollbarWidth();
+            const bodyScrollContainer = tableBodyContainer;
+            const isScrollbarActuallyVisible = bodyScrollContainer.scrollHeight > bodyScrollContainer.clientHeight;
+
+            if (headerCols[4] && bodyCols[4]) { // Ensure the new columns exist
+                if (isScrollbarActuallyVisible) {
+                    // Set width to triple scrollbar width as requested
+                    const emptyColumnWidth = currentScrollbarWidth; // Changed to 3x
+                    headerCols[4].style.width = `${emptyColumnWidth}px`;
+                    } else {
+                    headerCols[4].style.width = '0px';
+                    //bodyCols[4].style.width = '0px';
+                    }
+            }
+
+            // Ensure table width is 100% of its container
+            headerTable.style.width = '100%';
+            bodyTable.style.width = '100%';
+
+            // Synchronize scroll (existing logic)
+            const headerScrollContainer = tableHeadersContainer.querySelector('.overflow-x-auto');
+            if (bodyScrollContainer && headerScrollContainer) {
+                bodyScrollContainer.addEventListener('scroll', () => {
+                    headerScrollContainer.scrollLeft = bodyScrollContainer.scrollLeft;
+                });
+                headerScrollContainer.addEventListener('scroll', () => {
+                    bodyScrollContainer.scrollLeft = headerScrollContainer.scrollLeft;
+                });
+            }
+        }
+
+        /**
+         * Populates the search parameter radio buttons.
+         */
+        function populateSearchParamsRadios() {
+            // Since koatuuData is now loaded by the worker, we can't directly check its length here.
+            // This function will be called after the worker confirms data is loaded.
+            searchParamsRadiosDiv.innerHTML = ''; 
+
+            // Updated level keys for radio buttons
+            const levelKeys = ["all", "a", "b", "c", "d"];
+            const levelDisplayNames = {
+                "all": "Усі",
+                "a": paramNamesMap["a"],
+                "b": paramNamesMap["b"],
+                "c": paramNamesMap["c"],
+                "d": paramNamesMap["d"]
+            };
+
+            levelKeys.forEach(key => {
+                const radioContainer = document.createElement('label');
+                radioContainer.classList.add('radio-button-container');
+                
+                const radio = document.createElement('input'); 
+                radio.type = 'radio';
+                radio.id = `param-${key}`;
+                radio.name = 'searchParamRadio';
+                radio.value = key; 
+                radio.classList.add('hidden');
+
+                const labelText = document.createElement('span');
+                labelText.textContent = levelDisplayNames[key];
+                
+                radioContainer.appendChild(radio);
+                radioContainer.appendChild(labelText);
+                searchParamsRadiosDiv.appendChild(radioContainer); 
+
+                if (key === "all") {
+                    allRadio = radio;
+                    radio.checked = true;
+                    radioContainer.classList.add('selected');
+                }
+            });
+        }
+
+        /**
+         * Gets the currently selected search parameters (radio button).
+         * @returns {Array<string>} An array containing the selected parameter key, or empty if "all".
+         */
+        function getSelectedSearchParams() {
+            const checkedRadio = document.querySelector('#searchParamsRadios input[type="radio"]:checked');
+            if (checkedRadio && checkedRadio.value !== 'all') {
+                return [checkedRadio.value];
+            }
+            return [];
+        }
+
+        /**
+         * Copies the given text to the clipboard.
+         * @param {string} text The text to copy.
+         */
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; 
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showMessageBox('Скопійовано', 'success'); 
+            } catch (err) {
+                console.error('Не вдалося скопіювати текст: ', err);
+                showMessageBox('Помилка копіювання!', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        /**
+         * Returns the correct Ukrainian word for "record" based on the count.
+         * @param {number} count The number of records.
+         * @returns {string} The correct Ukrainian word ("запис", "записи", "записів").
+         */
+        function getRecordWord(count) {
+            if (count === 0) {
+                return "записів";
+            }
+            const lastDigit = count % 10;
+            const lastTwoDigits = count % 100;
+
+            if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+                return "записів";
+            }
+            if (lastDigit === 1) {
+                return "запис";
+            }
+            if (lastDigit >= 2 && lastDigit <= 4) {
+                return "записи";
+            }
+            return "записів";
+        }
+
+        /**
+         * Shows direct children rows of a given node.
+         * @param {string} nodeId The ID of the parent node whose children should be shown.
+         */
+        function showChildren(nodeId) {
+            const directChildrenRows = document.querySelectorAll(`tr[data-parent-id="${nodeId}"]`);
+            directChildrenRows.forEach(childRow => {
+                childRow.classList.remove('hidden');
+                const childNodeId = childRow.dataset.nodeId;
+                // If a child was previously expanded, ensure its icon is correct and its children are also shown
+                if (expandedNodeIds.has(childNodeId)) {
+                    const childToggleIcon = childRow.querySelector('.toggle-icon');
+                    if (childToggleIcon) {
+                        childToggleIcon.classList.remove('fa-chevron-right');
+                        childToggleIcon.classList.add('fa-chevron-down');
+                    }
+                    showChildren(childNodeId); // Recursively show its children if it was expanded
+                }
+            });
+        }
+
+        /**
+         * Hides direct children rows of a given node and recursively hides their descendants.
+         * @param {string} nodeId The ID of the parent node whose children should be hidden.
+         */
+        function hideChildren(nodeId) {
+            const directChildrenRows = document.querySelectorAll(`tr[data-parent-id="${nodeId}"]`);
+            directChildrenRows.forEach(childRow => {
+                childRow.classList.add('hidden');
+                const childNodeId = childRow.dataset.nodeId;
+                expandedNodeIds.delete(childNodeId); // Mark as collapsed
+                const childToggleIcon = childRow.querySelector('.toggle-icon');
+                if (childToggleIcon) {
+                    childToggleIcon.classList.remove('fa-chevron-down');
+                    childToggleIcon.classList.add('fa-chevron-right');
+                }
+                hideChildren(childNodeId); // Recursively hide its children
+            });
+        }
+
+        /**
+         * Toggles the visibility of a node's children rows in the table.
+         * @param {HTMLElement} targetRowElement The <tr> element of the node to toggle.
+         */
+        function toggleNodeChildren(targetRowElement) {
+            const nodeId = targetRowElement.dataset.nodeId;
+            const toggleIcon = targetRowElement.querySelector('.toggle-icon');
+            const isCurrentlyExpanded = expandedNodeIds.has(nodeId);
+
+            if (isCurrentlyExpanded) {
+                // Collapse
+                if (toggleIcon) { 
+                    toggleIcon.classList.remove('fa-chevron-down');
+                    toggleIcon.classList.add('fa-chevron-right');
+                }
+                expandedNodeIds.delete(nodeId);
+                hideChildren(nodeId); // Recursively hide all descendants
+            } else {
+                // Expand
+                if (toggleIcon) { 
+                    toggleIcon.classList.remove('fa-chevron-right');
+                    toggleIcon.classList.add('fa-chevron-down');
+                }
+                expandedNodeIds.add(nodeId); // Corrected: use nodeId from targetRowElement
+                showChildren(nodeId); // Show direct children (recursive call handles their state)
+            }
+            updateStickyPositions(); // Recalculate sticky positions after expand/collapse
+        }
+
+        /**
+         * Handles the scroll event for the table body to manage sticky rows and scroll-to-top button visibility.
+         * This function applies the 'sticky-row' class and sets the 'top' style.
+         */
+        const handleTableBodyScroll = debounce(() => {
+            const scrollOffset = tableBodyContainer.scrollTop;
+            const mainHeaderHeight = tableHeadersContainer.offsetHeight; // Get the height of the sticky main header
+
+            // Toggle scroll-to-top button visibility
+            if (scrollOffset > 200) { // Show button after scrolling 200px down
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+
+            // Clear all sticky classes and inline tops from all rendered rows
+            allRenderedRowsMap.forEach(row => {
+                row.classList.remove('sticky-row');
+                row.classList.remove('sticky-row-shadow'); // Also remove shadow class
+                row.style.top = ''; 
+            });
+
+            let currentStickyStack = []; // Stores the TR elements that are currently sticky, in order
+
+            // Helper to get the bottom offset of the last *visible* descendant of a given node
+            const getLastVisibleDescendantBottom = (nodeId) => {
+                let maxBottomOffset = 0; // Relative to tbody's top
+                let hasVisibleDescendants = false;
+
+                // We need to access koatuuNodeMap which is now maintained by the worker.
+                // For sticky logic, we need the structure of the *displayed* tree, not the full koatuuTree.
+                // This means `koatuuNodeMap` should be populated with the nodes from the *filtered* tree.
+                // For now, assuming koatuuNodeMap is updated with relevant nodes after a search.
+                // A better approach might be to pass the filtered tree structure back from the worker
+                // and rebuild a local koatuuNodeMap for display purposes only.
+                // For simplicity, let's assume `koatuuNodeMap` contains the nodes from the *last displayed* tree.
+                const nodeData = koatuuNodeMap.get(nodeId);
+                if (!nodeData) return null; // Node not found in the displayed tree
+
+                const queue = [nodeData]; // Start with the node data
+                while (queue.length > 0) {
+                    const currentNodeData = queue.shift();
+                    const currentRowElement = allRenderedRowsMap.get(currentNodeData.id);
+
+                    if (currentRowElement && !currentRowElement.classList.contains('hidden')) {
+                        maxBottomOffset = Math.max(maxBottomOffset, currentRowElement.offsetTop + currentRowElement.offsetHeight);
+                        hasVisibleDescendants = true;
+
+                        // Add children from the data model to the queue if their DOM elements are visible
+                        if (currentNodeData.children && currentNodeData.children.length > 0) {
+                            currentNodeData.children.forEach(childNodeData => {
+                                const childRowElement = allRenderedRowsMap.get(childNodeData.id);
+                                if (childRowElement && !childRowElement.classList.contains('hidden')) {
+                                    queue.push(childNodeData);
+                                }
+                            });
+                        }
+                    }
+                }
+                return hasVisibleDescendants ? maxBottomOffset : null;
+            };
+
+            // Iterate through all rows that are currently visible in the DOM order
+            // This still queries the DOM for visible rows, but subsequent lookups are fast.
+            const currentlyVisibleRows = Array.from(bodyTable.querySelectorAll('tbody > tr:not(.hidden)')); 
+
+            for (let i = 0; i < currentlyVisibleRows.length; i++) {
+                const row = currentlyVisibleRows[i];
+                const level = parseInt(row.dataset.level);
+                const nodeId = row.dataset.nodeId;
+                const rowOffsetTop = row.offsetTop; // Relative to tbody's top
+
+                // Determine the target sticky top for this row
+                // It should stick relative to the bottom of the main sticky header, plus any accumulated sticky rows above it.
+                let targetStickyTop = 0; // Relative to the top of tableBodyContainer
+                if (currentStickyStack.length > 0) {
+                    const lastStickyRow = currentStickyStack[currentStickyStack.length - 1];
+                    targetStickyTop = parseFloat(lastStickyRow.style.top) + lastStickyRow.offsetHeight;
+                }
+
+                // Condition to make a row sticky:
+                // 1. Its natural scroll position (relative to tbody) is at or above its target sticky top (relative to tbody).
+                // 2. It's a level 0 or level 1 row.
+                // 3. If level 1, its parent must be in the current sticky stack.
+                // 4. Its content (last visible descendant) has not scrolled past its sticky point.
+                if (rowOffsetTop - scrollOffset <= targetStickyTop) {
+                    // Check if it's a valid sticky level
+                    if (level === 0 || level === 1) { // Only level 0 and 1 rows can be sticky
+                        // Check parent for level 1
+                        if (level === 1) {
+                            const parentId = row.dataset.parentId;
+                            const parentIsSticky = currentStickyStack.some(s => s.dataset.nodeId === parentId);
+                            if (!parentIsSticky) {
+                                continue; // Level 1 cannot stick if its parent is not sticky
+                            }
+                        }
+
+                        // Get the unstick boundary (bottom of its last visible descendant)
+                        const unstickBoundaryOffset = getLastVisibleDescendantBottom(nodeId);
+
+                        // If no visible descendants (including itself), it cannot be sticky based on children
+                        if (unstickBoundaryOffset === null) {
+                            continue; 
+                        }
+
+                        // Unstick condition: if the bottom of its last visible descendant
+                        // has scrolled *above* the current sticky top + its own height (relative to tbody's scroll view).
+                        // This means the content it's "holding" is no longer visible below it.
+                        if (unstickBoundaryOffset - scrollOffset <= targetStickyTop + row.offsetHeight) {
+                             // This row's content has scrolled past, so it should unstick.
+                            continue;
+                        }
+
+                        // If we reached here, the row should be sticky
+                        row.classList.add('sticky-row');
+                        row.style.top = `${targetStickyTop}px`; // Set top relative to its sticky container
+                        
+                        // Add shadow only if scrolled
+                        if (scrollOffset > 0) {
+                            row.classList.add('sticky-row-shadow');
+                        } else {
+                            row.classList.remove('sticky-row-shadow');
+                        }
+
+                        currentStickyStack.push(row);
+                    }
+                } else {
+                    // This row has scrolled past the sticky region, or its parent is not sticky.
+                    // No need to add sticky class.
+                }
+            }
+        }, 10); // Debounce for performance
+
+        /**
+         * Displays the filtered tree structure as a table.
+         * @param {Array<object>} filteredTreeNodes The root nodes of the filtered tree.
+         * @param {number} totalResultsCount The pre-calculated total number of results based on filter logic.
+         */
+        function displayTree(filteredTreeNodes, totalResultsCount) {
+            const tbody = bodyTable.querySelector('tbody');
+            tbody.innerHTML = ''; // Clear previous content
+            initialResultMessage.style.display = 'none';
+
+            allRenderedRowsMap.clear(); // Clear the map before populating
+            koatuuNodeMap.clear(); // Clear the node map to rebuild it with only displayed nodes
+
+            // Flatten the tree into a list of rows to be appended to the tbody
+            const rowsToRender = [];
+            const flattenTree = (nodes, level) => {
+                nodes.forEach(node => {
+                    rowsToRender.push({ node, level });
+                    koatuuNodeMap.set(node.id, node); // Populate koatuuNodeMap with nodes from the filtered tree
+                    if (node.children.length > 0) {
+                        flattenTree(node.children, level + 1);
+                    }
+                });
+            };
+
+            flattenTree(filteredTreeNodes, 0);
+
+            if (totalResultsCount === 0) { 
+                initialResultMessage.textContent = `Не знайдено записів.`; // Changed text here
+                initialResultMessage.style.display = 'block';
+                tableHeadersContainer.style.display = 'none';
+                resultsCountDiv.textContent = `Не знайдено записів`; // Changed text here
+                return;
+            } else {
+                tableHeadersContainer.style.display = 'block';
+                resultsCountDiv.textContent = `Знайдено ${totalResultsCount} ${getRecordWord(totalResultsCount)}`;
+            }
+
+            rowsToRender.forEach(({ node, level }) => {
+                const tr = document.createElement('tr');
+                tr.classList.add('tree-table-row', 'group', 'cursor-pointer'); /* Removed hover:bg-blue-50 here */
+                tr.dataset.nodeId = node.id;
+                tr.dataset.level = level;
+                if (node.parentCode) {
+                    tr.dataset.parentId = node.parentCode;
+                }
+
+                // --- Cell 1: Назва (Name) ---
+                const nameTd = document.createElement('td');
+                nameTd.classList.add('px-4', 'py-2', 'text-sm', 'text-gray-800');
+                nameTd.style.paddingLeft = `${0.5 + level * 1.5}rem`; // Indentation based on level
+
+                const nameContentDiv = document.createElement('div');
+                nameContentDiv.classList.add('flex', 'items-center');
+
+                const toggleIcon = document.createElement('i');
+                toggleIcon.classList.add('fas', 'toggle-icon', 'mr-2', 'text-gray-500');
+                
+                const isInitiallyExpanded = node.shouldExpand || expandedNodeIds.has(node.id);
+
+                if (node.children.length > 0) {
+                    if (isInitiallyExpanded) {
+                        toggleIcon.classList.add('fa-chevron-down');
+                        expandedNodeIds.add(node.id); 
+                    } else {
+                        toggleIcon.classList.add('fa-chevron-right');
+                        expandedNodeIds.delete(node.id); 
+                    }
+                } else {
+                    toggleIcon.classList.add('opacity-0'); 
+                }
+                nameContentDiv.appendChild(toggleIcon);
+
+                const nodeNameSpan = document.createElement('span');
+                nodeNameSpan.classList.add('text-gray-800', 'flex-grow');
+                
+                // Bold only "Перший рівень" (Oblasts/ARC) - updated to 'a'
+                if (node.level === "a") {
+                    nodeNameSpan.classList.add('font-bold');
+                } else {
+                    nodeNameSpan.classList.add('font-medium'); // Default for others
+                }
+                nodeNameSpan.textContent = node.name;
+                nameContentDiv.appendChild(nodeNameSpan);
+                nameTd.appendChild(nameContentDiv);
+                tr.appendChild(nameTd);
+
+                // --- Cell 2: Категорія (Category) ---
+                const categoryTd = document.createElement('td');
+                categoryTd.classList.add('px-4', 'py-2', 'text-sm', 'text-gray-800', 'category-cell');
+                // Use the categoryDisplayMap, which now handles empty string for undefined categories
+                categoryTd.textContent = categoryDisplayMap[node.category] || ''; 
+                tr.appendChild(categoryTd);
+
+                // --- Cell 3: КОАТУУ (KOATUU Code) ---
+                const koatuuTd = document.createElement('td');
+                koatuuTd.classList.add('px-4', 'py-2', 'text-sm', 'text-gray-800', 'koatuu-cell');
+                koatuuTd.textContent = node.code;
+                tr.appendChild(koatuuTd);
+
+                // --- Cell 4: Дії (Actions) ---
+                const actionsTd = document.createElement('td');
+                actionsTd.classList.add('px-4', 'py-2', 'text-sm', 'text-gray-800');
+                actionsTd.style.whiteSpace = 'nowrap';
+
+                const copyButton = document.createElement('button');
+                copyButton.classList.add('copy-button', 'text-gray-500', 'hover:text-gray-700', 'focus:outline-none', 'p-1', 'rounded-full');
+                copyButton.title = 'Копіювати';
+                copyButton.innerHTML = '<i class="fas fa-copy"></i>';
+                copyButton.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const objectName = node.name; 
+                    const koatuuCode = node.code; 
+                    let textToCopy = objectName;
+                    if (koatuuCode) {
+                        textToCopy += ` (${koatuuCode})`;
+                    }
+                    if (textToCopy) {
+                        copyToClipboard(textToCopy);
+                    } else {
+                        showMessageBox('Немає даних для копіювання!', 'error');
+                    }
+                });
+                actionsTd.appendChild(copyButton);
+                tr.appendChild(actionsTd);
+
+                // --- Cell 5: Scrollbar Placeholder ---
+                const scrollbarPlaceholderTd = document.createElement('td');
+                scrollbarPlaceholderTd.classList.add('px-0', 'py-0'); // No padding
+                scrollbarPlaceholderTd.style.width = '0px'; // Initially 0 width, will be set by JS
+                tr.appendChild(scrollbarPlaceholderTd);
+
+                tbody.appendChild(tr);
+                allRenderedRowsMap.set(node.id, tr); // Store the TR element in the map
+
+                // Attach toggle listener to the icon
+                toggleIcon.addEventListener('click', (event) => {
+                    event.stopPropagation(); 
+                    toggleNodeChildren(tr); 
+                });
+
+                // Row selection logic
+                tr.addEventListener('click', (event) => {
+                    if (!event.target.closest('.copy-button') && !event.target.closest('.toggle-icon')) {
+                        document.querySelectorAll('.tree-table-row.selected').forEach(row => {
+                            row.classList.remove('selected');
+                        });
+                        tr.classList.toggle('selected');
+                    }
+                });
+            });
+
+            // After all rows are rendered, apply initial visibility for collapsed nodes
+            rowsToRender.forEach(({ node, level }) => {
+                if (node.children.length > 0 && !(node.shouldExpand || expandedNodeIds.has(node.id))) {
+                    hideChildren(node.id);
+                }
+            });
+
+            // Re-evaluate sticky positions after new content is rendered
+            updateStickyPositions(); 
+        }
+
+        /**
+         * Performs a full search based on the current input and selected parameters.
+         */
+        const debouncedPerformSearch = debounce(performSearch, 700); 
+
+        function performSearch() {
+            const query = searchInput.value.trim();
+            const selectedParams = getSelectedSearchParams();
+            const isQueryLongEnough = query.length >= MIN_SEARCH_LENGTH;
+            
+            // If query is too short AND no specific filters are applied (meaning "Усі" is active),
+            // then we should show the initial message and clear results.
+            if (query.length > 0 && query.length < MIN_SEARCH_LENGTH && selectedParams.length === 0) {
+                bodyTable.querySelector('tbody').innerHTML = ''; // Clear table body
+                initialResultMessage.textContent = `Введіть щонайменше ${MIN_SEARCH_LENGTH} символи для пошуку`;
+                initialResultMessage.style.display = 'block';
+                tableHeadersContainer.style.display = 'none';
+                resultsCountDiv.textContent = `Не знайдено записів`; // Changed text here
+                hideLoading();
+                // Scroll to top without animation
+                tableBodyContainer.scrollTo({ top: 0, behavior: 'auto' });
+                return;
+            }
+
+            // If no query and no specific parameters selected (implicitly "Усі" is active),
+            // then we should show the initial message and clear results.
+            if (query.length === 0 && selectedParams.length === 0) {
+                bodyTable.querySelector('tbody').innerHTML = ''; // Clear table body
+                initialResultMessage.textContent = `Результати пошуку з'являться тут.`;
+                initialResultMessage.style.display = 'block';
+                tableHeadersContainer.style.display = 'none';
+                resultsCountDiv.textContent = `Не знайдено записів`; // Changed text here
+                hideLoading();
+                // Scroll to top without animation
+                tableBodyContainer.scrollTo({ top: 0, behavior: 'auto' });
+                return;
+            }
+
+            showLoading(); 
+            // Send search request to worker
+            koatuuWorker.postMessage({
+                type: 'searchData',
+                payload: { query, selectedParams, isQueryLongEnough }
+            });
+        }
+
+        /**
+         * Function to handle getting and displaying suggestions.
+         */
+        const debouncedHandleSuggestions = debounce(handleSuggestions, 200); 
+
+        function handleSuggestions() {
+            const query = searchInput.value.trim();
+            // Send suggestion request to worker
+            koatuuWorker.postMessage({
+                type: 'getSuggestions',
+                payload: { query, MIN_SEARCH_LENGTH }
+            });
+        }
+
+        /**
+         * Displays suggestions in the suggestions div.
+         * @param {Array} suggestions An array of suggestion strings.
+         */
+        function displaySuggestions(suggestions) {
+            suggestionsDiv.innerHTML = '';
+            highlightedSuggestionIndex = -1; // Reset highlight when suggestions are re-rendered
+
+            if (suggestions.length === 0) {
+                suggestionsDiv.classList.add('hidden');
+                return;
+            }
+
+            suggestions.forEach((suggestionText, index) => {
+                const suggestionItem = document.createElement('div');
+                suggestionItem.classList.add('p-2', 'cursor-pointer', 'hover:bg-gray-200', 'rounded-md', 'suggestion-item');
+                suggestionItem.textContent = suggestionText;
+                suggestionItem.dataset.index = index; // Store index for keyboard navigation
+
+                suggestionItem.addEventListener('click', () => {
+                    searchInput.value = suggestionText;
+                    suggestionsDiv.classList.add('hidden');
+                    performSearch(); 
+                });
+                suggestionsDiv.appendChild(suggestionItem);
+            });
+            suggestionsDiv.classList.remove('hidden');
+        }
+
+        /**
+         * Updates the highlighted suggestion in the suggestions list.
+         * @param {number} newIndex The index of the suggestion to highlight.
+         */
+        function updateHighlightedSuggestion(newIndex) {
+            const suggestionItems = suggestionsDiv.querySelectorAll('.suggestion-item');
+            if (suggestionItems.length === 0) return;
+
+            // Remove highlight from previous item
+            if (highlightedSuggestionIndex !== -1 && suggestionItems[highlightedSuggestionIndex]) {
+                suggestionItems[highlightedSuggestionIndex].classList.remove('highlighted');
+            }
+
+            // Clamp newIndex within bounds
+            newIndex = Math.max(0, Math.min(newIndex, suggestionItems.length - 1));
+            highlightedSuggestionIndex = newIndex;
+
+            // Add highlight to new item
+            if (suggestionItems[highlightedSuggestionIndex]) {
+                suggestionItems[highlightedSuggestionIndex].classList.add('highlighted');
+                // Scroll into view if necessary
+                suggestionItems[highlightedSuggestionIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        /**
+         * Generates a random KOATUU code from the loaded data for the placeholder.
+         */
+        function setRandomKoatuuPlaceholder() {
+            if (koatuuData && koatuuData.length > 0) {
+                const randomIndex = Math.floor(Math.random() * koatuuData.length);
+                const randomItem = koatuuData[randomIndex];
+                // Assuming `randomItem.level` is still the most specific level key (a, b, c, d)
+                // and `randomItem[randomItem.level]` gives the code, and `randomItem.name` gives the name.
+                const randomKoatuuCode = randomItem[randomItem.level]; 
+                const randomName = randomItem.name;
+                searchInput.placeholder = `Наприклад Київ або ${randomName} (${randomKoatuuCode})`;
+            } else {
+                searchInput.placeholder = `Наприклад Київ або 8000000000`; // Fallback
+            }
+        }
+
+        // Observe changes in the searchFilterContainer's size to update loading overlay position
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                if (entry.target.id === 'searchFilterContainer') {
+                    updateStickyPositions();
+                }
+            }
+        });
+
+        // Event listener for messages from the Web Worker
+        koatuuWorker.onmessage = function(event) {
+            const { type, payload } = event.data;
+
+            switch (type) {
+                case 'dataLoaded':
+                    // The worker has loaded and processed the data.
+                    // We can now use the data length for placeholder and populate radios.
+                    // Note: koatuuData itself is NOT transferred back to the main thread.
+                    // If we need a sample for placeholder, the worker should send a sample.
+                    // For now, we'll just confirm data is ready.
+                    console.log('Дані КОАТУУ завантажено та проіндексовано у воркері.');
+                    // Request a random item for placeholder after data is loaded
+                    koatuuWorker.postMessage({ type: 'getRandomItemForPlaceholder' });
+                    populateSearchParamsRadios();
+                    hideLoading();
+                    break;
+                case 'randomItemForPlaceholder':
+                    // Worker sends a random item to update the placeholder
+                    koatuuData = [payload.randomItem]; // Store a single item for placeholder logic
+                    setRandomKoatuuPlaceholder();
+                    break;
+                case 'searchResults':
+                    const { filteredTree, totalResultsCount } = payload;
+                    // Update koatuuNodeMap with the filtered tree nodes for sticky logic
+                    koatuuNodeMap.clear();
+                    const populateNodeMap = (nodes) => {
+                        nodes.forEach(node => {
+                            koatuuNodeMap.set(node.id, node);
+                            if (node.children) {
+                                populateNodeMap(node.children);
+                            }
+                        });
+                    };
+                    populateNodeMap(filteredTree);
+
+                    displayTree(filteredTree, totalResultsCount);
+                    hideLoading();
+                    // Scroll to top after results are displayed without animation
+                    tableBodyContainer.scrollTo({ top: 0, behavior: 'auto' });
+                    break;
+                case 'suggestions':
+                    displaySuggestions(payload.suggestions);
+                    break;
+                case 'error':
+                    console.error('Помилка від воркера:', payload.message);
+                    showMessageBox(`Помилка: ${payload.message}`, 'error');
+                    hideLoading();
+                    break;
+            }
+        };
+
+        // Initial data load and setup when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Assign all DOM elements here
+            searchInput = document.getElementById('searchInput');
+            searchParamsRadiosDiv = document.getElementById('searchParamsRadios');
+            loadingOverlay = document.getElementById('loadingOverlay');
+            suggestionsDiv = document.getElementById('suggestions');
+            messageBox = document.getElementById('messageBox');
+            resultsCountDiv = document.getElementById('resultsCount');
+            searchButton = document.getElementById('searchButton');
+            clearSearchButton = document.getElementById('clearSearchButton');
+            toggleControl = document.getElementById('toggleControl');
+            toggleParamsButton = document.getElementById('toggleParamsButton');
+            toggleParamsIcon = toggleParamsButton.querySelector('i'); 
+            searchParamsContainer = document.getElementById('searchParamsContainer'); 
+            paramsLabel = document.getElementById('paramsLabel');
+            tableHeadersContainer = document.getElementById('tableHeadersContainer'); 
+            headerTable = document.getElementById('headerTable'); 
+            bodyTable = document.getElementById('bodyTable'); 
+            tableBodyContainer = document.getElementById('tableBodyContainer'); 
+            initialResultMessage = document.getElementById('initialResultMessage');
+            allRadio = document.getElementById('param-all'); // Ensure this is correctly assigned
+
+            scrollToTopBtn = document.getElementById('scrollToTopBtn');
+
+            // Request data load from the worker
+            showLoading();
+            koatuuWorker.postMessage({ type: 'loadData' });
+
+            // Set initial state for table and message
+            initialResultMessage.textContent = `Результати пошуку з'являться тут.`;
+            initialResultMessage.style.display = 'block';
+            tableHeadersContainer.style.display = 'none';
+            resultsCountDiv.textContent = `Не знайдено записів`; // Changed text here
+
+
+            if (searchFilterContainer) {
+                resizeObserver.observe(searchFilterContainer);
+            }
+            // Add resize observer for the window to re-sync widths on window resize
+            window.addEventListener('resize', updateStickyPositions);
+            updateStickyPositions();
+
+            // Add scroll listener to the tableBodyContainer for tree sticky rows and scroll-to-top button
+            tableBodyContainer.addEventListener('scroll', handleTableBodyScroll);
+
+            // Scroll to top button click listener
+            scrollToTopBtn.addEventListener('click', () => {
+                tableBodyContainer.scrollTo({
+                    top: 0,
+                    behavior: 'smooth' // Smooth scroll to top for the button
+                });
+            });
+
+            // Synchronize horizontal scroll of table body with header
+            const bodyScrollContainer = tableBodyContainer; // Now tableBodyContainer is the scrollable element
+            const headerScrollContainer = tableHeadersContainer.querySelector('.overflow-x-auto');
+            if (bodyScrollContainer && headerScrollContainer) {
+                bodyScrollContainer.addEventListener('scroll', () => {
+                    headerScrollContainer.scrollLeft = bodyScrollContainer.scrollLeft;
+                });
+            }
+
+            // Synchronize horizontal scroll of header with body (if user scrolls header)
+            if (headerScrollContainer) {
+                headerScrollContainer.addEventListener('scroll', () => {
+                    bodyScrollContainer.scrollLeft = headerScrollContainer.scrollLeft;
+                });
+            }
+
+            // Event listeners for search and clear buttons, input, and radios
+            searchButton.addEventListener('click', () => {
+                debouncedPerformSearch.cancel();
+                performSearch();
+            });
+
+            clearSearchButton.addEventListener('click', () => {
+                searchInput.value = '';
+                clearSearchButton.classList.add('hidden');
+                debouncedPerformSearch.cancel();
+                debouncedHandleSuggestions.cancel();
+                suggestionsDiv.classList.add('hidden');
+                highlightedSuggestionIndex = -1; // Reset highlight
+                
+                // When clearing search, ensure "Усі" radio is selected and styled
+                if (allRadio) {
+                    allRadio.checked = true;
+                    document.querySelectorAll('#searchParamsRadios .radio-button-container').forEach(container => {
+                        container.classList.remove('selected');
+                    });
+                    allRadio.closest('.radio-button-container').classList.add('selected');
+                }
+                performSearch(); // Re-run search to display initial message
+            });
+
+            searchInput.addEventListener('input', () => {
+                let value = searchInput.value;
+
+                value = value.trimStart();
+                value = value.replace(/[^0-9a-zA-ZА-Яа-яЇїІіЄєҐґ\s]/g, '');
+
+                searchInput.value = value;
+
+                const query = searchInput.value.trim(); 
+
+                if (query.length > 0) {
+                    clearSearchButton.classList.remove('hidden');
+                } else {
+                    clearSearchButton.classList.add('hidden');
+                }
+
+                // Only show suggestions if query length meets minimum
+                if (query.length >= MIN_SEARCH_LENGTH) {
+                    debouncedHandleSuggestions();
+                } else {
+                    suggestionsDiv.classList.add('hidden');
+                    highlightedSuggestionIndex = -1;
+                }
+                
+                showLoading(); // Show loading overlay immediately
+                debouncedPerformSearch();
+            });
+
+            // Keyboard navigation for suggestions
+            searchInput.addEventListener('keydown', (event) => {
+                const suggestionItems = suggestionsDiv.querySelectorAll('.suggestion-item');
+                if (suggestionsDiv.classList.contains('hidden') || suggestionItems.length === 0) {
+                    return; // No suggestions to navigate
+                }
+
+                if (event.key === 'ArrowDown') {
+                    event.preventDefault(); // Prevent cursor movement in input
+                    updateHighlightedSuggestion(highlightedSuggestionIndex + 1);
+                } else if (event.key === 'ArrowUp') {
+                    event.preventDefault(); // Prevent cursor movement in input
+                    updateHighlightedSuggestion(highlightedSuggestionIndex - 1);
+                } else if (event.key === 'Enter') {
+                    if (highlightedSuggestionIndex !== -1) {
+                        event.preventDefault(); // Prevent form submission
+                        const selectedSuggestionText = suggestionItems[highlightedSuggestionIndex].textContent;
+                        searchInput.value = selectedSuggestionText;
+                        suggestionsDiv.classList.add('hidden');
+                        performSearch();
+                    }
+                } else if (event.key === 'Escape') {
+                    suggestionsDiv.classList.add('hidden');
+                    highlightedSuggestionIndex = -1;
+                    searchInput.focus(); // Keep focus on input
+                }
+            });
+
+
+            // Delegated event listener for all radio buttons within searchParamsRadiosDiv
+            searchParamsRadiosDiv.addEventListener('change', (event) => {
+                if (event.target.type === 'radio' && event.target.name === 'searchParamRadio') {
+                    // Remove 'selected' class from all radio button containers
+                    document.querySelectorAll('#searchParamsRadios .radio-button-container').forEach(container => {
+                        container.classList.remove('selected');
+                    });
+                    // Add 'selected' class to the clicked radio button's container
+                    event.target.closest('.radio-button-container').classList.add('selected');
+                    showLoading();
+                    performSearch();
+                }
+            });
+
+            toggleControl.addEventListener('click', () => {
+                const isCollapsed = searchParamsContainer.classList.contains('collapsed');
+                
+                document.body.classList.add('no-scroll'); // Always add no-scroll immediately
+
+                if (isCollapsed) {
+                    paramsLabel.textContent = 'Згорнути'; 
+                    toggleParamsIcon.classList.remove('fa-chevron-down');
+                    toggleParamsIcon.classList.add('fa-chevron-up');
+                    searchParamsContainer.classList.remove('collapsed'); 
+                } else {
+                    paramsLabel.textContent = 'Параметри'; 
+                    toggleParamsIcon.classList.remove('fa-chevron-up');
+                    toggleParamsIcon.classList.add('fa-chevron-down');
+                    searchParamsContainer.classList.add('collapsed'); 
+                }
+
+                // Listen for the 'max-height' transition to end
+                const transitionEndHandler = (event) => {
+                    if (event.propertyName === 'max-height') {
+                        document.body.classList.remove('no-scroll');
+                        updateStickyPositions();
+                        searchParamsContainer.removeEventListener('transitionend', transitionEndHandler);
+                    }
+                };
+                searchParamsContainer.addEventListener('transitionend', transitionEndHandler);
+            });
+
+            // Click outside to hide suggestions
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                const isClickInsideSearchArea = searchInput.contains(target) || 
+                                                searchButton.contains(target) || 
+                                                clearSearchButton.contains(target) || 
+                                                suggestionsDiv.contains(target);
+
+                if (!isClickInsideSearchArea) {
+                    suggestionsDiv.classList.add('hidden');
+                    highlightedSuggestionIndex = -1; // Reset highlight
+                }
+            });
+        });
+    </script>
+</body>
+</html>
