@@ -1,19 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-  <title>My PDF Viewer</title>
+  <meta charset="UTF-8">
+  <title>PDF Переглядач на ViewerJS</title>
+  <style>
+    /* Встановлюємо HTML та body на повну висоту вікна перегляду, видаляємо відступи та поля */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden; /* Запобігаємо прокручуванню, якщо iframe займає 100% */
+    }
+    header {
+      background: #f5f5f5;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    /* Стилізуємо iframe, щоб він займав 100% ширини та висоти вікна перегляду */
+    iframe {
+      border: none;
+      width: 100vw; /* 100% ширини вікна перегляду */
+      height: 100vh; /* 100% висоти вікна перегляду */
+      display: block; /* Видаляємо зайві пробіли під iframe */
+    }
+  </style>
 </head>
 <body>
-  <div id="pdf-viewer" style="height: 100vh"></div>
-  
-  <script async type="module">
-    import EmbedPDF from 'https://snippet.embedpdf.com/embedpdf.js';
- 
-    EmbedPDF.init({
-      type: 'container',
-      target: document.getElementById('pdf-viewer'),
-      src: 'https://www.dropbox.com/scl/fi/jflmipnkkcggqokbj1aon/3.pdf?rlkey=0avw1w8w0bq5xdy32przllgov&st=6rd7cror&raw=1'
-    });
-  </script>
+
+<!-- Iframe для вбудовування PDF, тепер займає всю сторінку -->
+<iframe
+  src="https://www.dropbox.com/scl/fi/jflmipnkkcggqokbj1aon/3.pdf?rlkey=0avw1w8w0bq5xdy32przllgov&st=6rd7cror&raw=1">
+</iframe>
+
 </body>
 </html>
