@@ -1,37 +1,258 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8">
-  <title>PDF Переглядач на ViewerJS</title>
-  <style>
-    /* Встановлюємо HTML та body на повну висоту вікна перегляду, видаляємо відступи та поля */
-    html, body {
-      height: 100%;
-      margin: 0;
-      padding: 0;
-      overflow: hidden; /* Запобігаємо прокручуванню, якщо iframe займає 100% */
-    }
-    header {
-      background: #f5f5f5;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    /* Стилізуємо iframe, щоб він займав 100% ширини та висоти вікна перегляду */
-    iframe {
-      border: none;
-      width: 100vw; /* 100% ширини вікна перегляду */
-      height: 100vh; /* 100% висоти вікна перегляду */
-      display: block; /* Видаляємо зайві пробіли під iframe */
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF.js Переглядач</title>
+    <!-- Підключення Tailwind CSS для стилізації -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Встановлюємо HTML та body на повну висоту вікна перегляду, видаляємо відступи та поля */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Запобігаємо прокручуванню */
+            font-family: "Inter", sans-serif;
+        }
+
+        /* Основний контейнер для переглядача, займає всю доступну висоту */
+        .pdf-viewer-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Висота на всю висоту вікна перегляду */
+            width: 100vw; /* Ширина на всю ширину вікна перегляду */
+            background-color: #f0f4f8; /* Легкий сірий фон */
+            overflow: hidden;
+        }
+
+        /* Панель керування */
+        .controls {
+            background-color: #334155; /* Темний фон для панелі керування */
+            color: white;
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap; /* Дозволяє елементам переноситися на новий рядок на малих екранах */
+            border-bottom-left-radius: 10px; /* Закруглені кути */
+            border-bottom-right-radius: 10px; /* Закруглені кути */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10; /* Перекриває інші елементи */
+        }
+
+        .controls button {
+            background-color: #4a5568; /* Колір кнопок */
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px; /* Закруглені кути кнопок */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .controls button:hover {
+            background-color: #64748b; /* Колір кнопок при наведенні */
+        }
+
+        .controls span {
+            font-weight: bold;
+            min-width: 60px; /* Мінімальна ширина для відображення масштабу */
+            text-align: center;
+        }
+
+        /* Контейнер для канвасу PDF */
+        .pdf-canvas-wrapper {
+            flex-grow: 1; /* Займає всю доступну вертикальну площу */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto; /* Дозволяє прокручування, якщо PDF більший за контейнер */
+            padding: 1rem;
+        }
+
+        /* Стилі для канвасу PDF */
+        canvas {
+            display: block;
+            border-radius: 8px; /* Закруглені кути канвасу */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); /* Тінь для канвасу */
+            background-color: white; /* Білий фон для канвасу */
+        }
+
+        /* Стилі для повідомлень про завантаження/помилки */
+        .message {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #4a5568;
+        }
+    </style>
 </head>
 <body>
 
-<!-- Iframe для вбудовування PDF, тепер займає всю сторінку -->
-<iframe
-  src="https://www.dropbox.com/scl/fi/jflmipnkkcggqokbj1aon/3.pdf?rlkey=0avw1w8w0bq5xdy32przllgov&st=6rd7cror&raw=1">
-</iframe>
+    <div class="pdf-viewer-container">
+        <!-- Панель керування -->
+        <div class="controls">
+            <button id="prev-page-btn" title="Попередня сторінка">«</button>
+            <span id="page-info">Сторінка 1 / 1</span>
+            <button id="next-page-btn" title="Наступна сторінка">»</button>
+            <button id="zoom-out-btn" title="Зменшити масштаб">-</button>
+            <span id="zoom-info">100%</span>
+            <button id="zoom-in-btn" title="Збільшити масштаб">+</button>
+        </div>
 
+        <!-- Контейнер для відображення PDF -->
+        <div class="pdf-canvas-wrapper">
+            <canvas id="pdf-canvas"></canvas>
+            <div id="loading-message" class="message">Завантаження PDF...</div>
+            <div id="error-message" class="message hidden text-red-500">Не вдалося завантажити PDF.</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Імпорт PDF.js
+        // Використовуємо CDN для PDF.js та його worker
+        // Примітка: для production бажано хостити ці файли самостійно або використовувати npm
+        import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/build/pdf.mjs';
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/build/pdf.worker.mjs';
+
+        // Елементи DOM
+        const pdfCanvas = document.getElementById('pdf-canvas');
+        const pageInfoSpan = document.getElementById('page-info');
+        const zoomInfoSpan = document.getElementById('zoom-info');
+        const prevPageBtn = document.getElementById('prev-page-btn');
+        const nextPageBtn = document.getElementById('next-page-btn');
+        const zoomInBtn = document.getElementById('zoom-in-btn');
+        const zoomOutBtn = document.getElementById('zoom-out-btn');
+        const loadingMessage = document.getElementById('loading-message');
+        const errorMessage = document.getElementById('error-message');
+
+        // Змінні стану PDF
+        let pdfDoc = null; // Об'єкт PDF-документа
+        let currentPageNum = 1; // Поточний номер сторінки
+        let scale = 1.0; // Поточний масштаб
+        const ZOOM_STEP = 0.25; // Крок зміни масштабу
+
+        // URL PDF-файлу
+        const pdfUrl = 'https://www.dropbox.com/scl/fi/jflmipnkkcggqokbj1aon/3.pdf?rlkey=0avw1w8w0bq5xdy32przllgov&st=6rd7cror&raw=1';
+
+        /**
+         * Рендеринг вказаної сторінки PDF на канвасі.
+         * @param {number} num - Номер сторінки для рендерингу.
+         */
+        async function renderPage(num) {
+            if (!pdfDoc) return;
+
+            loadingMessage.classList.remove('hidden'); // Показати повідомлення про завантаження
+            pdfCanvas.classList.add('hidden'); // Приховати канвас під час рендерингу
+
+            try {
+                const page = await pdfDoc.getPage(num);
+                const viewport = page.getViewport({ scale: scale });
+
+                // Встановлюємо розміри канвасу
+                const canvasContext = pdfCanvas.getContext('2d');
+                pdfCanvas.height = viewport.height;
+                pdfCanvas.width = viewport.width;
+
+                // Рендеринг сторінки на канвасі
+                const renderContext = {
+                    canvasContext: canvasContext,
+                    viewport: viewport,
+                };
+                await page.render(renderContext).promise;
+
+                currentPageNum = num;
+                updateUI(); // Оновити інтерфейс після рендерингу
+                loadingMessage.classList.add('hidden'); // Приховати повідомлення про завантаження
+                pdfCanvas.classList.remove('hidden'); // Показати канвас
+            } catch (error) {
+                console.error('Помилка рендерингу сторінки:', error);
+                loadingMessage.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                errorMessage.textContent = 'Помилка рендерингу сторінки. Будь ласка, спробуйте ще раз.';
+            }
+        }
+
+        /**
+         * Оновлює інформацію про сторінку та масштаб в інтерфейсі.
+         */
+        function updateUI() {
+            if (pdfDoc) {
+                pageInfoSpan.textContent = `Сторінка ${currentPageNum} / ${pdfDoc.numPages}`;
+                // Деактивувати кнопки навігації, якщо досягнуто першої/останньої сторінки
+                prevPageBtn.disabled = currentPageNum <= 1;
+                nextPageBtn.disabled = currentPageNum >= pdfDoc.numPages;
+            } else {
+                pageInfoSpan.textContent = `Сторінка - / -`;
+                prevPageBtn.disabled = true;
+                nextPageBtn.disabled = true;
+            }
+            zoomInfoSpan.textContent = `${Math.round(scale * 100)}%`;
+        }
+
+        /**
+         * Завантажує PDF-документ.
+         */
+        async function loadPdf() {
+            loadingMessage.classList.remove('hidden');
+            errorMessage.classList.add('hidden'); // Приховати попередні повідомлення про помилки
+            pdfCanvas.classList.add('hidden'); // Приховати канвас під час завантаження
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(pdfUrl);
+                pdfDoc = await loadingTask.promise;
+                currentPageNum = 1; // Скинути до першої сторінки при новому завантаженні
+                scale = 1.0; // Скинути масштаб
+                await renderPage(currentPageNum);
+            } catch (error) {
+                console.error('Помилка завантаження PDF:', error);
+                loadingMessage.classList.add('hidden');
+                errorMessage.classList.remove('hidden');
+                errorMessage.textContent = 'Не вдалося завантажити PDF. Перевірте URL або спробуйте пізніше.';
+            }
+        }
+
+        // Обробники подій для кнопок
+        prevPageBtn.addEventListener('click', () => {
+            if (currentPageNum > 1) {
+                renderPage(currentPageNum - 1);
+            }
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (pdfDoc && currentPageNum < pdfDoc.numPages) {
+                renderPage(currentPageNum + 1);
+            }
+        });
+
+        zoomInBtn.addEventListener('click', () => {
+            scale += ZOOM_STEP;
+            renderPage(currentPageNum);
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            if (scale > ZOOM_STEP) { // Запобігаємо занадто малому масштабу
+                scale -= ZOOM_STEP;
+                renderPage(currentPageNum);
+            }
+        });
+
+        // Завантажити PDF при завантаженні сторінки
+        window.onload = loadPdf;
+
+        // Оновити рендеринг при зміні розміру вікна
+        window.addEventListener('resize', () => {
+            if (pdfDoc) {
+                renderPage(currentPageNum);
+            }
+        });
+
+        // Ініціалізація інтерфейсу
+        updateUI();
+    </script>
 </body>
 </html>
