@@ -3,256 +3,699 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF.js Переглядач</title>
-    <!-- Підключення Tailwind CSS для стилізації -->
+    <title>Переглядач PDF</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Встановлюємо HTML та body на повну висоту вікна перегляду, видаляємо відступи та поля */
+        /* Забезпечення повної висоти в'юпорта для HTML та Body */
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
-            overflow: hidden; /* Запобігаємо прокручуванню */
-            font-family: "Inter", sans-serif;
+            overflow: hidden; /* Запобігаємо прокрутці всього тіла, прокрутка буде в контейнері PDF */
         }
 
-        /* Основний контейнер для переглядача, займає всю доступну висоту */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e0e0e0; /* Сірий фон */
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Повна висота в'юпорта */
+            width: 100vw;  /* Повна ширина в'юпорта */
+            overflow: hidden; /* Запобігаємо прокрутці основного тіла */
+            box-sizing: border-box;
+        }
+
         .pdf-viewer-container {
+            position: absolute; /* Позиціонування відносно body */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #ffffff; /* Білий фон для області PDF */
+            border-radius: 0; /* Без заокруглення для повного екрану */
+            box-shadow: none; /* Без тіні, оскільки це повний екран */
+            padding: 0.5rem; /* Відступи, щоб вміст не прилипав до країв */
             display: flex;
             flex-direction: column;
-            height: 100vh; /* Висота на всю висоту вікна перегляду */
-            width: 100vw; /* Ширина на всю ширину вікна перегляду */
-            background-color: #f0f4f8; /* Легкий сірий фон */
-            overflow: hidden;
+            align-items: center; /* Центрування canvas по горизонталі, якщо він менший за контейнер */
+            justify-content: flex-start; /* Вирівнювання canvas до верхньої частини контейнера */
+            overflow: auto; /* Забезпечує скролбари для вмісту PDF */
+            box-sizing: border-box;
+            cursor: grab; /* Курсор "рука" для перетягування */
         }
 
-        /* Панель керування */
-        .controls {
-            background-color: #334155; /* Темний фон для панелі керування */
-            color: white;
-            padding: 0.75rem 1rem;
+        .pdf-viewer-container.dragging {
+            cursor: grabbing; /* Курсор "рука, що хапає" під час перетягування */
+        }
+
+        /* Обгортка для закріпленої панелі керування */
+        .controls-fixed-wrapper {
+            position: fixed;
+            top: 0.5rem; /* Невеликий відступ від верху */
+            left: 0.5rem; /* Невеликий відступ від лівого краю */
+            z-index: 10;
+            background-color: rgba(224, 224, 224, 0.7); /* Напівпрозорий сірий фон */
+            backdrop-filter: blur(5px); /* Ефект розмиття */
+            border-radius: 0.75rem; /* Закруглені кути для плаваючої панелі */
+            padding: 0.4rem 0.6rem; /* Компактні відступи */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap; /* Дозволяє елементам переноситися на новий рядок на малих екранах */
-            border-bottom-left-radius: 10px; /* Закруглені кути */
-            border-bottom-right-radius: 10px; /* Закруглені кути */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 10; /* Перекриває інші елементи */
+            align-items: center; /* Вертикальне центрування елементів керування */
+            gap: 0.25rem; /* Компактний проміжок між елементами керування */
+            width: auto; /* Ширина залежить від вмісту */
+            flex-wrap: wrap; /* Дозволяє перенесення, якщо забагато елементів керування */
         }
 
-        .controls button {
-            background-color: #4a5568; /* Колір кнопок */
+        .control-button, .control-display {
+            background-color: #616161; /* Темно-сірий колір */
             color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px; /* Закруглені кути кнопок */
+            padding: 0.25rem 0.5rem; /* Ще більш компактні відступи */
+            border-radius: 0.4rem; /* Менший радіус заокруглення */
+            font-weight: 600; /* Напівжирний шрифт */
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
             cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
-            font-size: 1rem;
-            font-weight: bold;
-        }
-
-        .controls button:hover {
-            background-color: #64748b; /* Колір кнопок при наведенні */
-        }
-
-        .controls span {
-            font-weight: bold;
-            min-width: 60px; /* Мінімальна ширина для відображення масштабу */
-            text-align: center;
-        }
-
-        /* Контейнер для канвасу PDF */
-        .pdf-canvas-wrapper {
-            flex-grow: 1; /* Займає всю доступну вертикальну площу */
+            border: none;
             display: flex;
-            justify-content: center;
             align-items: center;
-            overflow: auto; /* Дозволяє прокручування, якщо PDF більший за контейнер */
-            padding: 1rem;
+            justify-content: center;
+            min-width: unset; /* Дозволяє кнопкам зменшуватися */
+            height: 30px; /* Фіксована висота для послілідовності */
+            font-size: 0.75rem; /* Менший шрифт */
+        }
+        .control-button:hover {
+            background-color: #424242; /* Темніший сірий при наведенні */
+            transform: translateY(-1px);
+        }
+        .control-button:active {
+            background-color: #212121; /* Ще темніший сірий при натисканні */
+            transform: translateY(0);
+        }
+        .control-button:disabled {
+            background-color: #9e9e9e; /* Сірий колір для вимкнених кнопок */
+            cursor: not-allowed;
+        }
+        .control-display {
+            background-color: #bdbdbd; /* Світло-сірий для дисплея */
+            color: #212121; /* Темний текст на світло-сірому */
         }
 
-        /* Стилі для канвасу PDF */
-        canvas {
-            display: block;
-            border-radius: 8px; /* Закруглені кути канвасу */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); /* Тінь для канвасу */
-            background-color: white; /* Білий фон для канвасу */
+        .pdf-page-canvas {
+            display: none; /* Приховано за замовчуванням */
+            border: 1px solid #e0e0e0;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            position: relative; /* Для нормального потоку в flex-контейнері */
+            margin: 0 auto; /* Центрування по горизонталі */
+            flex-shrink: 0; /* Запобігаємо зменшенню */
+            flex-grow: 0; /* Запобігаємо збільшенню */
+        }
+        .pdf-page-canvas.active {
+            display: block; /* Відображаємо активний canvas */
         }
 
-        /* Стилі для повідомлень про завантаження/помилки */
-        .message {
+        /* Стилі для об'єднаного вікна повідомлень/спінера */
+        .message-box {
+            position: fixed;
+            top: 1.5rem; /* Відступ від верху */
+            right: 1.5rem; /* Відступ від правого краю */
+            background-color: rgba(255, 255, 255, 0.9); /* Напівпрозорий білий фон */
+            padding: 10px 15px; /* Менші відступи */
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
             text-align: center;
-            padding: 2rem;
-            font-size: 1.2rem;
-            color: #4a5568;
+            display: none; /* Приховано за замовчуванням */
+            align-items: center; /* Вирівнювання вмісту по центру */
+            gap: 10px; /* Проміжок між спінером і текстом */
+            flex-wrap: nowrap; /* Запобігаємо перенесенню тексту */
+            max-width: 300px; /* Обмеження ширини */
+            font-size: 0.9rem; /* Менший розмір шрифту */
+            color: #333; /* Колір тексту */
+        }
+        .message-box button {
+            background-color: #616161; /* Темно-сірий колір */
+            color: white;
+            padding: 8px 15px; /* Менші відступи для кнопки */
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px; /* Менший відступ зверху */
+            font-size: 0.8rem; /* Менший розмір шрифту кнопки */
+        }
+
+        /* Стилі для спінера всередині message-box */
+        .message-box .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1); /* Менша товщина рамки */
+            border-left-color: #616161; /* Колір спінера */
+            border-radius: 50%;
+            width: 25px; /* Менший розмір спінера */
+            height: 25px;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0; /* Запобігаємо зменшенню спінера */
+        }
+
+        .message-box .spinner-text {
+            margin-top: 0; /* Видаляємо відступ, оскільки він у flex-контейнері */
+            color: #616161; /* Колір тексту спінера */
+            font-weight: 500;
+            text-align: left; /* Вирівнювання тексту спінера */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Приховуємо спінер та текст за замовчуванням, коли відображається лише повідомлення */
+        .message-box.only-message .spinner,
+        .message-box.only-message .message-box-button {
+            display: none;
+        }
+        .message-box:not(.only-message) .message-box-button {
+            display: block; /* Показуємо кнопку "OK" тільки для повідомлень */
         }
     </style>
 </head>
 <body>
-
-    <div class="pdf-viewer-container">
-        <!-- Панель керування -->
-        <div class="controls">
-            <button id="prev-page-btn" title="Попередня сторінка">«</button>
-            <span id="page-info">Сторінка 1 / 1</span>
-            <button id="next-page-btn" title="Наступна сторінка">»</button>
-            <button id="zoom-out-btn" title="Зменшити масштаб">-</button>
-            <span id="zoom-info">100%</span>
-            <button id="zoom-in-btn" title="Збільшити масштаб">+</button>
-        </div>
-
-        <!-- Контейнер для відображення PDF -->
-        <div class="pdf-canvas-wrapper">
-            <canvas id="pdf-canvas"></canvas>
-            <div id="loading-message" class="message">Завантаження PDF...</div>
-            <div id="error-message" class="message hidden text-red-500">Не вдалося завантажити PDF.</div>
-        </div>
+    <div class="controls-fixed-wrapper">
+        <button id="prev-page" class="control-button">«</button>
+        <span id="page-num-display" class="control-display">1 / 1</span>
+        <button id="next-page" class="control-button">»</button>
     </div>
 
-    <script type="module">
-        // Імпорт PDF.js
-        // Використовуємо CDN для PDF.js та його worker
-        // Примітка: для production бажано хостити ці файли самостійно або використовувати npm
-        import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/build/pdf.mjs';
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/build/pdf.worker.mjs';
+    <div class="pdf-viewer-container">
+        <!-- Canvases will be dynamically added here -->
+    </div>
 
-        // Елементи DOM
-        const pdfCanvas = document.getElementById('pdf-canvas');
-        const pageInfoSpan = document.getElementById('page-info');
-        const zoomInfoSpan = document.getElementById('zoom-info');
-        const prevPageBtn = document.getElementById('prev-page-btn');
-        const nextPageBtn = document.getElementById('next-page-btn');
-        const zoomInBtn = document.getElementById('zoom-in-btn');
-        const zoomOutBtn = document.getElementById('zoom-out-btn');
-        const loadingMessage = document.getElementById('loading-message');
-        const errorMessage = document.getElementById('error-message');
+    <div class="floating-zoom-controls">
+        <button id="home-button" class="floating-button" title="Додому (перша сторінка, 100% масштаб)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-home"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </button>
+        <button id="fit-to-window-button" class="floating-button" title="Вписати у вікно">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-maximize"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3m-18 0v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <button id="zoom-in" class="floating-button">+</button>
+        <button id="zoom-out" class="floating-button">-</button>
+    </div>
 
-        // Змінні стану PDF
-        let pdfDoc = null; // Об'єкт PDF-документа
-        let currentPageNum = 1; // Поточний номер сторінки
-        let scale = 1.0; // Поточний масштаб
-        const ZOOM_STEP = 0.25; // Крок зміни масштабу
+    <!-- Об'єднаний елемент для повідомлень та спінера -->
+    <div id="message-box" class="message-box">
+        <div class="spinner"></div>
+        <div id="message-text" class="spinner-text"></div>
+        <button id="message-box-button" onclick="document.getElementById('message-box').style.display = 'none';">OK</button>
+    </div>
 
-        // URL PDF-файлу
-        const pdfUrl = 'https://www.dropbox.com/scl/fi/jflmipnkkcggqokbj1aon/3.pdf?rlkey=0avw1w8w0bq5xdy32przllgov&st=6rd7cror&raw=1';
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+
+    <script>
+        // Встановлення workerSrc для PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Отримання елементів DOM
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const homeBtn = document.getElementById('home-button');
+        const fitToWindowBtn = document.getElementById('fit-to-window-button');
+        const pageNumDisplay = document.getElementById('page-num-display');
+        
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text'); // Тепер це текст спінера/повідомлення
+        const messageBoxOkButton = document.getElementById('message-box-button'); // Кнопка OK у повідомленні
+
+        const spinnerIcon = messageBox.querySelector('.spinner'); // Іконка спінера
+
+        const pdfViewerContainer = document.querySelector('.pdf-viewer-container');
+        
+
+        // Змінні PDF
+        let pdfDoc = null;
+        let currentPageNum = 1;
+        let currentScale = 1.0;
+        const zoomStep = 0.25;
+        const minScale = 0.25;
+        const maxScale = 4.0;
+
+        // Змінні для перетягування
+        let isDragging = false;
+        let startX, startY;
+        let scrollLeft, scrollTop;
+
+        // Map для зберігання відрендерених canvas елементів та їхніх завдань рендерингу
+        // Зберігаємо об'єкт { canvas: HTMLCanvasElement, renderTask: PDFRenderTask | null }
+        const pageCanvases = new Map();
+        // Посилання на активний canvas (елемент DOM)
+        let activeCanvas = null;
+        // Set для відстеження сторінок, які вже були відрендерені
+        const renderedPages = new Set();
+        // Масив для черги завантаження сторінок
+        let pageRenderQueue = [];
+        let isProcessingQueue = false;
+
+        // URL PDF-файлу (завантажуємо лише третю сторінку)
+        const pdfUrl = 'https://wgis.project.co.ua/mytnytsia.pdf';
+        const pageToLoad = 3; // Сторінка, яку потрібно завантажити
 
         /**
-         * Рендеринг вказаної сторінки PDF на канвасі.
-         * @param {number} num - Номер сторінки для рендерингу.
+         * Відображає повідомлення у власному модальному вікні.
+         * @param {string} message Повідомлення для відображення.
          */
-        async function renderPage(num) {
-            if (!pdfDoc) return;
+        function showMessageBox(message) {
+            messageText.textContent = message;
+            spinnerIcon.style.display = 'none'; // Приховуємо спінер
+            messageBoxOkButton.style.display = 'block'; // Показуємо кнопку OK
+            messageBox.style.display = 'flex'; // Відображаємо message-box
+            messageBox.classList.add('only-message'); // Додаємо клас для стилізації тільки повідомлення
+        }
 
-            loadingMessage.classList.remove('hidden'); // Показати повідомлення про завантаження
-            pdfCanvas.classList.add('hidden'); // Приховати канвас під час рендерингу
+        /**
+         * Відображає спінер.
+         * @param {string} message Повідомлення для відображення під спінером.
+         */
+        function showSpinner(message = 'Завантаження...') {
+            messageText.textContent = message;
+            spinnerIcon.style.display = 'block'; // Показуємо спінер
+            messageBoxOkButton.style.display = 'none'; // Приховуємо кнопку OK
+            messageBox.style.display = 'flex'; // Відображаємо message-box
+            messageBox.classList.remove('only-message'); // Видаляємо клас only-message
+        }
+
+        /**
+         * Приховує спінер та повідомлення.
+         */
+        function hideSpinner() {
+            messageBox.style.display = 'none';
+        }
+
+        /**
+         * Вимикає всі кнопки керування.
+         */
+        function disableControls() {
+            prevPageBtn.disabled = true;
+            nextPageBtn.disabled = true;
+            zoomInBtn.disabled = true;
+            zoomOutBtn.disabled = true;
+            homeBtn.disabled = true;
+            fitToWindowBtn.disabled = true;
+        }
+
+        /**
+         * Вмикає всі кнопки керування.
+         */
+        function enableControls() {
+            prevPageBtn.disabled = false;
+            nextPageBtn.disabled = false;
+            zoomInBtn.disabled = false;
+            zoomOutBtn.disabled = false;
+            homeBtn.disabled = false;
+            fitToWindowBtn.disabled = false;
+        }
+
+        /**
+         * Створює та додає canvas елемент для заданого номера сторінки.
+         * @param {number} pageNum
+         * @returns {HTMLCanvasElement}
+         */
+        function createPageCanvasElement(pageNum) {
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = `pdf-page-${pageNum}`;
+            newCanvas.className = 'pdf-page-canvas'; // Додаємо клас для стилізації/вибору
+            pdfViewerContainer.appendChild(newCanvas);
+            return newCanvas;
+        }
+
+        /**
+         * Рендерить певну сторінку PDF на її виділеному canvas.
+         * @param {number} pageNum Номер сторінки для рендерингу.
+         * @param {number} scale Коефіцієнт масштабування для рендерингу.
+         * @param {boolean} forceRerender Якщо true, примусово рендерить сторінку, навіть якщо вона вже в кеші.
+         * @returns {Promise<void>}
+         */
+        async function renderPage(pageNum, scale, forceRerender = false) {
+            if (!pdfDoc) {
+                showMessageBox('PDF не завантажено.');
+                return;
+            }
+
+            let targetCanvasEntry = pageCanvases.get(pageNum);
+            if (!targetCanvasEntry) {
+                const newCanvasElement = createPageCanvasElement(pageNum);
+                targetCanvasEntry = { canvas: newCanvasElement, renderTask: null };
+                pageCanvases.set(pageNum, targetCanvasEntry);
+            }
+            const targetCanvas = targetCanvasEntry.canvas;
+
+            // Приховуємо всі canvas, крім цільового
+            pageCanvases.forEach(entry => entry.canvas.style.display = 'none');
+            targetCanvas.style.display = 'block'; // Відображаємо поточний canvas
+            activeCanvas = targetCanvas; // Оновлюємо посилання на активний canvas
+
+            pageNumDisplay.textContent = `${currentPageNum} / ${pdfDoc.numPages}`;
+
+            // Якщо сторінка вже відрендерена з цим масштабом і не потрібен примусовий перерендер, просто відображаємо її
+            if (renderedPages.has(pageNum) && !forceRerender) {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({ scale: scale });
+                // Перевіряємо, чи поточні розміри canvas відповідають необхідним для цього масштабу
+                if (targetCanvas.width === viewport.width && targetCanvas.height === viewport.height) {
+                    console.log(`Page ${pageNum} already rendered at this scale. Displaying cached canvas.`);
+                    return; // Просто показуємо вже відрендерену сторінку
+                }
+            }
+            
+            // Якщо сторінка не відрендерена, потрібен перерендер або змінився масштаб, виконуємо його
+            showSpinner(`Рендеринг сторінки ${pageNum}...`);
+            disableControls();
+
+            // Скасовуємо попереднє завдання рендерингу для цього canvas, якщо воно є
+            if (targetCanvasEntry.renderTask) {
+                try {
+                    targetCanvasEntry.renderTask.cancel();
+                    console.log(`Cancelled previous render task for page ${pageNum}.`);
+                } catch (e) {
+                    console.warn(`Error cancelling render task for page ${pageNum}:`, e);
+                }
+                targetCanvasEntry.renderTask = null; // Очищаємо посилання після скасування
+            }
 
             try {
-                const page = await pdfDoc.getPage(num);
+                const ctx = activeCanvas.getContext('2d'); // Отримуємо контекст з активного canvas
+                const page = await pdfDoc.getPage(pageNum);
                 const viewport = page.getViewport({ scale: scale });
 
-                // Встановлюємо розміри канвасу
-                const canvasContext = pdfCanvas.getContext('2d');
-                pdfCanvas.height = viewport.height;
-                pdfCanvas.width = viewport.width;
+                activeCanvas.height = viewport.height;
+                activeCanvas.width = viewport.width;
 
-                // Рендеринг сторінки на канвасі
                 const renderContext = {
-                    canvasContext: canvasContext,
+                    canvasContext: ctx,
                     viewport: viewport,
                 };
-                await page.render(renderContext).promise;
+                targetCanvasEntry.renderTask = page.render(renderContext); // Зберігаємо завдання рендерингу
+                await targetCanvasEntry.renderTask.promise; // Чекаємо завершення завдання
 
-                currentPageNum = num;
-                updateUI(); // Оновити інтерфейс після рендерингу
-                loadingMessage.classList.add('hidden'); // Приховати повідомлення про завантаження
-                pdfCanvas.classList.remove('hidden'); // Показати канвас
+                renderedPages.add(pageNum); // Додаємо сторінку до кешу відрендерених
+                console.log(`Page ${pageNum} rendered successfully at scale ${scale}.`);
+
             } catch (error) {
-                console.error('Помилка рендерингу сторінки:', error);
-                loadingMessage.classList.add('hidden');
-                errorMessage.classList.remove('hidden');
-                errorMessage.textContent = 'Помилка рендерингу сторінки. Будь ласка, спробуйте ще раз.';
+                // Якщо помилка через скасування, це не справжня помилка
+                if (error.name === 'RenderingCancelledException') {
+                    console.log(`Rendering for page ${pageNum} was cancelled.`);
+                } else {
+                    console.error(`Помилка рендерингу сторінки ${pageNum}:`, error);
+                    showMessageBox(`Помилка рендерингу сторінки ${pageNum}: ${error.message}`);
+                }
+            } finally {
+                targetCanvasEntry.renderTask = null; // Завжди очищаємо посилання на завдання після завершення/скасування/помилки
+                hideSpinner(); // Завжди приховуємо спінер
+                enableControls(); // Завжди вмикаємо кнопки
             }
         }
 
         /**
-         * Оновлює інформацію про сторінку та масштаб в інтерфейсі.
+         * Обробляє чергу рендерингу сторінок у фоновому режимі.
          */
-        function updateUI() {
-            if (pdfDoc) {
-                pageInfoSpan.textContent = `Сторінка ${currentPageNum} / ${pdfDoc.numPages}`;
-                // Деактивувати кнопки навігації, якщо досягнуто першої/останньої сторінки
-                prevPageBtn.disabled = currentPageNum <= 1;
-                nextPageBtn.disabled = currentPageNum >= pdfDoc.numPages;
-            } else {
-                pageInfoSpan.textContent = `Сторінка - / -`;
-                prevPageBtn.disabled = true;
-                nextPageBtn.disabled = true;
+        async function processRenderQueue() {
+            if (isProcessingQueue || pageRenderQueue.length === 0) {
+                return;
             }
-            zoomInfoSpan.textContent = `${Math.round(scale * 100)}%`;
+
+            isProcessingQueue = true;
+            while (pageRenderQueue.length > 0) {
+                const { pageNum, scale } = pageRenderQueue.shift();
+
+                let targetCanvasEntry = pageCanvases.get(pageNum);
+                if (!targetCanvasEntry) {
+                    const newCanvasElement = createPageCanvasElement(pageNum);
+                    targetCanvasEntry = { canvas: newCanvasElement, renderTask: null };
+                    pageCanvases.set(pageNum, targetCanvasEntry);
+                }
+                const canvasToRender = targetCanvasEntry.canvas;
+
+                // Пропускаємо, якщо сторінка вже відрендерена з цим масштабом
+                if (renderedPages.has(pageNum)) {
+                     const page = await pdfDoc.getPage(pageNum);
+                     const viewport = page.getViewport({ scale: scale });
+                     if (canvasToRender.width === viewport.width && canvasToRender.height === viewport.height) {
+                        console.log(`Skipping background render for page ${pageNum} - already cached.`);
+                        continue;
+                     }
+                }
+
+                // Скасовуємо попереднє завдання рендерингу для цього canvas, якщо воно є
+                if (targetCanvasEntry.renderTask) {
+                    try {
+                        targetCanvasEntry.renderTask.cancel();
+                    } catch (e) {
+                        console.warn(`Error cancelling background render task for page ${pageNum}:`, e);
+                    }
+                    targetCanvasEntry.renderTask = null;
+                }
+
+                try {
+                    // Рендеримо сторінку без відображення спінера на UI (для фонового режиму)
+                    const page = await pdfDoc.getPage(pageNum);
+                    const viewport = page.getViewport({ scale: scale });
+                    
+                    canvasToRender.height = viewport.height;
+                    canvasToRender.width = viewport.width;
+
+                    const renderContext = {
+                        canvasContext: canvasToRender.getContext('2d'),
+                        viewport: viewport,
+                    };
+                    targetCanvasEntry.renderTask = page.render(renderContext);
+                    await targetCanvasEntry.renderTask.promise;
+                    renderedPages.add(pageNum);
+                    console.log(`Background render for page ${pageNum} completed.`);
+                } catch (error) {
+                    if (error.name === 'RenderingCancelledException') {
+                        console.log(`Background rendering for page ${pageNum} was cancelled.`);
+                    } else {
+                        console.error(`Помилка фонового рендерингу сторінки ${pageNum}:`, error);
+                    }
+                } finally {
+                    targetCanvasEntry.renderTask = null; // Завжди очищаємо посилання на завдання
+                }
+            }
+            isProcessingQueue = false;
+        }
+
+
+        /**
+         * Додає сторінку до черги фонового рендерингу.
+         * @param {number} pageNum
+         * @param {number} scale
+         */
+        function addPageToRenderQueue(pageNum, scale) {
+            // Перевіряємо, чи сторінка вже в черзі або відрендерена з цим масштабом
+            let targetCanvasEntry = pageCanvases.get(pageNum);
+            if (targetCanvasEntry && renderedPages.has(pageNum)) {
+                // Якщо сторінка вже відрендерена і її розміри відповідають поточному масштабу, не додаємо її в чергу
+                // Потрібно отримати сторінку асинхронно, оскільки page.getViewport є асинхронним
+                pdfDoc.getPage(pageNum).then(page => {
+                    const viewport = page.getViewport({ scale: scale });
+                    if (targetCanvasEntry.canvas.width === viewport.width && targetCanvasEntry.canvas.height === viewport.height) {
+                        return; // Сторінка вже відрендерена з цим масштабом, не додаємо в чергу
+                    }
+                });
+            }
+
+            const existsInQueue = pageRenderQueue.some(item => item.pageNum === pageNum);
+            if (!existsInQueue) {
+                pageRenderQueue.push({ pageNum, scale });
+            }
+            if (!isProcessingQueue) {
+                processRenderQueue();
+            }
         }
 
         /**
-         * Завантажує PDF-документ.
+         * Функція для вписування поточної сторінки у вікно переглядача по висоті.
          */
-        async function loadPdf() {
-            loadingMessage.classList.remove('hidden');
-            errorMessage.classList.add('hidden'); // Приховати попередні повідомлення про помилки
-            pdfCanvas.classList.add('hidden'); // Приховати канвас під час завантаження
+        async function fitPageToHeight() {
+            if (!pdfDoc) return;
 
             try {
-                const loadingTask = pdfjsLib.getDocument(pdfUrl);
-                pdfDoc = await loadingTask.promise;
-                currentPageNum = 1; // Скинути до першої сторінки при новому завантаженні
-                scale = 1.0; // Скинути масштаб
-                await renderPage(currentPageNum);
+                const page = await pdfDoc.getPage(currentPageNum);
+                const originalViewport = page.getViewport({ scale: 1 });
+
+                const computedStyle = getComputedStyle(pdfViewerContainer);
+                const paddingTop = parseFloat(computedStyle.paddingTop);
+                const paddingBottom = parseFloat(computedStyle.paddingBottom);
+                const paddingLeft = parseFloat(computedStyle.paddingLeft);
+                const paddingRight = parseFloat(computedStyle.paddingRight);
+
+                const availableWidth = pdfViewerContainer.clientWidth - paddingLeft - paddingRight;
+                const availableHeight = pdfViewerContainer.clientHeight - paddingTop - paddingBottom;
+
+                // Розраховуємо масштаб для вписування по висоті
+                let scaleToFitHeight = availableHeight / originalViewport.height;
+
+                // Застосовуємо цей масштаб, дозволяючи горизонтальну прокрутку, якщо сторінка ширша
+                currentScale = scaleToFitHeight;
+
+                // Забезпечення дотримання мінімальних та максимальних меж масштабу
+                currentScale = Math.max(minScale, Math.min(maxScale, currentScale));
+
+                // Рендеримо поточну сторінку з новим масштабом, примусово перерендеривши
+                await renderPage(currentPageNum, currentScale, true);
+                pdfViewerContainer.scrollTop = 0; // Прокрутка до верху
+                pdfViewerContainer.scrollLeft = 0; // Прокрутка до лівого краю
             } catch (error) {
-                console.error('Помилка завантаження PDF:', error);
-                loadingMessage.classList.add('hidden');
-                errorMessage.classList.remove('hidden');
-                errorMessage.textContent = 'Не вдалося завантажити PDF. Перевірте URL або спробуйте пізніше.';
+                console.error('Помилка при вписуванні сторінки по висоті:', error);
+                showMessageBox(`Помилка при вписуванні сторінки по висоті: ${error.message}`);
             }
         }
 
-        // Обробники подій для кнопок
-        prevPageBtn.addEventListener('click', () => {
-            if (currentPageNum > 1) {
-                renderPage(currentPageNum - 1);
+        /**
+         * Ініціалізує переглядач PDF, завантажуючи PDF-документ.
+         */
+        async function initPdfViewer() {
+            try {
+                showSpinner('Завантаження PDF...'); // Показуємо спінер під час завантаження
+                disableControls(); // Вимикаємо кнопки під час завантаження
+
+                const loadingTask = pdfjsLib.getDocument({
+                    url: pdfUrl,
+                    onProgress: (progressData) => {
+                        if (progressData.total) {
+                            const percent = Math.round((progressData.loaded / progressData.total) * 100);
+                            spinnerMessage.textContent = `Завантаження PDF: ${percent}%`;
+                        } else {
+                            spinnerMessage.textContent = `Завантаження PDF: ${Math.round(progressData.loaded / 1024)} KB`;
+                        }
+                    }
+                });
+
+                pdfDoc = await loadingTask.promise;
+                hideSpinner(); // Приховуємо спінер після завантаження
+
+                // Завантажуємо тільки вказану сторінку
+                if (pageToLoad > 0 && pageToLoad <= pdfDoc.numPages) {
+                    currentPageNum = pageToLoad;
+                    // Створюємо canvas тільки для цієї сторінки
+                    createPageCanvasElement(currentPageNum);
+                    await fitPageToHeight(); // Це викличе renderPage внутрішньо
+                    // Вимикаємо кнопки навігації, оскільки ми переглядаємо лише одну сторінку
+                    prevPageBtn.disabled = true;
+                    nextPageBtn.disabled = true;
+                } else {
+                    showMessageBox(`Сторінка ${pageToLoad} не існує в документі. Документ має ${pdfDoc.numPages} сторінок.`);
+                    // Якщо сторінка не існує, можемо вимкнути всі кнопки, крім "Додому" або "Вписати"
+                    disableControls();
+                    homeBtn.disabled = false;
+                    fitToWindowBtn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Помилка завантаження PDF:', error);
+                showMessageBox(`Помилка завантаження PDF: ${error.message}. Переконайтеся, що URL правильний та доступний.`);
+                hideSpinner(); // Приховуємо спінер у разі помилки
+            } finally {
+                enableControls(); // Вмикаємо кнопки після всіх операцій або помилки
+                // Перевіряємо, чи потрібно вимкнути кнопки навігації, якщо завантажується лише одна сторінка
+                if (pdfDoc && pdfDoc.numPages === 1 || pageToLoad > 0) { // Якщо завантажуємо конкретну сторінку
+                     prevPageBtn.disabled = true;
+                     nextPageBtn.disabled = true;
+                }
             }
+        }
+
+        // Слухачі подій для перетягування
+        pdfViewerContainer.addEventListener('mousedown', (e) => {
+            // Перевіряємо, чи клік не був на елементі керування
+            if (e.target.closest('.controls-fixed-wrapper') || e.target.closest('.floating-zoom-controls')) {
+                return;
+            }
+            isDragging = true;
+            pdfViewerContainer.classList.add('dragging');
+            startX = e.pageX - pdfViewerContainer.offsetLeft;
+            startY = e.pageY - pdfViewerContainer.offsetTop;
+            scrollLeft = pdfViewerContainer.scrollLeft;
+            scrollTop = pdfViewerContainer.scrollTop;
         });
 
-        nextPageBtn.addEventListener('click', () => {
-            if (pdfDoc && currentPageNum < pdfDoc.numPages) {
-                renderPage(currentPageNum + 1);
+        pdfViewerContainer.addEventListener('mouseleave', () => {
+            isDragging = false;
+            pdfViewerContainer.classList.remove('dragging');
+        });
+
+        pdfViewerContainer.addEventListener('mouseup', () => {
+            isDragging = false;
+            pdfViewerContainer.classList.remove('dragging');
+        });
+
+        pdfViewerContainer.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault(); // Запобігаємо виділенню тексту
+            const x = e.pageX - pdfViewerContainer.offsetLeft;
+            const y = e.pageY - pdfViewerContainer.offsetTop;
+            const walkX = (x - startX); // Відстань, на яку потрібно прокрутити по X
+            const walkY = (y - startY); // Відстань, на яку потрібно прокрутити по Y
+            pdfViewerContainer.scrollLeft = scrollLeft - walkX;
+            pdfViewerContainer.scrollTop = scrollTop - walkY;
+        });
+
+
+        // Слухачі подій для кнопок
+        prevPageBtn.addEventListener('click', async () => {
+            if (currentPageNum <= 1) {
+                showMessageBox('Ви на першій сторінці.');
+                return;
             }
+            currentPageNum--;
+            await fitPageToHeight(); // Вписуємо сторінку по висоті після перемикання
+        });
+
+        nextPageBtn.addEventListener('click', async () => {
+            if (pdfDoc && currentPageNum >= pdfDoc.numPages) {
+                showMessageBox('Ви на останній сторінці.');
+                return;
+            }
+            currentPageNum++;
+            await fitPageToHeight(); // Вписуємо сторінку по висоті після перемикання
         });
 
         zoomInBtn.addEventListener('click', () => {
-            scale += ZOOM_STEP;
-            renderPage(currentPageNum);
+            if (currentScale < maxScale) {
+                currentScale = Math.min(maxScale, currentScale + zoomStep);
+                renderPage(currentPageNum, currentScale, true); // Примусово перерендерюємо при зміні масштабу
+            } else {
+                showMessageBox('Максимальне збільшення досягнуто.');
+            }
         });
 
         zoomOutBtn.addEventListener('click', () => {
-            if (scale > ZOOM_STEP) { // Запобігаємо занадто малому масштабу
-                scale -= ZOOM_STEP;
-                renderPage(currentPageNum);
+            if (currentScale > minScale) {
+                currentScale = Math.max(minScale, currentScale - zoomStep);
+                renderPage(currentPageNum, currentScale, true); // Примусово перерендерюємо при зміні масштабу
+            } else {
+                showMessageBox('Мінімальне зменшення досягнуто.');
             }
         });
 
-        // Завантажити PDF при завантаженні сторінки
-        window.onload = loadPdf;
+        homeBtn.addEventListener('click', async () => {
+            currentPageNum = pageToLoad; // Повертаємося до третьої сторінки
+            await fitPageToHeight(); // Вписуємо її по висоті
+            showMessageBox('Масштаб і положення скинуто.');
+        });
 
-        // Оновити рендеринг при зміні розміру вікна
+        fitToWindowBtn.addEventListener('click', fitPageToHeight); // Кнопка "Вписати у вікно" тепер вписує по висоті
+
+        // Ініціалізація переглядача при завантаженні вікна
+        window.onload = initPdfViewer;
+
+        // Обробка зміни розміру вікна: повторне вписування сторінки по висоті
         window.addEventListener('resize', () => {
             if (pdfDoc) {
-                renderPage(currentPageNum);
+                fitPageToHeight();
             }
         });
-
-        // Ініціалізація інтерфейсу
-        updateUI();
     </script>
 </body>
 </html>
