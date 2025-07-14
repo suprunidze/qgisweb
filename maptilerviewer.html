@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта OpenLayers з MapTiler</title>
+    <!-- Підключення бібліотеки OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <!-- Підключення Font Awesome для іконок (залишено для інших кнопок) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Запобігаємо прокрутці */
+        }
+        #map {
+            width: 100%;
+            height: 100vh; /* Карта займатиме всю висоту вікна браузера */
+        }
+
+        /* Стилі для кастомних кнопок керування картою (нижній блок) */
+        .map-controls-bottom {
+            position: absolute;
+            bottom: 40px; /* Піднято на 40px */
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000; /* Переконайтесь, що кнопки знаходяться поверх карти */
+        }
+
+        /* Стилі для кастомних елементів керування картою (верхній блок) */
+        .map-controls-top {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Відступ між кнопкою Північ та регулятором */
+            z-index: 1000; /* Переконайтесь, що елементи знаходяться поверх карти */
+            align-items: center; /* Центруємо елементи всередині */
+        }
+
+        .map-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%; /* Кругла форма */
+            background-color: rgba(224, 224, 224, 0.5); /* Світло-сірий прозорий колір */
+            backdrop-filter: blur(5px); /* Ефект розмиття */
+            color: #333; /* Темніший колір тексту/іконки для контрасту */
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none; /* Прибрано тінь */
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .map-button:hover {
+            background-color: rgba(192, 192, 192, 0.7); /* Трохи темніший сірий при наведенні */
+            transform: scale(1.05);
+        }
+
+        .map-button:active {
+            transform: scale(0.95);
+        }
+
+        .map-button i {
+            font-size: 1.2em;
+        }
+
+        /* Стилі для круглого регулятора повороту */
+        .rotation-dial-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rotation-dial {
+            width: 45px; /* Зроблено розміром як інші кнопки */
+            height: 45px;
+            border-radius: 50%; /* Кругла форма */
+            background-color: rgba(224, 224, 224, 0.5); /* Світло-сірий прозорий колір */
+            backdrop-filter: blur(5px); /* Ефект розмиття */
+            border: none; /* Прибрано обводку */
+            box-shadow: none; /* Прибрано тінь */
+            position: relative;
+            cursor: grab; /* Курсор при наведенні */
+            transition: transform 0.05s linear; /* Плавний поворот */
+        }
+
+        .rotation-dial:active {
+            cursor: grabbing; /* Курсор під час перетягування */
+        }
+
+        .north-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333; /* Колір стрілки як на кнопках */
+            pointer-events: none; /* Щоб не перехоплював події миші */
+        }
+
+        .north-indicator i {
+            font-size: 1.8em; /* Зменшено розмір іконки, щоб вона краще вписувалася в менший регулятор */
+            text-shadow: none; /* Прибрано тінь */
+            transform: rotate(-45deg); /* Компенсація для fa-location-arrow, щоб вона вказувала прямо вгору */
+        }
+
+        /* Приховано відображення значення повороту */
+        .rotation-value-display {
+            display: none;
+        }
+
+        /* Стилі для нової кнопки "Північ" */
+        #northButton {
+            width: 9px; /* Менший розмір (45px / 5) */
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(51, 51, 51, 0.6); /* Темний, прозорий фон */
+            backdrop-filter: blur(5px);
+            color: white; /* Колір для фону, якщо немає іконки */
+            border: none;
+            cursor: pointer;
+            font-size: 0; /* Приховуємо будь-який текст, якщо він випадково з'явиться */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #northButton:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* Стилі для іконки будинку SVG */
+        .icons8-home {
+            display: inline-block;
+            width: 24px; /* Розмір іконки всередині кнопки */
+            height: 24px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiPjxwYXRoIGQ9Ik0gMTIgMi4wOTk2MDk0IEwgMSAxMiBMIDQgMTIgTCA0IDIxIEwgMTEgMjEgTCAxMSAxNSBMIDEzIDE1IEwgMTMgMjEgTCAyMCAyMSBMIDIwIDEyIEwgMjMgMTIgTCAxMiAyLjA5OTYwOTQgeiBNIDEyIDQuNzkxMDE1NiBMIDE4IDEwLjE5MTQwNiBMIDE4IDExIEwgMTggMTkgTCAxNSAxOSBMIDE1IDEzIEwgOSAxMyBMIDkgMTkgTCA2IDE5IEwgNiAxMC4xOTE0MDYgTCAxMiA0Ljc5MTAxNTYgeiIvPjwvc3ZnPg==') 50% 50% no-repeat;
+            background-size: 100%;
+        }
+
+        /* Стилі для елемента керування атрибуцією OpenLayers */
+        .ol-attribution {
+            left: 10px !important; /* Переміщуємо вліво */
+            right: auto !important; /* Вимикаємо позиціонування праворуч */
+            bottom: 10px !important; /* Залишаємо внизу */
+            background-color: rgba(224, 224, 224, 0.5); /* Прозорий білий фон */
+            backdrop-filter: blur(5px); /* Ефект розмиття */
+            border-radius: 5px; /* Закруглені кути */
+            padding: 2px 5px; /* Невеликий відступ */
+            box-shadow: none; /* Прибираємо тінь */
+            z-index: 1000; /* Переконаємось, що знаходиться поверх карти */
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="map-controls-bottom">
+        <button id="homeButton" class="map-button" title="Повернутись до початкової позиції">
+            <div class="icons8-home"></div> <!-- Нова SVG іконка будинку -->
+        </button>
+        <button id="zoomInButton" class="map-button" title="Збільшити">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button id="zoomOutButton" class="map-button" title="Зменшити">
+            <i class="fas fa-minus"></i>
+        </button>
+    </div>
+
+    <div class="map-controls-top">
+        <button id="northButton" title="Встановити північ"></button> <!-- Кнопка без іконки -->
+        <div class="rotation-dial-container">
+            <div id="rotationDial" class="rotation-dial">
+                <div id="northIndicator" class="north-indicator">
+                    <i class="fas fa-location-arrow"></i> <!-- Іконка стрілки для навігатора -->
+                </div>
+            </div>
+            <!-- Приховано відображення значення повороту -->
+            <div class="rotation-value-display">
+                Поворот: <span id="rotationValue">0</span>°
+            </div>
+        </div>
+    </div>
+
+    <!-- Підключення бібліотеки OpenLayers JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <!-- Підключення бібліотеки ol-mapbox-style для завантаження стилів MapTiler -->
+    <script src="https://cdn.jsdelivr.net/npm/ol-mapbox-style@12.0.0/dist/olms.js"></script>
+    <script>
+        // Ваш MapTiler API-ключ
+        const mapTilerApiKey = '7JUTiyTWHkC7qe7Dy8Qj';
+        // URL стилю MapTiler (style.json)
+        const mapTilerStyleUrl = `https://api.maptiler.com/maps/01980891-51b4-7eed-89ae-ee81612e0ea5/style.json?key=${mapTilerApiKey}`;
+        // URL додаткового шару MapTiler
+        const customLayerUrl = `https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=${mapTilerApiKey}`;
+
+        // Початкові параметри вигляду карти для кнопки "Додому"
+        const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
+        const initialZoom = 17; // Зум 17
+        const initialMapRotationDegrees = -40; // 40 градусів проти годинникової стрілки
+        const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
+
+        // Ініціалізація карти OpenLayers без початкових шарів, оскільки olms.apply додасть їх
+        const map = new ol.Map({
+            target: 'map', // Елемент HTML, в якому буде відображатися карта
+            // Вимикаємо стандартні елементи керування OpenLayers, окрім атрибуції
+            controls: ol.control.defaults.defaults({
+                zoom: false, // Вимикаємо стандартні кнопки масштабування
+                rotate: false, // Вимикаємо стандартну кнопку повороту
+                attribution: true // Залишаємо стандартну кнопку атрибуції
+            }),
+            view: new ol.View({
+                center: initialCenter,
+                zoom: initialZoom,
+                rotation: initialMapRotationRadians
+            })
+        });
+
+        // Застосування стилю MapTiler до карти за допомогою ol-mapbox-style
+        olms.apply(map, mapTilerStyleUrl).then(function (map) {
+            // Після того, як базовий стиль застосовано, додаємо додатковий шар
+            map.addLayer(new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: customLayerUrl,
+                    attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>'
+                })
+            }));
+        }).catch(function(error) {
+            console.error("Помилка при завантаженні стилю MapTiler:", error);
+            // Можна додати повідомлення для користувача, якщо карта не завантажилася
+            document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
+        });
+
+        // Отримання посилань на кнопки та регулятор повороту
+        const zoomInButton = document.getElementById('zoomInButton');
+        const zoomOutButton = document.getElementById('zoomOutButton');
+        const homeButton = document.getElementById('homeButton');
+        const rotationDial = document.getElementById('rotationDial');
+        const northButton = document.getElementById('northButton'); // Нова кнопка "Північ"
+
+        let isDraggingDial = false;
+        let dialCenterX, dialCenterY;
+        let startMouseAngle; // Кут миші відносно центру регулятора при натисканні
+        let initialMapRotationOnDragStart; // Початковий поворот карти при початку перетягування
+
+        // Функція для оновлення візуального стану регулятора
+        function updateRotationDial(mapRotationRadians) {
+            // Візуальний поворот регулятора має бути протилежним повороту карти,
+            // щоб стрілка завжди вказувала на географічну північ
+            let dialVisualRotationRadians = -mapRotationRadians;
+            rotationDial.style.transform = `rotate(${dialVisualRotationRadians * 180 / Math.PI}deg)`;
+        }
+
+        // Встановлення початкового стану регулятора
+        updateRotationDial(initialMapRotationRadians);
+
+        // Обробники подій для регулятора повороту
+        rotationDial.addEventListener('mousedown', function(e) {
+            isDraggingDial = true;
+            rotationDial.style.cursor = 'grabbing';
+            const rect = rotationDial.getBoundingClientRect();
+            dialCenterX = rect.left + rect.width / 2;
+            dialCenterY = rect.top + rect.height / 2;
+
+            // Зберігаємо початковий кут миші та початковий поворот карти
+            startMouseAngle = Math.atan2(e.clientY - dialCenterY, e.clientX - dialCenterX);
+            initialMapRotationOnDragStart = map.getView().getRotation();
+
+            e.preventDefault(); // Запобігаємо виділенню тексту
+        });
+
+        // Прив'язуємо mousemove та mouseup до document для глобального відстеження
+        document.addEventListener('mousemove', function(e) {
+            if (!isDraggingDial) return;
+
+            const currentMouseX = e.clientX - dialCenterX;
+            const currentMouseY = e.clientY - dialCenterY;
+
+            // Поточний кут миші відносно центру регулятора
+            let currentMouseAngle = Math.atan2(currentMouseY, currentMouseX);
+
+            // Розраховуємо зміну кута
+            let angleDelta = currentMouseAngle - startMouseAngle;
+
+            // Новий поворот карти = початковий поворот + зміна кута миші
+            // Для того, щоб обертання карти відповідало напрямку руху миші,
+            // коли миша рухається за годинниковою стрілкою (angleDelta стає від'ємним),
+            // поворот карти має збільшуватися (ставати більш позитивним).
+            // Отже, ми віднімаємо angleDelta.
+            let newMapRotationRadians = initialMapRotationOnDragStart - angleDelta;
+
+            map.getView().setRotation(newMapRotationRadians);
+
+            // Оновлюємо візуальне відображення регулятора
+            updateRotationDial(newMapRotationRadians);
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDraggingDial) {
+                isDraggingDial = false;
+                rotationDial.style.cursor = 'grab';
+            }
+        });
+
+        // Додаємо обробник події mouseleave до вікна, щоб зупинити обертання, якщо миша виходить за межі фрейма
+        window.addEventListener('mouseleave', function() {
+            if (isDraggingDial) {
+                isDraggingDial = false;
+                rotationDial.style.cursor = 'grab';
+            }
+        });
+
+        // Обробник зміни повороту карти (наприклад, якщо користувач перетягує карту)
+        map.getView().on('change:rotation', function() {
+            updateRotationDial(map.getView().getRotation());
+        });
+
+        // Додавання обробників подій для кнопок
+        zoomInButton.addEventListener('click', function() {
+            const view = map.getView();
+            const currentZoom = view.getZoom();
+            view.setZoom(currentZoom + 1);
+        });
+
+        zoomOutButton.addEventListener('click', function() {
+            const view = map.getView();
+            const currentZoom = view.getZoom();
+            view.setZoom(currentZoom - 1);
+        });
+
+        homeButton.addEventListener('click', function() {
+            const view = map.getView();
+            view.setCenter(initialCenter);
+            view.setZoom(initialZoom);
+            view.setRotation(initialMapRotationRadians); // Встановлюємо початковий поворот карти
+            // Оновлюємо регулятор та його відображення до початкового стану
+            updateRotationDial(initialMapRotationRadians);
+        });
+
+        // Обробник для нової кнопки "Північ"
+        northButton.addEventListener('click', function() {
+            const view = map.getView();
+            view.setRotation(0); // Встановлюємо поворот на 0 радіан (географічна північ)
+            updateRotationDial(0); // Оновлюємо регулятор
+        });
+    </script>
+</body>
+</html>
