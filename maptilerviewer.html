@@ -6,7 +6,7 @@
     <title>Карта OpenLayers з MapTiler</title>
     <!-- Підключення бібліотеки OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
-    <!-- Підключення Font Awesome для іконок (залишено для інших кнопок) -->
+    <!-- Підключення Font Awesome для іконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
@@ -23,36 +23,48 @@
         /* Стилі для кастомних кнопок керування картою (нижній блок) */
         .map-controls-bottom {
             position: absolute;
-            bottom: 40px; /* Піднято на 40px */
-            right: 20px;
+            bottom: 10px; /* Менший відступ для десктопа */
+            right: 10px; /* Менший відступ для десктопа */
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 5px; /* Менший відступ між кнопками */
             z-index: 1000; /* Переконайтесь, що кнопки знаходяться поверх карти */
         }
 
-        /* Стилі для кастомних елементів керування картою (верхній блок) */
-        .map-controls-top {
+        /* Стилі для кастомних елементів керування картою (верхній правий блок) */
+        .map-controls-top-right {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 80px; /* Змінено з 10px на 80px (10 + 70) */
+            right: 10px; /* Менший відступ для десктопа */
             display: flex;
             flex-direction: column;
-            gap: 10px; /* Відступ між кнопкою Північ та регулятором */
+            gap: 5px; /* Менший відступ між кнопками */
             z-index: 1000; /* Переконайтесь, що елементи знаходяться поверх карти */
             align-items: center; /* Центруємо елементи всередині */
         }
 
+        /* Стилі для кастомних елементів керування картою (верхній лівий блок) */
+        .map-controls-top-left {
+            position: absolute;
+            top: 80px; /* Змінено з 10px на 80px (10 + 70) */
+            left: 10px; /* Менший відступ для десктопа */
+            display: flex;
+            flex-direction: column;
+            gap: 5px; /* Менший відступ між кнопками */
+            z-index: 1000;
+            align-items: center;
+        }
+
         .map-button {
-            width: 45px;
-            height: 45px;
+            width: 35px; /* Менший розмір для десктопа */
+            height: 35px; /* Менший розмір для десктопа */
             border-radius: 50%; /* Кругла форма */
             background-color: rgba(224, 224, 224, 0.5); /* Світло-сірий прозорий колір */
             backdrop-filter: blur(5px); /* Ефект розмиття */
             color: #333; /* Темніший колір тексту/іконки для контрасту */
             border: none;
             cursor: pointer;
-            font-size: 1.2em;
+            font-size: 1em; /* Менший розмір шрифту */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -70,7 +82,7 @@
         }
 
         .map-button i {
-            font-size: 1.2em;
+            font-size: 1em; /* Менший розмір іконки */
         }
 
         /* Стилі для круглого регулятора повороту */
@@ -81,8 +93,8 @@
         }
 
         .rotation-dial {
-            width: 45px; /* Зроблено розміром як інші кнопки */
-            height: 45px;
+            width: 35px; /* Менший розмір для десктопа */
+            height: 35px; /* Менший розмір для десктопа */
             border-radius: 50%; /* Кругла форма */
             background-color: rgba(224, 224, 224, 0.5); /* Світло-сірий прозорий колір */
             backdrop-filter: blur(5px); /* Ефект розмиття */
@@ -111,7 +123,7 @@
         }
 
         .north-indicator i {
-            font-size: 1.8em; /* Зменшено розмір іконки, щоб вона краще вписувалася в менший регулятор */
+            font-size: 1.4em; /* Менший розмір іконки */
             text-shadow: none; /* Прибрано тінь */
             transform: rotate(-45deg); /* Компенсація для fa-location-arrow, щоб вона вказувала прямо вгору */
         }
@@ -123,15 +135,14 @@
 
         /* Стилі для нової кнопки "Північ" */
         #northButton {
-            width: 9px; /* Менший розмір (45px / 5) */
-            height: 12px;
+            width: 7px; /* Менший розмір для десктопа */
+            height: 12px; /* Менший розмір для десктопа */
             border-radius: 50%;
-            background-color: rgba(51, 51, 51, 0.6); /* Темний, прозорий фон */
-            backdrop-filter: blur(5px);
+            background-color: #333; /* Суцільний колір */
             color: white; /* Колір для фону, якщо немає іконки */
             border: none;
             cursor: pointer;
-            font-size: 0; /* Приховуємо будь-який текст, якщо він випадково з'явиться */
+            font-size: 0; /* Приховуємо будь-який текст */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -147,8 +158,8 @@
         /* Стилі для іконки будинку SVG */
         .icons8-home {
             display: inline-block;
-            width: 24px; /* Розмір іконки всередині кнопки */
-            height: 24px;
+            width: 20px; /* Менший розмір іконки */
+            height: 20px; /* Менший розмір іконки */
             background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiPjxwYXRoIGQ9Ik0gMTIgMi4wOTk2MDk0IEwgMSAxMiBMIDQgMTIgTCA0IDIxIEwgMTEgMjEgTCAxMSAxNSBMIDEzIDE1IEwgMTMgMjEgTCAyMCAyMSBMIDIwIDEyIEwgMjMgMTIgTCAxMiAyLjA5OTYwOTQgeiBNIDEyIDQuNzkxMDE1NiBMIDE4IDEwLjE5MTQwNiBMIDE4IDExIEwgMTggMTkgTCAxNSAxOSBMIDE1IDEzIEwgOSAxMyBMIDkgMTkgTCA2IDE5IEwgNiAxMC4xOTE0MDYgTCAxMiA0Ljc5MTAxNTYgeiIvPjwvc3ZnPg==') 50% 50% no-repeat;
             background-size: 100%;
         }
@@ -164,6 +175,127 @@
             padding: 2px 5px; /* Невеликий відступ */
             box-shadow: none; /* Прибираємо тінь */
             z-index: 1000; /* Переконаємось, що знаходиться поверх карти */
+        }
+
+        /* Стилі для бічної панелі (спливаючого вікна) */
+        .side-panel {
+            position: absolute;
+            top: 80px; /* Змінено з 10px на 80px */
+            left: -320px; /* Початково приховано */
+            width: 300px; /* Ширина панелі */
+            height: calc(100vh - 160px); /* Висота з урахуванням відступів (80px + 80px) */
+            background-color: rgba(255, 255, 255, 0.9); /* Напівпрозорий білий фон */
+            backdrop-filter: blur(10px); /* Ефект розмиття */
+            z-index: 2000; /* Вище, ніж кнопки карти */
+            transition: left 0.3s ease-out; /* Плавна анімація появи/зникнення */
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2); /* Тінь для візуального відділення */
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px; /* Округлення всіх кутів для ефекту "бульбашки" */
+            overflow: hidden; /* Обрізаємо вміст, щоб він не виходив за заокруглені кути */
+        }
+
+        .side-panel.open {
+            left: 10px; /* Висуваємо панель на екран з відступом */
+        }
+
+        .side-panel-close-button {
+            position: absolute; /* Розміщуємо кнопку поверх усього */
+            top: 10px;
+            right: 10px;
+            background: rgba(224, 224, 224, 0.5); /* Фон як у кнопок */
+            backdrop-filter: blur(5px); /* Розмиття як у кнопок */
+            border: none;
+            font-size: 1.2em; /* Менший розмір шрифту */
+            cursor: pointer;
+            color: #333;
+            z-index: 2001; /* Вище, ніж iframe */
+            border-radius: 50%; /* Кругла форма */
+            width: 25px; /* Менший розмір кнопки */
+            height: 25px; /* Менший розмір кнопки */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: background-color 0.3s ease; /* Прибрано transform з transition */
+        }
+
+        .side-panel-close-button:hover {
+            background-color: rgba(192, 192, 192, 0.7);
+        }
+
+        .side-panel-iframe {
+            flex-grow: 1; /* Займає весь доступний простір */
+            width: 100%;
+            height: 100%; /* Iframe займає 100% висоти батьківського елемента */
+            border: none;
+            border-radius: 20px; /* Заокруглення всіх кутів iframe */
+        }
+
+        /* Мобільні стилі: більші кнопки та відступи */
+        @media (pointer: coarse) and (max-width: 768px) {
+            .map-controls-bottom {
+                bottom: 40px;
+                right: 20px;
+                gap: 10px;
+            }
+
+            .map-controls-top-right {
+                top: 160px; /* Змінено з 90px на 160px (90 + 70) */
+                right: 20px;
+                gap: 10px;
+            }
+
+            .map-controls-top-left {
+                top: 160px; /* Змінено з 90px на 160px (90 + 70) */
+                left: 20px;
+                gap: 10px;
+            }
+
+            .map-button {
+                width: 45px; /* Більший розмір */
+                height: 45px; /* Більший розмір */
+                font-size: 1.2em; /* Більший розмір шрифту */
+            }
+
+            .map-button i {
+                font-size: 1.2em; /* Більший розмір іконки */
+            }
+
+            .rotation-dial {
+                width: 45px; /* Більший розмір */
+                height: 45px; /* Більший розмір */
+            }
+
+            #northButton {
+                width: 9px; /* Більший розмір */
+                height: 12px; /* Більший розмір */
+            }
+
+            .north-indicator i {
+                font-size: 1.8em; /* Більший розмір іконки */
+            }
+
+            .icons8-home {
+                width: 24px; /* Більший розмір іконки */
+                height: 24px; /* Більший розмір іконки */
+            }
+
+            .side-panel {
+                top: 160px; /* Змінено з 90px на 160px */
+                left: -320px; /* Ширина + лівий відступ */
+                height: calc(100vh - 320px); /* Висота з урахуванням відступів (160px + 160px) */
+            }
+
+            .side-panel.open {
+                left: 20px; /* Відступ при відкритті */
+            }
+
+            .side-panel-close-button {
+                width: 30px; /* Більший розмір кнопки */
+                height: 30px; /* Більший розмір кнопки */
+                font-size: 1.5em; /* Більший розмір шрифту */
+            }
         }
     </style>
 </head>
@@ -182,7 +314,7 @@
         </button>
     </div>
 
-    <div class="map-controls-top">
+    <div class="map-controls-top-right">
         <button id="northButton" title="Встановити північ"></button> <!-- Кнопка без іконки -->
         <div class="rotation-dial-container">
             <div id="rotationDial" class="rotation-dial">
@@ -195,6 +327,20 @@
                 Поворот: <span id="rotationValue">0</span>°
             </div>
         </div>
+    </div>
+
+    <div class="map-controls-top-left">
+        <button id="openPanelButton" class="map-button" title="Відкрити бічну панель">
+            <img src="https://img.icons8.com/material-rounded/48/list.png" alt="List Icon" style="width: 24px; height: 24px;">
+        </button>
+    </div>
+
+    <!-- Бічна панель -->
+    <div id="sidePanel" class="side-panel">
+        <button id="closePanelButton" class="side-panel-close-button">
+            <i class="fas fa-times"></i>
+        </button>
+        <iframe id="panelIframe" class="side-panel-iframe" src="https://www.google.com"></iframe>
     </div>
 
     <!-- Підключення бібліотеки OpenLayers JavaScript -->
@@ -252,6 +398,9 @@
         const homeButton = document.getElementById('homeButton');
         const rotationDial = document.getElementById('rotationDial');
         const northButton = document.getElementById('northButton'); // Нова кнопка "Північ"
+        const openPanelButton = document.getElementById('openPanelButton'); // Нова кнопка відкриття панелі
+        const sidePanel = document.getElementById('sidePanel'); // Бічна панель
+        const closePanelButton = document.getElementById('closePanelButton'); // Кнопка закриття панелі
 
         let isDraggingDial = false;
         let dialCenterX, dialCenterY;
@@ -357,6 +506,15 @@
             const view = map.getView();
             view.setRotation(0); // Встановлюємо поворот на 0 радіан (географічна північ)
             updateRotationDial(0); // Оновлюємо регулятор
+        });
+
+        // Обробники для бічної панелі
+        openPanelButton.addEventListener('click', function() {
+            sidePanel.classList.add('open');
+        });
+
+        closePanelButton.addEventListener('click', function() {
+            sidePanel.classList.remove('open');
         });
     </script>
 </body>
