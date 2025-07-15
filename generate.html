@@ -54,9 +54,10 @@
         }
         .additional-settings, #customSymbolsContainer {
             overflow: hidden;
-            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin-bottom 0.5s ease-in-out;
             max-height: 0;
             opacity: 0;
+            margin-bottom: 0;
         }
         .settings-toggle-icon {
             transition: transform 0.3s ease-in-out;
@@ -100,11 +101,11 @@
 
     <!-- Налаштування довжини -->
     <div class="mb-6">
-        <label for="stringLengthSlider" class="block text-lg font-medium text-gray-700 mb-2">Довжина рядка: <span id="lengthValue" class="font-bold text-blue-600">16</span></label>
+        <label for="stringLengthSlider" class="block text-lg font-medium text-gray-700 mb-2">Довжина рядка: <span id="lengthValue" class="font-bold text-blue-600">8</span></label>
         <div class="flex items-center gap-4">
-            <button id="decrementLength" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-10 h-10 flex items-center justify-center">-</button>
-            <input id="stringLengthSlider" type="range" min="1" max="128" value="16" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-            <button id="incrementLength" class="p-2 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-10 h-10 flex items-center justify-center">+</button>
+            <button id="decrementLength" class="text-lg rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-10 h-10 flex items-center justify-center transition-colors">-</button>
+            <input id="stringLengthSlider" type="range" min="1" max="128" value="8" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+            <button id="incrementLength" class="text-lg rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-10 h-10 flex items-center justify-center transition-colors">+</button>
         </div>
     </div>
 
@@ -129,7 +130,7 @@
     </div>
 
     <!-- Поле для кастомних символів (з'являється динамічно) -->
-    <div id="customSymbolsContainer" class="mb-4">
+    <div id="customSymbolsContainer">
         <label for="customSymbolsInput" class="block text-sm font-medium text-gray-600">Спеціальні символи</label>
         <div class="relative mt-1">
             <input type="text" id="customSymbolsInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-24">
@@ -208,11 +209,15 @@
     const errorMessage = document.getElementById('errorMessage');
     
     const defaultSpecialSymbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+    const disallowedCharsRegex = /[a-zA-Z0-9\s]/g;
 
     // --- Функції для UI ---
 
     function updateLength(value) {
-        const val = parseInt(value, 10);
+        let val = parseInt(value, 10);
+        if (isNaN(val)) val = 1;
+        if (val < 1) val = 1;
+        if (val > 128) val = 128;
         stringLengthSlider.value = val;
         lengthValue.textContent = val;
     }
@@ -221,9 +226,11 @@
         if (show) {
             element.style.maxHeight = element.scrollHeight + "px";
             element.style.opacity = '1';
+            element.style.marginBottom = '1rem'; // Corresponds to mb-4
         } else {
-            element.style.maxHeight = '0px';
+            element.style.maxHeight = '0';
             element.style.opacity = '0';
+            element.style.marginBottom = '0';
         }
     }
 
@@ -266,23 +273,35 @@
             customSymbolsInput.value = defaultSpecialSymbols;
         }
     });
+
+    // Заборона вводу не-спецсимволів
+    customSymbolsInput.addEventListener('input', (e) => {
+        const currentValue = e.target.value;
+        const sanitizedValue = currentValue.replace(disallowedCharsRegex, '');
+        if (currentValue !== sanitizedValue) {
+            e.target.value = sanitizedValue;
+        }
+    });
     
     // Кнопки для полів вводу
     revertSymbols.addEventListener('click', () => customSymbolsInput.value = defaultSpecialSymbols);
-    clearSymbols.addEventListener('click', () => customSymbolsInput.value = '');
-    clearInclude.addEventListener('click', () => includeCharactersCustomInput.value = '');
-    clearExclude.addEventListener('click', () => excludeCharactersInput.value = '');
+    clearSymbols.addEventListener('click', () => { customSymbolsInput.value = ''; customSymbolsInput.focus(); });
+    clearInclude.addEventListener('click', () => { includeCharactersCustomInput.value = ''; includeCharactersCustomInput.focus(); });
+    clearExclude.addEventListener('click', () => { excludeCharactersInput.value = ''; excludeCharactersInput.focus(); });
 
-    async function pasteToInput(inputElement) {
+    async function pasteToInput(inputElement, sanitize = false) {
         try {
-            const text = await navigator.clipboard.readText();
+            let text = await navigator.clipboard.readText();
+            if (sanitize) {
+                text = text.replace(disallowedCharsRegex, '');
+            }
             inputElement.value = text;
         } catch (err) {
             console.error('Не вдалося вставити текст: ', err);
         }
     }
 
-    pasteSymbols.addEventListener('click', () => pasteToInput(customSymbolsInput));
+    pasteSymbols.addEventListener('click', () => pasteToInput(customSymbolsInput, true));
     pasteInclude.addEventListener('click', () => pasteToInput(includeCharactersCustomInput));
     pasteExclude.addEventListener('click', () => pasteToInput(excludeCharactersInput));
 
@@ -355,7 +374,6 @@
     // --- Ініціалізація ---
     window.addEventListener('load', () => {
         updateLength(stringLengthSlider.value);
-        // Перевірка стану чекбоксу спецсимволів при завантаженні
         if (includeSymbols.checked) {
              toggleVisibility(customSymbolsContainer, true);
              if (customSymbolsInput.value.trim() === '') {
