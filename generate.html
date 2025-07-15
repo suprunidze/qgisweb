@@ -211,6 +211,68 @@
     const defaultSpecialSymbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
     const disallowedCharsRegex = /[a-zA-Z0-9\s]/g;
 
+    // --- Функції для Cookies ---
+    function setCookie(name, value, days) {
+        let expires = "";
+        if (days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/; SameSite=Lax";
+    }
+
+    function getCookie(name) {
+        const nameEQ = name + "=";
+        const ca = document.cookie.split(';');
+        for(let i = 0; i < ca.length; i++) {
+            let c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+        }
+        return null;
+    }
+    
+    // --- Збереження та завантаження налаштувань ---
+    function saveSettings() {
+        setCookie('stringLength', stringLengthSlider.value, 365);
+        setCookie('includeUppercase', includeUppercase.checked, 365);
+        setCookie('includeLowercase', includeLowercase.checked, 365);
+        setCookie('includeNumbers', includeNumbers.checked, 365);
+        setCookie('includeSymbols', includeSymbols.checked, 365);
+        setCookie('customSymbols', customSymbolsInput.value, 365);
+        setCookie('includeChars', includeCharactersCustomInput.value, 365);
+        setCookie('excludeChars', excludeCharactersInput.value, 365);
+    }
+
+    function loadSettings() {
+        const savedLength = getCookie('stringLength');
+        if (savedLength !== null) {
+            updateLength(savedLength);
+        }
+
+        const uc = getCookie('includeUppercase');
+        if (uc !== null) includeUppercase.checked = (uc === 'true');
+
+        const lc = getCookie('includeLowercase');
+        if (lc !== null) includeLowercase.checked = (lc === 'true');
+
+        const num = getCookie('includeNumbers');
+        if (num !== null) includeNumbers.checked = (num === 'true');
+        
+        const sym = getCookie('includeSymbols');
+        if (sym !== null) includeSymbols.checked = (sym === 'true');
+
+        const customSymbols = getCookie('customSymbols');
+        if (customSymbols !== null) customSymbolsInput.value = customSymbols;
+
+        const includeChars = getCookie('includeChars');
+        if (includeChars !== null) includeCharactersCustomInput.value = includeChars;
+
+        const excludeChars = getCookie('excludeChars');
+        if (excludeChars !== null) excludeCharactersInput.value = excludeChars;
+    }
+
     // --- Функції для UI ---
 
     function updateLength(value) {
@@ -226,7 +288,7 @@
         if (show) {
             element.style.maxHeight = element.scrollHeight + "px";
             element.style.opacity = '1';
-            element.style.marginBottom = '1rem'; // Corresponds to mb-4
+            element.style.marginBottom = '1rem';
         } else {
             element.style.maxHeight = '0';
             element.style.opacity = '0';
@@ -284,10 +346,29 @@
     });
     
     // Кнопки для полів вводу
-    revertSymbols.addEventListener('click', () => customSymbolsInput.value = defaultSpecialSymbols);
-    clearSymbols.addEventListener('click', () => { customSymbolsInput.value = ''; customSymbolsInput.focus(); });
-    clearInclude.addEventListener('click', () => { includeCharactersCustomInput.value = ''; includeCharactersCustomInput.focus(); });
-    clearExclude.addEventListener('click', () => { excludeCharactersInput.value = ''; excludeCharactersInput.focus(); });
+    function triggerInputChange(element) {
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    
+    revertSymbols.addEventListener('click', () => {
+        customSymbolsInput.value = defaultSpecialSymbols;
+        triggerInputChange(customSymbolsInput);
+    });
+    clearSymbols.addEventListener('click', () => {
+        customSymbolsInput.value = '';
+        customSymbolsInput.focus();
+        triggerInputChange(customSymbolsInput);
+    });
+    clearInclude.addEventListener('click', () => {
+        includeCharactersCustomInput.value = '';
+        includeCharactersCustomInput.focus();
+        triggerInputChange(includeCharactersCustomInput);
+    });
+    clearExclude.addEventListener('click', () => {
+        excludeCharactersInput.value = '';
+        excludeCharactersInput.focus();
+        triggerInputChange(excludeCharactersInput);
+    });
 
     async function pasteToInput(inputElement, sanitize = false) {
         try {
@@ -296,6 +377,7 @@
                 text = text.replace(disallowedCharsRegex, '');
             }
             inputElement.value = text;
+            triggerInputChange(inputElement);
         } catch (err) {
             console.error('Не вдалося вставити текст: ', err);
         }
@@ -373,14 +455,28 @@
 
     // --- Ініціалізація ---
     window.addEventListener('load', () => {
+        loadSettings();
+        
         updateLength(stringLengthSlider.value);
+        
         if (includeSymbols.checked) {
              toggleVisibility(customSymbolsContainer, true);
-             if (customSymbolsInput.value.trim() === '') {
+             if (customSymbolsInput.value.trim() === '' && getCookie('customSymbols') === null) {
                 customSymbolsInput.value = defaultSpecialSymbols;
              }
         }
+        
         generateString();
+        
+        // Додаємо слухачі для збереження налаштувань після завантаження
+        document.querySelectorAll('input[type="checkbox"], input[type="range"]').forEach(input => {
+            input.addEventListener('change', saveSettings);
+        });
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('input', saveSettings);
+        });
+        decrementLength.addEventListener('click', saveSettings);
+        incrementLength.addEventListener('click', saveSettings);
     });
 </script>
 
