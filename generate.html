@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Генератор випадкових символів</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+            margin-top: -6px;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #2563eb;
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+        }
+        textarea {
+            resize: vertical;
+            min-height: 50px;
+        }
+        .special-symbols-group.expanded {
+            background-color: #f9fafb;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            margin-top: 0.5rem;
+        }
+        .special-symbols-group.expanded .special-symbols-options {
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="p-4">
+
+<!-- ... основний блок без змін ... -->
+
+    <!-- Поле результату -->
+    <div class="mb-6 relative">
+        <textarea id="resultString" class="w-full p-3 pr-12 border border-gray-300 rounded-lg text-lg text-gray-700 font-mono bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500" readonly rows="3" placeholder="Натисніть 'Згенерувати'"></textarea>
+        <div class="absolute right-3 top-3 flex space-x-2">
+            <button id="copyButton" class="text-gray-500 hover:text-blue-600 focus:outline-none p-2">
+                <i class="far fa-copy text-xl"></i>
+            </button>
+        </div>
+        <p id="errorMessage" class="text-red-500 mt-2 text-sm hidden">Оберіть хоча б одну групу символів або перевірте виключення.</p>
+    </div>
+
+<!-- ... -->
+
+<script>
+    // ...
+
+    // Копіювання згенерованого рядка
+    copyButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(resultStringInput.value)
+            .then(() => {
+                copyButton.innerHTML = '<i class="fas fa-check text-green-500 text-xl"></i>';
+                setTimeout(() => {
+                    copyButton.innerHTML = '<i class="far fa-copy text-xl"></i>';
+                }, 1500);
+            })
+            .catch(err => {
+                console.error('Помилка копіювання: ', err);
+            });
+    });
+
+    // Анімація відкриття/закриття налаштувань
+    toggleSettingsButton.addEventListener('click', () => {
+        const isHidden = additionalSettingsDiv.style.maxHeight === '0px' || !additionalSettingsDiv.style.maxHeight;
+        if (isHidden) {
+            additionalSettingsDiv.style.maxHeight = additionalSettingsDiv.scrollHeight + "px";
+            settingsToggleIcon.classList.add('rotate-180');
+        } else {
+            additionalSettingsDiv.style.maxHeight = "0px";
+            settingsToggleIcon.classList.remove('rotate-180');
+        }
+    });
+
+    // Генерація випадкового рядка
+    generateButton.addEventListener('click', () => {
+        const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lower = 'abcdefghijklmnopqrstuvwxyz';
+        const numbers = '0123456789';
+        const errorMessage = document.getElementById('errorMessage');
+
+        let availableChars = '';
+        if (includeUppercase.checked) availableChars += upper;
+        if (includeLowercase.checked) availableChars += lower;
+        if (includeNumbers.checked) availableChars += numbers;
+
+        if (includeSymbols.checked) {
+            const customSyms = customSymbolsInput.value.trim();
+            availableChars += customSyms || defaultSpecialSymbols;
+        }
+
+        const customIncludeChars = includeCharactersCustomInput.value.trim();
+        if (customIncludeChars) availableChars += customIncludeChars;
+
+        let excludeChars = excludeCharactersInput.value;
+        for (const char of excludeChars) {
+            availableChars = availableChars.replace(new RegExp(char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '');
+        }
+
+        availableChars = Array.from(new Set(availableChars.split(''))).join('');
+
+        const length = parseInt(stringLengthSlider.value);
+        let generatedString = '';
+
+        if (availableChars.length === 0) {
+            errorMessage.classList.remove('hidden');
+            resultStringInput.value = '';
+            return;
+        } else {
+            errorMessage.classList.add('hidden');
+        }
+
+        for (let i = 0; i < length; i++) {
+            const randomIndex = Math.floor(Math.random() * availableChars.length);
+            generatedString += availableChars[randomIndex];
+        }
+
+        resultStringInput.value = generatedString;
+    });
+
+    // Автогенерація при старті
+    generateButton.click();
+</script>
+
+</body>
+</html>
