@@ -178,7 +178,7 @@
             top: 80px;
             right: -100dvw; /* Початково приховано за екраном справа */
             width: 50dvw; /* Ширина панелі: 40% від ширини вьюпорту */
-            height: calc(100svh - 90px);
+            height: calc(100dvh - 90px);
             background-color: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             z-index: 2000;
@@ -318,7 +318,7 @@
         /* Мобільні стилі: більші кнопки та відступи */
         @media (pointer: coarse) and (max-width: 768px) {
             .map-controls-bottom {
-                bottom: 60px;
+                bottom: calc(100dvh - (100dvh - 160px);
                 right: 20px;
                 gap: 10px;
             }
@@ -352,8 +352,8 @@
             .side-panel {
                 top: 80px;
                 right: -100dvw; /* Початково приховано за екраном справа */
-                width: calc(100svw - 100px); /* На мобільних 80% ширини */
-                height: calc(100svh - 100px);
+                width: calc(100dvw - 100px); /* На мобільних 80% ширини */
+                height: calc(100dvh - 120px);
             }
             .side-panel.open {
                 right: 20px;
