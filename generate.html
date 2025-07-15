@@ -132,43 +132,6 @@
         .dropdown-menu.show {
             display: block;
         }
-
-        /* Toggle button group styles */
-        .toggle-group {
-            display: flex;
-            background-color: #e5e7eb;
-            border-radius: 0.5rem;
-            overflow: hidden;
-            margin-bottom: 0.75rem;
-        }
-        .toggle-group button {
-            flex: 1;
-            padding: 0.5rem 0.75rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #4b5563;
-            background-color: transparent;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
-        }
-        .toggle-group button.active {
-            background-color: #3b82f6;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .toggle-group button:not(.active):hover {
-            background-color: #d1d5db;
-        }
-
-        /* Segment settings container */
-        .segment-settings-container {
-            border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            background-color: #f9fafb;
-            margin-top: 0.5rem;
-        }
     </style>
 </head>
 <body>
@@ -305,145 +268,9 @@
                 </div>
             </div>
 
-            <!-- Starts With Section -->
-            <div class="border-t pt-4 mt-4 border-gray-200">
-                <label class="block text-lg font-medium text-gray-700 mb-2">Починається з:</label>
-                <div class="toggle-group" id="startsWithModeToggle">
-                    <button type="button" data-mode="custom" class="active">Власний текст</button>
-                    <button type="button" data-mode="generate">Генерувати з налаштуваннями</button>
-                </div>
-
-                <div id="startsWithCustomInputContainer">
-                    <div class="relative mb-3">
-                        <input type="text" id="startsWithCustomInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Обов'язковий початок">
-                        <div class="input-icon-group">
-                            <i id="pasteStartsWith" class="fas fa-paste input-icon" title="Вставити"></i>
-                            <i id="clearStartsWith" class="fas fa-times-circle input-icon" title="Очистити"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="startsWithGenerateSettingsContainer" class="segment-settings-container hidden">
-                    <label for="startsWithLengthSlider" class="block text-sm font-medium text-gray-700 mb-2">Довжина сегмента: <span id="startsWithLengthValue" class="font-bold text-blue-600">0</span></label>
-                    <div class="flex items-center gap-4 mb-4">
-                        <button id="decrementStartsWithLength" class="text-md rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-8 h-8 flex items-center justify-center transition-colors">-</button>
-                        <input id="startsWithLengthSlider" type="range" min="0" max="64" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <button id="incrementStartsWithLength" class="text-md rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-8 h-8 flex items-center justify-center transition-colors">+</button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="startsWithIncludeUppercase" type="checkbox" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="startsWithIncludeUppercase" class="ml-2 text-sm font-medium text-gray-700">ABC</label>
-                        </div>
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="startsWithIncludeLowercase" type="checkbox" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="startsWithIncludeLowercase" class="ml-2 text-sm font-medium text-gray-700">abc</label>
-                        </div>
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="startsWithIncludeNumbers" type="checkbox" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="startsWithIncludeNumbers" class="ml-2 text-sm font-medium text-gray-700">123</label>
-                        </div>
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="startsWithIncludeSymbols" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="startsWithIncludeSymbols" class="ml-2 text-sm font-medium text-gray-700">@#$</label>
-                        </div>
-                    </div>
-
-                    <div id="startsWithCustomSymbolsContainer" class="mb-4">
-                        <label for="startsWithCustomSymbolsInput" class="block text-sm font-medium text-gray-600">Спеціальні символи</label>
-                        <div class="relative mt-1">
-                            <input type="text" id="startsWithCustomSymbolsInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-24">
-                            <div class="input-icon-group">
-                                <i id="startsWithRevertSymbols" class="fas fa-undo input-icon" title="Повернути стандартні"></i>
-                                <i id="startsWithPasteSymbols" class="fas fa-paste input-icon" title="Вставити"></i>
-                                <i id="startsWithClearSymbols" class="fas fa-times-circle input-icon" title="Очистити"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <label for="startsWithExcludeCharactersInput" class="block text-sm font-medium text-gray-600">Виключити ці символи</label>
-                        <input type="text" id="startsWithExcludeCharactersInput" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Небажані символи">
-                        <div class="input-icon-group">
-                            <i id="startsWithPasteExclude" class="fas fa-paste input-icon" title="Вставити"></i>
-                            <i id="startsWithClearExclude" class="fas fa-times-circle input-icon" title="Очистити"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Ends With Section -->
-            <div class="border-t pt-4 mt-4 border-gray-200">
-                <label class="block text-lg font-medium text-gray-700 mb-2">Закінчується на:</label>
-                <div class="toggle-group" id="endsWithModeToggle">
-                    <button type="button" data-mode="custom" class="active">Власний текст</button>
-                    <button type="button" data-mode="generate">Генерувати з налаштуваннями</button>
-                </div>
-
-                <div id="endsWithCustomInputContainer">
-                    <div class="relative mb-3">
-                        <input type="text" id="endsWithCustomInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Обов'язковий кінець">
-                        <div class="input-icon-group">
-                            <i id="pasteEndsWith" class="fas fa-paste input-icon" title="Вставити"></i>
-                            <i id="clearEndsWith" class="fas fa-times-circle input-icon" title="Очистити"></i>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="endsWithGenerateSettingsContainer" class="segment-settings-container hidden">
-                    <label for="endsWithLengthSlider" class="block text-sm font-medium text-gray-700 mb-2">Довжина сегмента: <span id="endsWithLengthValue" class="font-bold text-blue-600">0</span></label>
-                    <div class="flex items-center gap-4 mb-4">
-                        <button id="decrementEndsWithLength" class="text-md rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-8 h-8 flex items-center justify-center transition-colors">-</button>
-                        <input id="endsWithLengthSlider" type="range" min="0" max="64" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
-                        <button id="incrementEndsWithLength" class="text-md rounded-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold w-8 h-8 flex items-center justify-center transition-colors">+</button>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="endsWithIncludeUppercase" type="checkbox" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="endsWithIncludeUppercase" class="ml-2 text-sm font-medium text-gray-700">ABC</label>
-                        </div>
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="endsWithIncludeLowercase" type="checkbox" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="endsWithIncludeLowercase" class="ml-2 text-sm font-medium text-gray-700">abc</label>
-                        </div>
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="endsWithIncludeNumbers" type="checkbox" checked class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="endsWithIncludeNumbers" class="ml-2 text-sm font-medium text-gray-700">123</label>
-                        </div>
-                        <div class="flex items-center p-2 bg-gray-100 rounded-lg border">
-                            <input id="endsWithIncludeSymbols" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                            <label for="endsWithIncludeSymbols" class="ml-2 text-sm font-medium text-gray-700">@#$</label>
-                        </div>
-                    </div>
-
-                    <div id="endsWithCustomSymbolsContainer" class="mb-4">
-                        <label for="endsWithCustomSymbolsInput" class="block text-sm font-medium text-gray-600">Спеціальні символи</label>
-                        <div class="relative mt-1">
-                            <input type="text" id="endsWithCustomSymbolsInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-24">
-                            <div class="input-icon-group">
-                                <i id="endsWithRevertSymbols" class="fas fa-undo input-icon" title="Повернути стандартні"></i>
-                                <i id="endsWithPasteSymbols" class="fas fa-paste input-icon" title="Вставити"></i>
-                                <i id="endsWithClearSymbols" class="fas fa-times-circle input-icon" title="Очистити"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="relative">
-                        <label for="endsWithExcludeCharactersInput" class="block text-sm font-medium text-gray-600">Виключити ці символи</label>
-                        <input type="text" id="endsWithExcludeCharactersInput" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Небажані символи">
-                        <div class="input-icon-group">
-                            <i id="endsWithPasteExclude" class="fas fa-paste input-icon" title="Вставити"></i>
-                            <i id="endsWithClearExclude" class="fas fa-times-circle input-icon" title="Очистити"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Existing include/exclude character inputs (for middle part) -->
+            <!-- Existing include/exclude character inputs -->
             <div class="relative">
-                <label for="includeCharactersCustomInput" class="block text-sm font-medium text-gray-600">Завжди включати ці символи (для середньої частини)</label>
+                <label for="includeCharactersCustomInput" class="block text-sm font-medium text-gray-600">Завжди включати ці символи</label>
                 <input type="text" id="includeCharactersCustomInput" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Обов'язкові символи">
                  <div class="input-icon-group">
                     <i id="pasteInclude" class="fas fa-paste input-icon" title="Вставити"></i>
@@ -451,11 +278,35 @@
                 </div>
             </div>
             <div class="relative">
-                <label for="excludeCharactersInput" class="block text-sm font-medium text-gray-600">Виключити ці символи (для середньої частини)</label>
+                <label for="excludeCharactersInput" class="block text-sm font-medium text-gray-600">Виключити ці символи</label>
                 <input type="text" id="excludeCharactersInput" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Небажані символи">
                  <div class="input-icon-group">
                     <i id="pasteExclude" class="fas fa-paste input-icon" title="Вставити"></i>
                     <i id="clearExclude" class="fas fa-times-circle input-icon" title="Очистити"></i>
+                </div>
+            </div>
+
+            <!-- "Starts With" section -->
+            <div class="border-t pt-4 mt-4 border-gray-200">
+                <label class="block text-lg font-medium text-gray-700 mb-2">Починається з:</label>
+                <div class="relative mb-3">
+                    <input type="text" id="startsWithCustomInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Обов'язковий початок">
+                    <div class="input-icon-group">
+                        <i id="pasteStartsWith" class="fas fa-paste input-icon" title="Вставити"></i>
+                        <i id="clearStartsWith" class="fas fa-times-circle input-icon" title="Очистити"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- "Ends With" section -->
+            <div class="border-t pt-4 mt-4 border-gray-200">
+                <label class="block text-lg font-medium text-gray-700 mb-2">Закінчується на:</label>
+                <div class="relative mb-3">
+                    <input type="text" id="endsWithCustomInput" class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm pr-16" placeholder="Обов'язковий кінець">
+                    <div class="input-icon-group">
+                        <i id="pasteEndsWith" class="fas fa-paste input-icon" title="Вставити"></i>
+                        <i id="clearEndsWith" class="fas fa-times-circle input-icon" title="Очистити"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -495,6 +346,14 @@
     const pasteExclude = document.getElementById('pasteExclude');
     const clearExclude = document.getElementById('clearExclude');
 
+    const startsWithCustomInput = document.getElementById('startsWithCustomInput');
+    const pasteStartsWith = document.getElementById('pasteStartsWith');
+    const clearStartsWith = document.getElementById('clearStartsWith');
+
+    const endsWithCustomInput = document.getElementById('endsWithCustomInput');
+    const pasteEndsWith = document.getElementById('pasteEndsWith');
+    const clearEndsWith = document.getElementById('clearEndsWith');
+
     const generateButton = document.getElementById('generateButton');
     const copyButton = document.getElementById('copyButton');
     const toggleSettingsButton = document.getElementById('toggleSettingsButton');
@@ -526,59 +385,10 @@
     const downloadCsv = document.getElementById('downloadCsv');
     const downloadYaml = document.getElementById('downloadYaml');
     const downloadXml = document.getElementById('downloadXml');
-    const downloadAllZip = document.getElementById('downloadAllZip'); 
+    const downloadAllZip = document.getElementById('downloadAllZip'); // New ZIP button
     
     const defaultSpecialSymbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
     const disallowedCharsRegex = /[a-zA-Z0-9\s]/g; 
-
-    // --- Segment Specific Elements ---
-    // Starts With
-    const startsWithModeToggle = document.getElementById('startsWithModeToggle');
-    const startsWithCustomInputContainer = document.getElementById('startsWithCustomInputContainer');
-    const startsWithCustomInput = document.getElementById('startsWithCustomInput');
-    const startsWithGenerateSettingsContainer = document.getElementById('startsWithGenerateSettingsContainer');
-    const startsWithLengthSlider = document.getElementById('startsWithLengthSlider');
-    const startsWithLengthValue = document.getElementById('startsWithLengthValue');
-    const decrementStartsWithLength = document.getElementById('decrementStartsWithLength');
-    const incrementStartsWithLength = document.getElementById('incrementStartsWithLength');
-    const startsWithIncludeUppercase = document.getElementById('startsWithIncludeUppercase');
-    const startsWithIncludeLowercase = document.getElementById('startsWithIncludeLowercase');
-    const startsWithIncludeNumbers = document.getElementById('startsWithIncludeNumbers');
-    const startsWithIncludeSymbols = document.getElementById('startsWithIncludeSymbols');
-    const startsWithCustomSymbolsContainer = document.getElementById('startsWithCustomSymbolsContainer');
-    const startsWithCustomSymbolsInput = document.getElementById('startsWithCustomSymbolsInput');
-    const startsWithRevertSymbols = document.getElementById('startsWithRevertSymbols');
-    const startsWithPasteSymbols = document.getElementById('startsWithPasteSymbols');
-    const startsWithClearSymbols = document.getElementById('startsWithClearSymbols');
-    const startsWithExcludeCharactersInput = document.getElementById('startsWithExcludeCharactersInput');
-    const startsWithPasteExclude = document.getElementById('startsWithPasteExclude');
-    const startsWithClearExclude = document.getElementById('startsWithClearExclude');
-
-    // Ends With
-    const endsWithModeToggle = document.getElementById('endsWithModeToggle');
-    const endsWithCustomInputContainer = document.getElementById('endsWithCustomInputContainer');
-    const endsWithCustomInput = document.getElementById('endsWithCustomInput');
-    const endsWithGenerateSettingsContainer = document.getElementById('endsWithGenerateSettingsContainer');
-    const endsWithLengthSlider = document.getElementById('endsWithLengthSlider');
-    const endsWithLengthValue = document.getElementById('endsWithLengthValue');
-    const decrementEndsWithLength = document.getElementById('decrementEndsWithLength');
-    const incrementEndsWithLength = document.getElementById('incrementEndsWithLength');
-    const endsWithIncludeUppercase = document.getElementById('endsWithIncludeUppercase');
-    const endsWithIncludeLowercase = document.getElementById('endsWithIncludeLowercase');
-    const endsWithIncludeNumbers = document.getElementById('endsWithIncludeNumbers');
-    const endsWithIncludeSymbols = document.getElementById('endsWithIncludeSymbols');
-    const endsWithCustomSymbolsContainer = document.getElementById('endsWithCustomSymbolsContainer');
-    const endsWithCustomSymbolsInput = document.getElementById('endsWithCustomSymbolsInput');
-    const endsWithRevertSymbols = document.getElementById('endsWithRevertSymbols');
-    const endsWithPasteSymbols = document.getElementById('endsWithPasteSymbols');
-    const endsWithClearSymbols = document.getElementById('endsWithClearSymbols');
-    const endsWithExcludeCharactersInput = document.getElementById('endsWithExcludeCharactersInput');
-    const endsWithPasteExclude = document.getElementById('endsWithPasteExclude');
-    const endsWithClearExclude = document.getElementById('endsWithClearExclude');
-
-    // --- Global State for Modes ---
-    let startsWithMode = 'custom'; // 'custom' or 'generate'
-    let endsWithMode = 'custom';   // 'custom' or 'generate'
 
     // --- Функції для Cookies ---
     function setCookie(name, value, days) {
@@ -617,26 +427,7 @@
         setCookie('endsWithCustomInput', endsWithCustomInput.value, 365);
         setCookie('numberOfStrings', numberOfStringsInput.value, 365);
         setCookie('separator', separatorInput.value, 365);
-        setCookie('jsonKey', jsonKeyInput.value, 365); 
-
-        // Save segment-specific settings
-        setCookie('startsWithMode', startsWithMode, 365);
-        setCookie('startsWithLength', startsWithLengthSlider.value, 365);
-        setCookie('startsWithIncludeUppercase', startsWithIncludeUppercase.checked, 365);
-        setCookie('startsWithIncludeLowercase', startsWithIncludeLowercase.checked, 365);
-        setCookie('startsWithIncludeNumbers', startsWithIncludeNumbers.checked, 365);
-        setCookie('startsWithIncludeSymbols', startsWithIncludeSymbols.checked, 365);
-        setCookie('startsWithCustomSymbols', startsWithCustomSymbolsInput.value, 365);
-        setCookie('startsWithExcludeCharacters', startsWithExcludeCharactersInput.value, 365);
-
-        setCookie('endsWithMode', endsWithMode, 365);
-        setCookie('endsWithLength', endsWithLengthSlider.value, 365);
-        setCookie('endsWithIncludeUppercase', endsWithIncludeUppercase.checked, 365);
-        setCookie('endsWithIncludeLowercase', endsWithIncludeLowercase.checked, 365);
-        setCookie('endsWithIncludeNumbers', endsWithIncludeNumbers.checked, 365);
-        setCookie('endsWithIncludeSymbols', endsWithIncludeSymbols.checked, 365);
-        setCookie('endsWithCustomSymbols', endsWithCustomSymbolsInput.value, 365);
-        setCookie('endsWithExcludeCharacters', endsWithExcludeCharactersInput.value, 365);
+        setCookie('jsonKey', jsonKeyInput.value, 365); // Save JSON Key
     }
 
     function loadSettings() {
@@ -691,25 +482,6 @@
         if (savedJsonKey !== null) {
             jsonKeyInput.value = savedJsonKey;
         }
-
-        // Load segment-specific settings
-        startsWithMode = getCookie('startsWithMode') || 'custom';
-        updateLength(startsWithLengthSlider, startsWithLengthValue, getCookie('startsWithLength') || '0');
-        startsWithIncludeUppercase.checked = (getCookie('startsWithIncludeUppercase') === 'true');
-        startsWithIncludeLowercase.checked = (getCookie('startsWithIncludeLowercase') === 'true');
-        startsWithIncludeNumbers.checked = (getCookie('startsWithIncludeNumbers') === 'true');
-        startsWithIncludeSymbols.checked = (getCookie('startsWithIncludeSymbols') === 'true');
-        startsWithCustomSymbolsInput.value = getCookie('startsWithCustomSymbols') || '';
-        startsWithExcludeCharactersInput.value = getCookie('startsWithExcludeCharacters') || '';
-
-        endsWithMode = getCookie('endsWithMode') || 'custom';
-        updateLength(endsWithLengthSlider, endsWithLengthValue, getCookie('endsWithLength') || '0');
-        endsWithIncludeUppercase.checked = (getCookie('endsWithIncludeUppercase') === 'true');
-        endsWithIncludeLowercase.checked = (getCookie('endsWithIncludeLowercase') === 'true');
-        endsWithIncludeNumbers.checked = (getCookie('endsWithIncludeNumbers') === 'true');
-        endsWithIncludeSymbols.checked = (getCookie('endsWithIncludeSymbols') === 'true');
-        endsWithCustomSymbolsInput.value = getCookie('endsWithCustomSymbols') || '';
-        endsWithExcludeCharactersInput.value = getCookie('endsWithExcludeCharacters') || '';
     }
 
     // --- Функції для UI ---
@@ -730,41 +502,12 @@
             element.style.maxHeight = element.scrollHeight + "px";
             element.style.opacity = '1';
             element.style.marginBottom = '1rem';
-            element.classList.remove('hidden'); // Ensure it's not hidden by display:none
         } else {
             element.style.maxHeight = '0';
             element.style.opacity = '0';
             element.style.marginBottom = '0';
-            // Use setTimeout to ensure transition completes before hiding
-            setTimeout(() => {
-                element.classList.add('hidden');
-            }, 500); // Matches transition duration
         }
     }
-
-    function setSegmentMode(segmentName, mode) {
-        const modeToggle = document.getElementById(`${segmentName}ModeToggle`);
-        const customContainer = document.getElementById(`${segmentName}CustomInputContainer`);
-        const generateContainer = document.getElementById(`${segmentName}GenerateSettingsContainer`);
-
-        if (mode === 'custom') {
-            customContainer.classList.remove('hidden');
-            generateContainer.classList.add('hidden');
-            modeToggle.querySelector('[data-mode="custom"]').classList.add('active');
-            modeToggle.querySelector('[data-mode="generate"]').classList.remove('active');
-        } else { // mode === 'generate'
-            customContainer.classList.add('hidden');
-            generateContainer.classList.remove('hidden');
-            modeToggle.querySelector('[data-mode="custom"]').classList.remove('active');
-            modeToggle.querySelector('[data-mode="generate"]').classList.add('active');
-        }
-        if (segmentName === 'startsWith') startsWithMode = mode;
-        else if (segmentName === 'endsWith') endsWithMode = mode;
-        saveSettings();
-        updateGenerateButtonState();
-        generateString();
-    }
-
 
     // Helper to trigger input change event for saving settings
     function triggerInputChange(element) {
@@ -993,7 +736,7 @@
 
     // Відкриття/закриття налаштувань
     toggleSettingsButton.addEventListener('click', () => {
-        const isHidden = additionalSettingsDiv.style.maxHeight === '0px' || additionalSettingsDiv.classList.contains('hidden');
+        const isHidden = additionalSettingsDiv.style.maxHeight === '0px' || !additionalSettingsDiv.style.maxHeight;
         toggleVisibility(additionalSettingsDiv, isHidden);
         settingsToggleIcon.classList.toggle('rotate-180', isHidden);
     });
@@ -1035,123 +778,30 @@
     clearExclude.addEventListener('click', () => { excludeCharactersInput.value = ''; excludeCharactersInput.focus(); triggerInputChange(excludeCharactersInput); saveSettings(); updateGenerateButtonState(); generateString(); });
     excludeCharactersInput.addEventListener('input', () => { saveSettings(); updateGenerateButtonState(); generateString(); });
 
-    // JSON Key input handlers
-    pasteJsonKey.addEventListener('click', () => { pasteToInput(jsonKeyInput); saveSettings(); updateGenerateButtonState(); });
-    clearJsonKey.addEventListener('click', () => { jsonKeyInput.value = ''; jsonKeyInput.focus(); triggerInputChange(jsonKeyInput); saveSettings(); updateGenerateButtonState(); });
-    jsonKeyInput.addEventListener('input', () => { saveSettings(); updateGenerateButtonState(); });
+    // Starts With specific handlers
+    pasteStartsWith.addEventListener('click', () => { pasteToInput(startsWithCustomInput); saveSettings(); updateGenerateButtonState(); generateString(); });
+    clearStartsWith.addEventListener('click', () => { startsWithCustomInput.value = ''; startsWithCustomInput.focus(); triggerInputChange(startsWithCustomInput); saveSettings(); updateGenerateButtonState(); generateString(); });
+    startsWithCustomInput.addEventListener('input', () => { saveSettings(); updateGenerateButtonState(); generateString(); });
 
-    // --- Segment-specific event listeners ---
-    function setupSegmentListeners(segmentName) {
-        const lengthSlider = document.getElementById(`${segmentName}LengthSlider`);
-        const lengthValue = document.getElementById(`${segmentName}LengthValue`);
-        const decrementLength = document.getElementById(`decrement${segmentName}Length`);
-        const incrementLength = document.getElementById(`increment${segmentName}Length`);
-        const includeUppercase = document.getElementById(`${segmentName}IncludeUppercase`);
-        const includeLowercase = document.getElementById(`${segmentName}IncludeLowercase`);
-        const includeNumbers = document.getElementById(`${segmentName}IncludeNumbers`);
-        const includeSymbols = document.getElementById(`${segmentName}IncludeSymbols`);
-        const customSymbolsContainer = document.getElementById(`${segmentName}CustomSymbolsContainer`);
-        const customSymbolsInput = document.getElementById(`${segmentName}CustomSymbolsInput`);
-        const revertSymbols = document.getElementById(`${segmentName}RevertSymbols`);
-        const pasteSymbols = document.getElementById(`${segmentName}PasteSymbols`);
-        const clearSymbols = document.getElementById(`${segmentName}ClearSymbols`);
-        const excludeCharactersInput = document.getElementById(`${segmentName}ExcludeCharactersInput`);
-        const pasteExclude = document.getElementById(`${segmentName}PasteExclude`);
-        const clearExclude = document.getElementById(`${segmentName}ClearExclude`);
+    // Ends With specific handlers
+    pasteEndsWith.addEventListener('click', () => { pasteToInput(endsWithCustomInput); saveSettings(); updateGenerateButtonState(); generateString(); });
+    clearEndsWith.addEventListener('click', () => { endsWithCustomInput.value = ''; endsWithCustomInput.focus(); triggerInputChange(endsWithCustomInput); saveSettings(); updateGenerateButtonState(); generateString(); });
+    endsWithCustomInput.addEventListener('input', () => { saveSettings(); updateGenerateButtonState(); generateString(); });
 
-        // Length
-        lengthSlider.addEventListener('input', (e) => {
-            updateLength(lengthSlider, lengthValue, e.target.value);
-            saveSettings();
-            updateGenerateButtonState();
-            generateString();
-        });
-        decrementLength.addEventListener('click', () => {
-            updateLength(lengthSlider, lengthValue, parseInt(lengthSlider.value) - 1);
-            saveSettings();
-            updateGenerateButtonState();
-            generateString();
-        });
-        incrementLength.addEventListener('click', () => {
-            updateLength(lengthSlider, lengthValue, parseInt(lengthSlider.value) + 1);
-            saveSettings();
-            updateGenerateButtonState();
-            generateString();
-        });
-
-        // Character types
-        [includeUppercase, includeLowercase, includeNumbers, includeSymbols].forEach(input => {
-            input.addEventListener('change', (e) => {
-                const isChecked = e.target.checked;
-                if (input.id.includes('IncludeSymbols')) {
-                    toggleVisibility(customSymbolsContainer, isChecked);
-                    if (isChecked && customSymbolsInput.value.trim() === '') {
-                        customSymbolsInput.value = defaultSpecialSymbols;
-                    }
-                }
-                saveSettings();
-                updateGenerateButtonState();
-                generateString();
-            });
-        });
-
-        // Custom symbols
-        customSymbolsInput.addEventListener('input', (e) => {
-            const currentValue = e.target.value;
-            const sanitizedValue = currentValue.replace(disallowedCharsRegex, '');
-            if (currentValue !== sanitizedValue) {
-                e.target.value = sanitizedValue;
-            }
-            saveSettings();
-            updateGenerateButtonState();
-            generateString();
-        });
-        revertSymbols.addEventListener('click', () => { customSymbolsInput.value = defaultSpecialSymbols; triggerInputChange(customSymbolsInput); saveSettings(); updateGenerateButtonState(); generateString(); });
-        pasteSymbols.addEventListener('click', () => { pasteToInput(customSymbolsInput, true); saveSettings(); updateGenerateButtonState(); generateString(); });
-        clearSymbols.addEventListener('click', () => { customSymbolsInput.value = ''; customSymbolsInput.focus(); triggerInputChange(customSymbolsInput); saveSettings(); updateGenerateButtonState(); generateString(); });
-
-        // Exclude characters
-        excludeCharactersInput.addEventListener('input', () => { saveSettings(); updateGenerateButtonState(); generateString(); });
-        pasteExclude.addEventListener('click', () => { pasteToInput(excludeCharactersInput); saveSettings(); updateGenerateButtonState(); generateString(); });
-        clearExclude.addEventListener('click', () => { excludeCharactersInput.value = ''; excludeCharactersInput.focus(); triggerInputChange(excludeCharactersInput); saveSettings(); updateGenerateButtonState(); generateString(); });
-    }
-
-    setupSegmentListeners('startsWith');
-    setupSegmentListeners('endsWith');
-
-    // Toggle mode buttons for Starts With and Ends With
-    startsWithModeToggle.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', () => setSegmentMode('startsWith', button.dataset.mode));
-    });
-    endsWithModeToggle.querySelectorAll('button').forEach(button => {
-        button.addEventListener('click', () => setSegmentMode('endsWith', button.dataset.mode));
-    });
-
-    // No Duplicate Chars checkbox (global)
+    // No Duplicate Chars checkbox
     noDuplicateChars.addEventListener('change', () => {
         saveSettings();
         updateGenerateButtonState();
         generateString(); // Dynamic generation
     });
 
+    // JSON Key input handlers
+    pasteJsonKey.addEventListener('click', () => { pasteToInput(jsonKeyInput); saveSettings(); updateGenerateButtonState(); });
+    clearJsonKey.addEventListener('click', () => { jsonKeyInput.value = ''; jsonKeyInput.focus(); triggerInputChange(jsonKeyInput); saveSettings(); updateGenerateButtonState(); });
+    jsonKeyInput.addEventListener('input', () => { saveSettings(); updateGenerateButtonState(); });
+
 
     // --- Validation and Button State Management ---
-
-    // Helper function to get available characters for a segment
-    function getSegmentAvailableChars(includeUpper, includeLower, includeNumbers, includeSymbols, customSymbols, excludeChars) {
-        const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const lower = 'abcdefghijklmnopqrstuvwxyz';
-        const numbers = '0123456789';
-        
-        let baseAvailableChars = '';
-        if (includeUpper) baseAvailableChars += upper;
-        if (includeLower) baseAvailableChars += lower;
-        if (includeNumbers) baseAvailableChars += numbers;
-        if (includeSymbols) baseAvailableChars += customSymbols.trim();
-        
-        const excludedSet = new Set(excludeChars.trim().split(''));
-        return Array.from(new Set(baseAvailableChars.split(''))).filter(char => !excludedSet.has(char));
-    }
 
     function updateGenerateButtonState() {
         let isValid = true;
@@ -1164,59 +814,14 @@
 
         const totalLength = parseInt(stringLengthSlider.value);
         const noDuplicates = noDuplicateChars.checked;
+        const startsWithVal = startsWithCustomInput.value.trim();
+        const endsWithVal = endsWithCustomInput.value.trim();
         const mandatoryChars = Array.from(new Set(includeCharactersCustomInput.value.trim().split('')));
         const numStrings = parseInt(numberOfStringsInput.value);
+        // Separator is now optional, no validation needed for its presence
 
-        let startsWithVal = '';
-        let endsWithVal = '';
-        let startsWithLength = 0;
-        let endsWithLength = 0;
-
-        // Determine startsWith segment
-        if (startsWithMode === 'custom') {
-            startsWithVal = startsWithCustomInput.value.trim();
-            startsWithLength = startsWithVal.length;
-        } else { // generate mode
-            startsWithLength = parseInt(startsWithLengthSlider.value);
-            const available = getSegmentAvailableChars(
-                startsWithIncludeUppercase.checked, startsWithIncludeLowercase.checked,
-                startsWithIncludeNumbers.checked, startsWithIncludeSymbols.checked,
-                startsWithCustomSymbolsInput.value, startsWithExcludeCharactersInput.value
-            );
-            if (startsWithLength > available.length && noDuplicates) {
-                currentErrorMessage = `Недостатньо унікальних символів для початку (${startsWithLength} потрібні, ${available.length} доступні).`;
-                isValid = false;
-            }
-        }
-
-        // Determine endsWith segment
-        if (endsWithMode === 'custom') {
-            endsWithVal = endsWithCustomInput.value.trim();
-            endsWithLength = endsWithVal.length;
-        } else { // generate mode
-            endsWithLength = parseInt(endsWithLengthSlider.value);
-            const available = getSegmentAvailableChars(
-                endsWithIncludeUppercase.checked, endsWithIncludeLowercase.checked,
-                endsWithIncludeNumbers.checked, endsWithIncludeSymbols.checked,
-                endsWithCustomSymbolsInput.value, endsWithExcludeCharactersInput.value
-            );
-            if (endsWithLength > available.length && noDuplicates) {
-                currentErrorMessage = `Недостатньо унікальних символів для кінця (${endsWithLength} потрібні, ${available.length} доступні).`;
-                isValid = false;
-            }
-        }
-
-        if (!isValid) {
-            errorMessage.textContent = currentErrorMessage;
-            errorMessage.classList.remove('hidden');
-            generateButton.disabled = true;
-            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            resultStringInput.value = '';
-            return;
-        }
-
-        // Check for duplicates in "Starts With" and "Ends With" (only if custom and no duplicates)
-        if (startsWithMode === 'custom' && endsWithMode === 'custom' && startsWithVal.length > 0 && endsWithVal.length > 0) {
+        // 1. Check for duplicates in "Starts With" and "Ends With"
+        if (startsWithVal.length > 0 && endsWithVal.length > 0) {
             const startsWithSet = new Set(startsWithVal.split(''));
             const endsWithSet = new Set(endsWithVal.split(''));
             
@@ -1235,46 +840,115 @@
             }
         }
 
+        // If there's already an error from the above check, stop here for button state
         if (!isValid) {
             errorMessage.textContent = currentErrorMessage;
             errorMessage.classList.remove('hidden');
             generateButton.disabled = true;
             generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            resultStringInput.value = ''; 
+            resultStringInput.value = ''; // Clear result on error
             return;
         }
 
-        // Calculate combined fixed length and initial used characters for global noDuplicates check
-        let initialFixedChars = [];
-        if (startsWithMode === 'custom') initialFixedChars = initialFixedChars.concat(startsWithVal.split(''));
-        if (endsWithMode === 'custom') initialFixedChars = initialFixedChars.concat(endsWithVal.split(''));
-        initialFixedChars = initialFixedChars.concat(mandatoryChars);
+        // 2. Get Base Available Characters for the middle part (and for general pool)
+        const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lower = 'abcdefghijklmnopqrstuvwxyz';
+        const numbers = '0123456789';
         
-        let uniqueFixedChars = new Set();
-        for (const char of initialFixedChars) {
-            if (noDuplicates && uniqueFixedChars.has(char)) {
+        let baseAvailableChars = '';
+        if (includeUppercase.checked) baseAvailableChars += upper;
+        if (includeLowercase.checked) baseAvailableChars += lower;
+        if (includeNumbers.checked) baseAvailableChars += numbers;
+        if (includeSymbols.checked) baseAvailableChars += customSymbolsInput.value.trim();
+        baseAvailableChars = Array.from(new Set(baseAvailableChars.split(''))).join(''); // Ensure unique within base pool
+
+        // 3. Get Excluded Characters
+        // FIX: Corrected missing closing parenthesis for split('')
+        const excludedCharsSet = new Set(excludeCharactersInput.value.trim().split(''));
+
+        // 4. Filter Base Pool with Exclusions
+        let filteredAvailableCharsArray = [];
+        for (const char of baseAvailableChars) {
+            if (!excludedCharsSet.has(char)) {
+                filteredAvailableCharsArray.push(char);
+            }
+        }
+        let filteredAvailableChars = filteredAvailableCharsArray.join('');
+
+        // 5. Validate Mandatory Characters against exclusions
+        for (const char of mandatoryChars) {
+            if (excludedCharsSet.has(char)) {
+                currentErrorMessage = `Обов'язковий символ '${char}' знаходиться у списку виключених символів.`;
+                isValid = false;
+                break;
+            }
+        }
+        if (!isValid) {
+            errorMessage.textContent = currentErrorMessage;
+            errorMessage.classList.remove('hidden');
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+            resultStringInput.value = ''; // Clear result on error
+            return;
+        }
+
+        // 6. Validate Starts With/Ends With segments against exclusions
+        for (const char of startsWithVal) {
+            if (excludedCharsSet.has(char)) {
+                currentErrorMessage = `Символ '${char}' у "Починається з" знаходиться у списку виключених символів.`;
+                isValid = false;
+                break;
+            }
+        }
+        if (!isValid) {
+            errorMessage.textContent = currentErrorMessage;
+            errorMessage.classList.remove('hidden');
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+            resultStringInput.value = ''; // Clear result on error
+            return;
+        }
+
+        for (const char of endsWithVal) {
+            if (excludedCharsSet.has(char)) {
+                currentErrorMessage = `Символ '${char}' у "Закінчується на" знаходиться у списку виключених символів.`;
+                isValid = false;
+                break;
+            }
+        }
+        if (!isValid) {
+            errorMessage.textContent = currentErrorMessage;
+            errorMessage.classList.remove('hidden');
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+            resultStringInput.value = ''; // Clear result on error
+            return;
+        }
+
+        // 7. Consolidate Fixed Parts and check for duplicates within them if noDuplicates is true
+        let fixedPartsCombinedArray = startsWithVal.split('').concat(mandatoryChars).concat(endsWithVal.split(''));
+        let uniqueCharsUsedForFixed = new Set();
+
+        for (const char of fixedPartsCombinedArray) {
+            if (noDuplicates && uniqueCharsUsedForFixed.has(char)) {
                 currentErrorMessage = `Символ '${char}' повторюється у фіксованих частинах (початок, кінець, обов'язкові) при увімкненій опції "Символи не повторюються".`;
                 isValid = false;
                 break;
             }
-            uniqueFixedChars.add(char);
+            uniqueCharsUsedForFixed.add(char);
         }
-
         if (!isValid) {
             errorMessage.textContent = currentErrorMessage;
             errorMessage.classList.remove('hidden');
             generateButton.disabled = true;
             generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            resultStringInput.value = ''; 
+            resultStringInput.value = ''; // Clear result on error
             return;
         }
 
-        const currentFixedLength = (startsWithMode === 'custom' ? startsWithVal.length : startsWithLength) +
-                                   (endsWithMode === 'custom' ? endsWithVal.length : endsWithLength) +
-                                   mandatoryChars.length;
-        
-        if (totalLength < currentFixedLength) {
-            currentErrorMessage = `Довжина рядка (${totalLength}) менша за сумарну довжину фіксованих частин (${currentFixedLength}).`;
+        // 8. Length Validation
+        if (totalLength < fixedPartsCombinedArray.length) {
+            currentErrorMessage = `Довжина рядка (${totalLength}) менша за кількість символів у фіксованих частинах (${fixedPartsCombinedArray.length}).`;
             isValid = false;
         }
         if (!isValid) {
@@ -1282,25 +956,20 @@
             errorMessage.classList.remove('hidden');
             generateButton.disabled = true;
             generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            resultStringInput.value = ''; 
+            resultStringInput.value = ''; // Clear result on error
             return;
         }
         
-        let remainingLengthForMiddle = totalLength - currentFixedLength;
+        let remainingLength = totalLength - fixedPartsCombinedArray.length;
         
-        const mainExcludeCharsSet = new Set(excludeCharactersInput.value.trim().split(''));
-        let mainAvailableChars = getSegmentAvailableChars(
-            includeUppercase.checked, includeLowercase.checked,
-            includeNumbers.checked, includeSymbols.checked,
-            customSymbolsInput.value, excludeCharactersInput.value
-        );
-
+        let workingAvailableCharsArray = [...filteredAvailableCharsArray]; // Pool for middle part
         if (noDuplicates) {
-            mainAvailableChars = mainAvailableChars.filter(char => !uniqueFixedChars.has(char));
+            // Remove characters already used in fixed parts from the working pool
+            workingAvailableCharsArray = workingAvailableCharsArray.filter(char => !uniqueCharsUsedForFixed.has(char));
         }
 
-        if (noDuplicates && remainingLengthForMiddle > mainAvailableChars.length) {
-            currentErrorMessage = `Недостатньо унікальних символів для заповнення середньої частини рядка. Доступно: ${mainAvailableChars.length} унікальних символів.`;
+        if (noDuplicates && remainingLength > workingAvailableCharsArray.length) {
+            currentErrorMessage = `Недостатньо унікальних символів для заповнення середньої частини рядка. Доступно: ${workingAvailableCharsArray.length} унікальних символів.`;
             isValid = false;
         }
         if (!isValid) {
@@ -1308,11 +977,12 @@
             errorMessage.classList.remove('hidden');
             generateButton.disabled = true;
             generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            resultStringInput.value = ''; 
+            resultStringInput.value = ''; // Clear result on error
             return;
         }
 
-        if (totalLength > currentFixedLength && mainAvailableChars.length === 0) {
+        // 9. Check if any character source is selected if middle part needs to be generated
+        if (totalLength > fixedPartsCombinedArray.length && filteredAvailableChars.length === 0 && workingAvailableCharsArray.length === 0) {
             currentErrorMessage = 'Оберіть хоча б одну групу символів або вкажіть обов\'язкові символи для генерації середньої частини.';
             isValid = false;
         }
@@ -1321,7 +991,7 @@
             errorMessage.classList.remove('hidden');
             generateButton.disabled = true;
             generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            resultStringInput.value = ''; 
+            resultStringInput.value = ''; // Clear result on error
             return;
         }
         
@@ -1331,51 +1001,66 @@
         errorMessage.classList.add('hidden'); // Ensure error message is hidden
     }
 
-    // This function generates a segment based on provided settings and a set of already used characters.
-    // It modifies the globalUsedCharsSet if noDuplicatesGlobal is true.
-    function generateSpecificSegment(segmentLength, includeUpper, includeLower, includeNumbers, includeSymbols, customSymbols, excludeChars, noDuplicatesGlobal, globalUsedCharsSet) {
-        if (segmentLength === 0) return { segment: '', error: null };
-
-        let availableChars = '';
-        if (includeUpper) availableChars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if (includeLower) availableChars += 'abcdefghijklmnopqrstuvwxyz';
-        if (includeNumbers) availableChars += '0123456789';
-        if (includeSymbols) availableChars += customSymbols.trim();
-
-        const excludedSet = new Set(excludeChars.trim().split(''));
-        let filteredAvailableChars = Array.from(new Set(availableChars.split(''))).filter(char => !excludedSet.has(char));
-
-        let tempAvailableChars = [...filteredAvailableChars]; // Work with a copy for this segment's generation
-
-        if (noDuplicatesGlobal) {
-            // Filter out characters already globally used from the temporary pool
-            tempAvailableChars = tempAvailableChars.filter(char => !globalUsedCharsSet.has(char));
-            if (segmentLength > tempAvailableChars.length) {
-                 return { segment: '', error: 'Недостатньо унікальних символів для цього сегмента.' };
-            }
-        } else {
-            // If noDuplicatesGlobal is false, ensure there's at least one char to pick from if length > 0
-            if (segmentLength > 0 && tempAvailableChars.length === 0) {
-                return { segment: '', error: 'Немає доступних символів для генерації цього сегмента.' };
-            }
-        }
+    // --- Core single string generation logic (refactored) ---
+    function _generateSingleStringInternal() {
+        const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const lower = 'abcdefghijklmnopqrstuvwxyz';
+        const numbers = '0123456789';
         
-        let segmentChars = [];
-        for (let i = 0; i < segmentLength; i++) {
-            if (tempAvailableChars.length === 0) {
-                return { segment: '', error: 'Вичерпано доступні символи для цього сегмента.' };
-            }
-            const randomIndex = Math.floor(Math.random() * tempAvailableChars.length);
-            const char = tempAvailableChars[randomIndex];
-            segmentChars.push(char);
-            if (noDuplicatesGlobal) {
-                globalUsedCharsSet.add(char); // Add to global set
-                tempAvailableChars.splice(randomIndex, 1); // Remove from temp pool for this segment
+        const totalLength = parseInt(stringLengthSlider.value);
+        const noDuplicates = noDuplicateChars.checked;
+
+        let baseAvailableChars = '';
+        if (includeUppercase.checked) baseAvailableChars += upper;
+        if (includeLowercase.checked) baseAvailableChars += lower;
+        if (includeNumbers.checked) baseAvailableChars += numbers;
+        if (includeSymbols.checked) baseAvailableChars += customSymbolsInput.value.trim();
+        baseAvailableChars = Array.from(new Set(baseAvailableChars.split(''))).join('');
+
+        const excludedCharsSet = new Set(excludeCharactersInput.value.trim().split(''));
+
+        let filteredAvailableCharsArray = [];
+        for (const char of baseAvailableChars) {
+            if (!excludedCharsSet.has(char)) {
+                filteredAvailableCharsArray.push(char);
             }
         }
-        return { segment: segmentChars.join(''), error: null };
-    }
 
+        const mandatoryChars = Array.from(new Set(includeCharactersCustomInput.value.trim().split('')));
+        const startsWithSegment = startsWithCustomInput.value.trim();
+        const endsWithSegment = endsWithCustomInput.value.trim();
+
+        let fixedPartsCombinedArray = startsWithSegment.split('').concat(mandatoryChars).concat(endsWithSegment.split(''));
+        let uniqueCharsUsedForFixed = new Set();
+        for (const char of fixedPartsCombinedArray) {
+            uniqueCharsUsedForFixed.add(char);
+        }
+
+        let remainingLength = totalLength - fixedPartsCombinedArray.length;
+        
+        let workingAvailableCharsArray = [...filteredAvailableCharsArray];
+        if (noDuplicates) {
+            workingAvailableCharsArray = workingAvailableCharsArray.filter(char => !uniqueCharsUsedForFixed.has(char));
+        }
+
+        let middleChars = [];
+        for (let i = 0; i < remainingLength; i++) {
+            if (workingAvailableCharsArray.length === 0) {
+                return ''; // Should not happen if updateGenerateButtonState passed
+            }
+            const randomIndex = Math.floor(Math.random() * workingAvailableCharsArray.length);
+            const char = workingAvailableCharsArray[randomIndex];
+            middleChars.push(char);
+            if (noDuplicates) {
+                workingAvailableCharsArray.splice(randomIndex, 1);
+            }
+        }
+
+        let finalMiddleAndMandatoryChars = mandatoryChars.concat(middleChars);
+        shuffleArray(finalMiddleAndMandatoryChars);
+
+        return startsWithSegment + finalMiddleAndMandatoryChars.join('') + endsWithSegment;
+    }
 
     // --- Main generate string function ---
     function generateString() {
@@ -1398,144 +1083,32 @@
             let foundUnique = false;
 
             while (attemptCount < maxAttemptsPerString) {
-                let currentGlobalUsedChars = new Set(); // Reset for each string generation attempt
-                let startsWithSegment = '';
-                let endsWithSegment = '';
-                let middleSegment = '';
+                newString = _generateSingleStringInternal();
+                if (newString === '') { // Internal error during generation (e.g., impossible length/chars)
+                    // This error should ideally be caught by updateGenerateButtonState, but as a fallback
+                    errorMessage.textContent = 'Не вдалося згенерувати рядок через внутрішню помилку або неможливі налаштування.';
+                    errorMessage.classList.remove('hidden');
+                    generateButton.disabled = true;
+                    generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+                    resultStringInput.value = '';
+                    return;
+                }
 
-                const noDuplicates = noDuplicateChars.checked;
-
-                // 1. Generate Starts With segment
-                if (startsWithMode === 'custom') {
-                    startsWithSegment = startsWithCustomInput.value.trim();
-                    if (noDuplicates) {
-                        for (const char of startsWithSegment) currentGlobalUsedChars.add(char);
+                // Only check for uniqueness if generating multiple strings and the "no duplicates" option is active
+                // AND if the generated string is not empty (empty strings can be duplicates if separator is empty)
+                if (numStrings > 1 && noDuplicateChars.checked) {
+                    if (!generatedStringsSet.has(newString)) {
+                        generatedStringsSet.add(newString);
+                        generatedStrings.push(newString);
+                        foundUnique = true;
+                        break;
                     }
-                } else { // generate mode
-                    const result = generateSpecificSegment(
-                        parseInt(startsWithLengthSlider.value),
-                        startsWithIncludeUppercase.checked, startsWithIncludeLowercase.checked,
-                        startsWithIncludeNumbers.checked, startsWithIncludeSymbols.checked,
-                        startsWithCustomSymbolsInput.value, startsWithExcludeCharactersInput.value,
-                        noDuplicates, currentGlobalUsedChars
-                    );
-                    if (result.error) {
-                        // This error should be caught by updateGenerateButtonState, but as a fallback
-                        errorMessage.textContent = `Помилка генерації початку: ${result.error}`;
-                        errorMessage.classList.remove('hidden');
-                        generateButton.disabled = true;
-                        generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        resultStringInput.value = '';
-                        return;
-                    }
-                    startsWithSegment = result.segment;
-                }
-
-                // 2. Generate Ends With segment
-                if (endsWithMode === 'custom') {
-                    endsWithSegment = endsWithCustomInput.value.trim();
-                    if (noDuplicates) {
-                        for (const char of endsWithSegment) {
-                            if (currentGlobalUsedChars.has(char)) {
-                                // Conflict with startsWith or mandatory chars
-                                // This should ideally be caught by updateGenerateButtonState
-                                newString = ''; // Mark as invalid
-                                break;
-                            }
-                            currentGlobalUsedChars.add(char);
-                        }
-                    }
-                } else { // generate mode
-                    const result = generateSpecificSegment(
-                        parseInt(endsWithLengthSlider.value),
-                        endsWithIncludeUppercase.checked, endsWithIncludeLowercase.checked,
-                        endsWithIncludeNumbers.checked, endsWithIncludeSymbols.checked,
-                        endsWithCustomSymbolsInput.value, endsWithExcludeCharactersInput.value,
-                        noDuplicates, currentGlobalUsedChars
-                    );
-                    if (result.error) {
-                        errorMessage.textContent = `Помилка генерації кінця: ${result.error}`;
-                        errorMessage.classList.remove('hidden');
-                        generateButton.disabled = true;
-                        generateButton.classList.add('opacity-50', 'cursor-not-allowed');
-                        resultStringInput.value = '';
-                        return;
-                    }
-                    endsWithSegment = result.segment;
-                }
-                
-                if (newString === '') { // If there was a conflict in custom segments
-                    attemptCount++;
-                    continue;
-                }
-
-                // 3. Process Mandatory Characters (for middle part)
-                const mandatoryChars = Array.from(new Set(includeCharactersCustomInput.value.trim().split('')));
-                let mandatoryCharsForMiddle = [];
-                if (noDuplicates) {
-                    for (const char of mandatoryChars) {
-                        if (currentGlobalUsedChars.has(char)) {
-                            newString = ''; // Mark as invalid
-                            break;
-                        }
-                        currentGlobalUsedChars.add(char);
-                        mandatoryCharsForMiddle.push(char);
-                    }
-                } else {
-                    mandatoryCharsForMiddle = mandatoryChars;
-                }
-
-                if (newString === '') { // If there was a conflict with mandatory chars
-                    attemptCount++;
-                    continue;
-                }
-
-                // 4. Calculate remaining length for the dynamic middle part
-                const totalLength = parseInt(stringLengthSlider.value);
-                const currentFixedLength = startsWithSegment.length + endsWithSegment.length + mandatoryCharsForMiddle.length;
-                const remainingLength = totalLength - currentFixedLength;
-
-                // 5. Generate Dynamic Middle Part
-                if (remainingLength > 0) {
-                    const result = generateSpecificSegment(
-                        remainingLength,
-                        includeUppercase.checked, includeLowercase.checked,
-                        includeNumbers.checked, includeSymbols.checked,
-                        customSymbolsInput.value, excludeCharactersInput.value,
-                        noDuplicates, currentGlobalUsedChars
-                    );
-                    if (result.error) {
-                        // This error should be caught by updateGenerateButtonState, but as a fallback
-                        // For unique strings, it's possible to run out of chars in the middle
-                        newString = ''; // Mark as invalid, try again
-                    } else {
-                        middleSegment = result.segment;
-                    }
-                } else if (remainingLength < 0) {
-                     newString = ''; // Should be caught by validation
-                }
-
-                if (newString === '') { // If middle segment generation failed due to unique char exhaustion
-                    attemptCount++;
-                    continue;
-                }
-
-                // Combine all parts and shuffle the middle + mandatory characters
-                let combinedMiddlePart = mandatoryCharsForMiddle.concat(middleSegment.split(''));
-                shuffleArray(combinedMiddlePart); // Shuffle mandatory and generated middle chars
-
-                newString = startsWithSegment + combinedMiddlePart.join('') + endsWithSegment;
-
-                // Check for uniqueness of the entire string (if generating multiple)
-                if (numStrings > 1 && generatedStringsSet.has(newString)) {
-                    attemptCount++;
-                    continue; // String is a duplicate, try again
-                } else {
-                    generatedStringsSet.add(newString);
+                } else { // Single string generation or multiple strings without uniqueness requirement
                     generatedStrings.push(newString);
                     foundUnique = true;
-                    break; // Found a unique string, move to next
+                    break;
                 }
+                attemptCount++;
             }
 
             if (!foundUnique) {
@@ -1548,6 +1121,7 @@
             }
         }
         
+        // If separator is empty, use newline for display in the textarea
         resultStringInput.value = generatedStrings.join(separatorVal || '\n');
     }
 
@@ -1564,7 +1138,7 @@
     window.addEventListener('load', () => {
         loadSettings();
         
-        // Initialize visibility for custom symbols input (main)
+        // Initialize visibility for custom symbols input
         if (includeSymbols.checked) {
              toggleVisibility(customSymbolsContainer, true);
              if (customSymbolsInput.value.trim() === '' && getCookie('customSymbols') === null) {
@@ -1574,51 +1148,30 @@
 
         // Initialize visibility for separator container based on loaded number of strings
         toggleVisibility(separatorContainer, parseInt(numberOfStringsInput.value) > 1);
-
-        // Initialize segment modes and their containers
-        setSegmentMode('startsWith', startsWithMode);
-        setSegmentMode('endsWith', endsWithMode);
-
-        // Initialize visibility for segment custom symbol inputs
-        if (startsWithIncludeSymbols.checked) {
-            toggleVisibility(startsWithCustomSymbolsContainer, true);
-            if (startsWithCustomSymbolsInput.value.trim() === '' && getCookie('startsWithCustomSymbols') === null) {
-                startsWithCustomSymbolsInput.value = defaultSpecialSymbols;
-            }
-        }
-        if (endsWithIncludeSymbols.checked) {
-            toggleVisibility(endsWithCustomSymbolsContainer, true);
-            if (endsWithCustomSymbolsInput.value.trim() === '' && getCookie('endsWithCustomSymbols') === null) {
-                endsWithCustomSymbolsInput.value = defaultSpecialSymbols;
-            }
-        }
         
         updateGenerateButtonState(); // Initial validation on load
         generateString(); // Generate initial string if valid
 
         // Add change/input listeners for saving settings and updating button state
         document.querySelectorAll('input[type="checkbox"]').forEach(input => {
-            // Exclude segment-specific checkboxes, as they have their own listeners
-            if (!input.id.startsWith('startsWith') && !input.id.startsWith('endsWith')) {
-                input.addEventListener('change', () => {
-                    saveSettings();
-                    updateGenerateButtonState();
-                    generateString(); // Dynamic generation
-                });
-            }
+            input.addEventListener('change', () => {
+                saveSettings();
+                updateGenerateButtonState();
+                generateString(); // Dynamic generation
+            });
         });
         document.querySelectorAll('input[type="range"]').forEach(input => {
-            // Exclude segment-specific range sliders, as they have their own listeners
-            if (!input.id.startsWith('startsWith') && !input.id.startsWith('endsWith')) {
-                input.addEventListener('input', () => { // Use 'input' for range sliders for real-time updates
-                    saveSettings();
-                    updateGenerateButtonState();
-                    generateString(); // Dynamic generation
-                });
-            }
+            input.addEventListener('input', () => { // Use 'input' for range sliders for real-time updates
+                saveSettings();
+                updateGenerateButtonState();
+                generateString(); // Dynamic generation
+            });
         });
         // Text inputs have their listeners defined explicitly above for better control
         // of when updateGenerateButtonState is called after input changes.
+        
+        // All buttons that change values should trigger saveSettings and update button state
+        // These are already handled by their specific event listeners now.
     });
 </script>
 
