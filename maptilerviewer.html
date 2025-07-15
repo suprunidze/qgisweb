@@ -351,16 +351,16 @@
                 height: 24px;
             }
             .side-panel {
-                top: 150px;
+                top: 80px;
                 right: -100dvw; /* Початково приховано за екраном справа */
-                width: 80dvw; /* На мобільних 80% ширини */
-                height: calc(100svh - 170px);
+                width: calc(100svw - 100px); /* На мобільних 80% ширини */
+                height: calc(100svh - 100px);
             }
             .side-panel.open {
                 right: 20px;
             }
             body.panel-open .map-controls-bottom {
-                right: calc(80dvw + 20px + 20px); /* Зсув на 80dvw + відступи */
+                right: calc(100svw - 100px + 20px + 20px); /* Зсув на 80dvw + відступи */
                 transition: right 0.3s ease-out; /* Явно встановлюємо перехід тут */
             }
             .side-panel-close-button {
@@ -437,7 +437,7 @@
             controls: ol.control.defaults.defaults({
                 zoom: false,
                 rotate: false,
-                attribution: true
+                attribution: false
             }),
             view: new ol.View({
                 center: initialCenter,
