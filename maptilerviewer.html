@@ -18,19 +18,24 @@
         #map {
             width: 100%;
             height: 100dvh;
+            cursor: grab;
         }
-
+#map:active {
+            width: 100%;
+            height: 100dvh;
+            cursor: grabbing;
+        }
         /* Стилі для кастомних кнопок керування картою (нижній блок) */
         .map-controls-bottom {
             position: absolute;
-            bottom: 10px;
+            bottom: 20px;
             right: 10px;
             display: flex;
             flex-direction: column-reverse;
-    flex-wrap: wrap-reverse;
-    justify-content: flex-end;
-    align-content: flex-end;
-max-height: calc(100svh - 60px);
+            flex-wrap: wrap-reverse;
+            justify-content: flex-end;
+        align-content: flex-end;
+            max-height: calc(100svh - 60px);
             gap: 5px;
             z-index: 1000;
             transition: right 0.3s ease-out; /* Залишаємо перехід тут */
@@ -100,12 +105,12 @@ max-height: calc(100svh - 60px);
             border: none;
             box-shadow: none;
             position: relative;
-            cursor: grab;
+            cursor: move;
             transition: transform 0.05s linear;
         }
 
         .rotation-dial:active {
-            cursor: grabbing;
+            cursor: move;
         }
 
         .north-indicator {
@@ -201,7 +206,7 @@ max-height: calc(100svh - 60px);
 
         /* Зсув нижніх елементів керування, коли панель відкрита */
         body.panel-open .map-controls-bottom {
-            right: calc(40dvw + 10px + 10px); /* Зсув на 40dvw + відступи */
+            right: calc(50dvw + 10px + 10px); /* Зсув на 40dvw + відступи */
             transition: right 0.3s ease-out; /* Явно встановлюємо перехід тут */
         }
 
@@ -322,13 +327,13 @@ max-height: calc(100svh - 60px);
         /* Мобільні стилі: більші кнопки та відступи */
         @media (pointer: coarse) and (max-width: 768px) {
             .map-controls-bottom {
-                bottom: - 160px;
+                bottom: - 170px;
                 right: 20px;
                 gap: 10px;
             }
             .map-controls-top-left {
                 top: 50px;
-                left: 10px;
+                left: 20px;
                 gap: 10px;
             }
             .map-button {
@@ -357,7 +362,7 @@ max-height: calc(100svh - 60px);
                 top: 80px;
                 right: -100dvw; /* Початково приховано за екраном справа */
                 width: calc(100dvw - 100px); /* На мобільних 80% ширини */
-                height: calc(100dvh - 120px);
+                height: calc(100dvh - 100px);
             }
             .side-panel.open {
                 right: 20px;
@@ -470,7 +475,7 @@ max-height: calc(100svh - 60px);
         const sidePanel = document.getElementById('sidePanel');
         const closePanelButton = document.getElementById('closePanelButton');
         const spinner = document.getElementById('spinner');
-
+        
         let isDraggingDial = false;
         let dialCenterX, dialCenterY;
         let startMouseAngle;
@@ -507,7 +512,7 @@ max-height: calc(100svh - 60px);
 
         rotationDial.addEventListener('mousedown', function(e) {
             isDraggingDial = true;
-            rotationDial.style.cursor = 'grabbing';
+            rotationDial.style.cursor = "move";
             const rect = rotationDial.getBoundingClientRect();
             dialCenterX = rect.left + rect.width / 2;
             dialCenterY = rect.top + rect.height / 2;
@@ -531,14 +536,14 @@ max-height: calc(100svh - 60px);
         document.addEventListener('mouseup', function() {
             if (isDraggingDial) {
                 isDraggingDial = false;
-                rotationDial.style.cursor = 'grab';
-            }
-        });
+                rotationDial.style.cursor = "move";
+            }}
+        );
 
         window.addEventListener('mouseleave', function() {
             if (isDraggingDial) {
                 isDraggingDial = false;
-                rotationDial.style.cursor = 'grab';
+                rotationDial.style.cursor = "move";
             }
         });
 
