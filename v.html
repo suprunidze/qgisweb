@@ -955,13 +955,35 @@ console.log('Parent rotation handler triggered');
    * Використовує параметр 'p' з URL для формування шляху до config.json.
    * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
    */
-  async function loadConfig() {
+  function updateUrlModeParam(mode) {
+  const url = new URL(window.location.href);
+  // Встановити або оновити параметр 'mode'
+  if (mode === '2D3D') {
+    url.searchParams.delete('mode'); // За замовчуванням не показуємо mode=2D3D
+  } else {
+    url.searchParams.set('mode', mode.toLowerCase());
+  }
+  window.history.replaceState({}, '', url);
+}
+async function loadConfig() {
     let configUrl = 'testconfig.json'; // За замовчуванням: config.json у поточній директорії
 
     // Отримати параметр 'p' з URL
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Додатковий параметр "mode" для примусового режиму
+    const modeParam = urlParams.get('mode');
+    if (modeParam === '3d') {
+      currentDesktopMode = '3D';
+      currentMobileMode = '3D';
+    } else if (modeParam === '2d') {
+      currentDesktopMode = '2D';
+      currentMobileMode = '2D';
+    } else {
+      currentDesktopMode = '2D3D'; // За замовчуванням
+      currentMobileMode = '2D'; // За замовчуванням для мобільних пристроїв
+    }
     const pParam = urlParams.get('p');
-
     if (pParam) {
       // Сформувати URL на основі параметра 'p'
       configUrl = `${pParam}/config.json`;
@@ -1087,6 +1109,7 @@ console.log('Parent rotation handler triggered');
    */
   function setDesktopMode(mode) {
     // Видалити активний клас з усіх кнопок робочого столу
+    updateUrlModeParam(mode);
     btn2D.classList.remove('active');
     btn3D.classList.remove('active');
     btn2D3D.classList.remove('active');
@@ -1130,6 +1153,7 @@ console.log('Parent rotation handler triggered');
    */
   function setMobileMode(mode) {
     // Видалити активний клас з усіх мобільних кнопок
+    updateUrlModeParam(mode);
     btnMobile2D.classList.remove('active');
     btnMobile3D.classList.remove('active');
 
