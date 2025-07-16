@@ -182,7 +182,7 @@
         /* Стилі для бічної панелі (спливаючого вікна) */
         .side-panel {
             position: absolute;
-            top: 80px;
+            top: 70px;
             right: -100dvw; /* Початково приховано за екраном справа */
             width: 50dvw; /* Ширина панелі: 40% від ширини вьюпорту */
             height: calc(100dvh - 90px);
@@ -196,6 +196,7 @@
             border-radius: 20px;
             overflow: hidden; /* Обрізаємо вміст, що виходить за межі панелі */
             box-sizing: border-box; /* Враховуємо padding у розмірі */
+            min-width: 300px; /* Мінімальна ширина панелі */
         }
 
         .side-panel.open {
@@ -204,8 +205,8 @@
 
         /* Зсув нижніх елементів керування, коли панель відкрита */
         body.panel-open .map-controls-bottom {
-            right: calc(50dvw + 10px + 10px); /* Зсув на 40dvw + відступи */
-            transition: right 0.3s ease-out; /* Явно встановлюємо перехід тут */
+            right: calc(max(50dvw, 300px) + 20px); /* Зсув на 40dvw + відступи */
+            transition: right 0.3s ease-out;  /*Явно встановлюємо перехід тут */
         }
 
         .side-panel-close-button {
