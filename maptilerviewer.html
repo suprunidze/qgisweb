@@ -197,6 +197,7 @@
             overflow: hidden; /* Обрізаємо вміст, що виходить за межі панелі */
             box-sizing: border-box; /* Враховуємо padding у розмірі */
             min-width: 300px; /* Мінімальна ширина панелі */
+            visibility: hidden; /* Приховуємо панель, поки вона не відкрита */
         }
 
         .side-panel.open {
@@ -636,7 +637,10 @@ console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(in
                 openPanelButton.innerHTML = '<i class="fas fa-list"></i>';
                 openPanelButton.title = 'Відкрити бічну панель';
                 spinner.classList.remove('show');
-                hideScrollbars(); // Приховуємо скролбари при закритті панелі
+                hideScrollbars(); //
+                setTimeout(() => {
+            sidePanel.style.visibility = 'hidden'; 
+        }, 300); // Приховуємо скролбари при закритті панелі
             } else {
                 // Якщо панель закрита, відкриваємо її
                 sidePanel.classList.add('open');
@@ -644,7 +648,7 @@ console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(in
                 document.body.classList.add('panel-open');
                 openPanelButton.innerHTML = '<i class="fas fa-times"></i>';
                 openPanelButton.title = 'Закрити бічну панель';
-
+sidePanel.style.visibility ='visible'; // Показуємо скролбари при відкритті панелі
                 if (!isPanelContentLoaded) {
                     spinner.classList.add('show'); // Показуємо спінер тільки якщо контент ще не завантажено
                     img.src = canvasImageUrl; // Завантажуємо зображення
