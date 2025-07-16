@@ -943,13 +943,20 @@
     encrypted: 'https://placehold.co/20x20/e74c3c/ffffff?text=ENC'
   };
 
+function parentRotationHandler() {
+            topBar.style.cursor = 'move';
+console.log('Parent rotation handler triggered');
+           
+        }
+        
+
   /**
    * Завантажує дані конфігурації з config.json.
    * Використовує параметр 'p' з URL для формування шляху до config.json.
    * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
    */
   async function loadConfig() {
-    let configUrl = 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/testconfig.json'; // За замовчуванням: config.json у поточній директорії
+    let configUrl = 'testconfig.json'; // За замовчуванням: config.json у поточній директорії
 
     // Отримати параметр 'p' з URL
     const urlParams = new URLSearchParams(window.location.search);

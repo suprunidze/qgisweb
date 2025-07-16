@@ -459,7 +459,7 @@
                     attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>'
                 })
             }));
-        }).catch(function(error) {
+        }).catch(function (error) {
             console.error("Помилка при завантаженні стилю MapTiler:", error);
             document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
         });
@@ -473,7 +473,7 @@
         const sidePanel = document.getElementById('sidePanel');
         const closePanelButton = document.getElementById('closePanelButton');
         const spinner = document.getElementById('spinner');
-        
+
         let isDraggingDial = false;
         let dialCenterX, dialCenterY;
         let startMouseAngle;
@@ -508,60 +508,115 @@
 
         updateRotationDial(initialMapRotationRadians);
 
-        rotationDial.addEventListener('mousedown', function(e) {
-            isDraggingDial = true;
-            rotationDial.style.cursor = "move";
-            const rect = rotationDial.getBoundingClientRect();
-            dialCenterX = rect.left + rect.width / 2;
-            dialCenterY = rect.top + rect.height / 2;
-            startMouseAngle = Math.atan2(e.clientY - dialCenterY, e.clientX - dialCenterX);
-            initialMapRotationOnDragStart = map.getView().getRotation();
-            e.preventDefault();
-        });
+        let capturedPointerId = null;
+        let hasMovedEnoughForDrag = false;
 
-        document.addEventListener('mousemove', function(e) {
-            if (isDraggingDial) {
-                const currentMouseX = e.clientX - dialCenterX;
-                const currentMouseY = e.clientY - dialCenterY;
-                let currentMouseAngle = Math.atan2(currentMouseY, currentMouseX);
-                let angleDelta = currentMouseAngle - startMouseAngle;
-                let newMapRotationRadians = initialMapRotationOnDragStart - angleDelta;
-                map.getView().setRotation(newMapRotationRadians);
-                updateRotationDial(newMapRotationRadians);
+        function commonRotationResetHandler() {
+                const view = map.getView();
+                view.animate({
+                    rotation: 0, // Кінцевий кут обертання (0 радіан = Північ)
+                    duration: 500, // Тривалість анімації в мілісекундах
+                    easing: ol.easing.easeOut // Функція згладжування
+                })
+                updateRotationDial(0);
+            };
+        //rotationDial.addEventListener('pointerdown', commonRotationResetHandler);
+function radiansToDegrees(radians) {
+  return radians * (180 / Math.PI);
+}
+        northButton.addEventListener('click', commonRotationResetHandler);
+
+        rotationDial.addEventListener('pointerdown', function (e) {
+                if (e.button === 0 || e.pointerType === 'touch') {
+                    if (e.pointerType === 'touch') {
+                        commonRotationResetHandler();
+                        // Optional: Запобігти будь-якій подальшій обробці для цього дотику
+                        e.preventDefault();
+                        return;
+                    }
+                    isDraggingDial = true;
+                    hasMovedEnoughForDrag = false;
+                    rotationDial.style.cursor = "move";
+
+                    const rect = rotationDial.getBoundingClientRect();
+                    dialCenterX = rect.left + rect.width / 2;
+                    dialCenterY = rect.top + rect.height / 2;
+                    startMouseAngle = Math.atan2(e.clientY - dialCenterY, e.clientX - dialCenterX);
+                    initialMapRotationOnDragStart = map.getView().getRotation();
+console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(initialMapRotationOnDragStart));
+                    rotationDial.setPointerCapture(e.pointerId);
+                    capturedPointerId = e.pointerId;
+
+                    e.preventDefault();
+                }
+            });
+
+        window.addEventListener('pointermove', function (e) {
+            if (isDraggingDial && e.pointerId === capturedPointerId && e.pointerType === 'mouse') {
+                // Обчислюємо поточну відстань від початкової точки натискання
+                const distanceX = e.clientX - (dialCenterX + Math.cos(startMouseAngle) * 5); // 5 - це поріг, можна налаштувати
+                const distanceY = e.clientY - (dialCenterY + Math.sin(startMouseAngle) * 5);
+                const currentDistance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+                // Встановлюємо hasMovedEnoughForDrag, якщо рух перевищив поріг
+                if (currentDistance > 5) { // Поріг у 5 пікселів
+                    hasMovedEnoughForDrag = true;
+                }
+
+                // Виконуємо обертання ТІЛЬКИ якщо вже почали перетягувати (тобто, пройшли поріг руху)
+                if (hasMovedEnoughForDrag) {
+                    const currentMouseX = e.clientX - dialCenterX;
+                    const currentMouseY = e.clientY - dialCenterY;
+                    let currentMouseAngle = Math.atan2(currentMouseY, currentMouseX);
+                    let angleDelta = currentMouseAngle - startMouseAngle;
+                    let newMapRotationRadians = initialMapRotationOnDragStart - angleDelta;
+
+                    map.getView().setRotation(newMapRotationRadians);
+                    updateRotationDial(newMapRotationRadians);
+               console.log('Dragging. Current Map Rotation (radians):', radiansToDegrees(newMapRotationRadians)); // Вивід під час перетягування
+ }
             }
         });
 
-        document.addEventListener('mouseup', function() {
-            if (isDraggingDial) {
+        function stopDialDrag(e) {
+            if (isDraggingDial && e.pointerType === 'mouse') {
                 isDraggingDial = false;
                 rotationDial.style.cursor = "move";
-            }}
-        );
 
-        window.addEventListener('mouseleave', function() {
-            if (isDraggingDial) {
-                isDraggingDial = false;
-                rotationDial.style.cursor = "move";
+                if (capturedPointerId !== null) {
+                    rotationDial.releasePointerCapture(capturedPointerId);
+                    capturedPointerId = null;
+                }
+                if (!hasMovedEnoughForDrag) {
+                    commonRotationResetHandler(); // Викликаємо функцію скидання обертання
+                }else {
+            const finalRotation = radiansToDegrees(map.getView().getRotation());
+            console.log('Drag ended. Final Map Rotation (radians):', finalRotation); // Вивід після завершення перетягування
+        }
             }
-        });
+        }
+        window.addEventListener('pointerup', stopDialDrag);
+      
+        window.addEventListener('pointercancel', stopDialDrag)
+  //window.addEventListener('pointerleave', stopDialDrag);
 
-        map.getView().on('change:rotation', function() {
+        map.getView().on('change:rotation', function () {
             updateRotationDial(map.getView().getRotation());
         });
 
-        zoomInButton.addEventListener('click', function() {
+        zoomInButton.addEventListener('click', function () {
             const view = map.getView();
             const currentZoom = view.getZoom();
             view.setZoom(currentZoom + 1);
         });
 
-        zoomOutButton.addEventListener('click', function() {
+        zoomOutButton.addEventListener('click', function () {
             const view = map.getView();
             const currentZoom = view.getZoom();
             view.setZoom(currentZoom - 1);
         });
 
-        homeButton.addEventListener('click', function() {
+        homeButton.addEventListener('click', function () {
             const view = map.getView();
             view.setCenter(initialCenter);
             view.setZoom(initialZoom);
@@ -569,13 +624,7 @@
             updateRotationDial(initialMapRotationRadians);
         });
 
-       function commonRotationResetHandler() {
-            const view = map.getView();
-            view.setRotation(0);
-            updateRotationDial(0);
-        };
-        rotationDial.addEventListener('click', commonRotationResetHandler);
-        northButton.addEventListener('click', commonRotationResetHandler);
+        // --- Логіка для кастомних скролбарів ---
 
         function toggleSidePanel() {
             if (sidePanel.classList.contains('open')) {
@@ -624,7 +673,7 @@
             imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`;
         }
 
-        img.onload = function() {
+        img.onload = function () {
             spinner.classList.remove('show');
             isPanelContentLoaded = true;
             // Ініціалізуємо panX, panY для центрування зображення, якщо воно менше контейнера
@@ -645,7 +694,7 @@
             updateScrollbars(); // Оновлюємо скролбари після завантаження
         };
 
-        img.onerror = function() {
+        img.onerror = function () {
             spinner.classList.remove('show');
             console.error("Помилка завантаження зображення для канвасу.");
             const errorDiv = document.createElement('div');
