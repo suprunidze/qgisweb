@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <title>Карта OpenLayers з MapTiler</title>
     <!-- Підключення бібліотеки OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
@@ -21,8 +21,6 @@
             cursor: grab;
         }
 #map:active {
-            width: 100%;
-            height: 100dvh;
             cursor: grabbing;
         }
         /* Стилі для кастомних кнопок керування картою (нижній блок) */
@@ -571,11 +569,13 @@
             updateRotationDial(initialMapRotationRadians);
         });
 
-        northButton.addEventListener('click', function() {
+       function commonRotationResetHandler() {
             const view = map.getView();
             view.setRotation(0);
             updateRotationDial(0);
-        });
+        };
+        rotationDial.addEventListener('click', commonRotationResetHandler);
+        northButton.addEventListener('click', commonRotationResetHandler);
 
         function toggleSidePanel() {
             if (sidePanel.classList.contains('open')) {
