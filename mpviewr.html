@@ -658,7 +658,8 @@ customInteractions.push(new SingleFingerZoomInteraction());
             view: new ol.View({
                 center: initialCenter,
                 zoom: initialZoom,
-                rotation: initialMapRotationRadians
+                rotation: initialMapRotationRadians,  minZoom:10,  // Мінімальний рівень зуму (найбільш віддалений)
+        maxZoom: 19
             }),
     // Використовуємо нашу спеціально підготовлену колекцію взаємодій
     interactions: customInteractions,
