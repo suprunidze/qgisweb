@@ -52,7 +52,7 @@
             /*left: 80px;*/
             right: -100dvw;
             /* Початково приховано за екраном справа */
-            max-width: calc(100vw - 100px);
+            max-width: calc(100dvw - 100px);
             /* Prevent overflow */
             width: auto;
             /* width: 50dvw;  Ширина панелі: 40% від ширини вьюпорту */
@@ -421,7 +421,7 @@
                 top: 80px;
                 right: -100dvw;
                 /* Початково приховано за екраном справа */
-                max-width: calc(100vw - 100px);
+                max-width: calc(100dvw - 100px);
                 /* На мобільних 80% ширини */
                 height: calc(100dvh - 100px);
             }
@@ -431,7 +431,7 @@
             }
 
             body.panel-open .map-controls-bottom {
-                right: calc((var(--panel-width, 250px)) + 40px);
+                right: calc((var(--panel-width, 250px)) + 1cm);
                 /* Зсув на 80dvw + відступи */
                 /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
             }
