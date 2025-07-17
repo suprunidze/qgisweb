@@ -661,7 +661,10 @@ customInteractions.push(new SingleFingerZoomInteraction());
                 rotation: initialMapRotationRadians
             }),
     // Використовуємо нашу спеціально підготовлену колекцію взаємодій
-    interactions: customInteractions
+    interactions: customInteractions,
+    // *** ДОДАНО / ЗМІНЕНО ***
+    loadTilesWhileInteracting: true, // Це дозволить плавніше взаємодіяти
+    loadTilesWhileAnimating: true    // Це допоможе під час анімаційного завершення зуму
 });
 
 
