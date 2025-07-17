@@ -530,7 +530,7 @@
          * @private
          * @type {number}
          */
-        this.zoomDelta_ = 0;
+        this.zoomDelta_ = 0; // Це буде накопичуватися
 
         /**
          * @private
@@ -567,9 +567,8 @@
             if (distanceSq < 25 * 25) { // Поріг для подвійного тапу
                 this.dragging_ = true;
                 this.lastY_ = pixel[1];
-                this.zoomDelta_ = 0;
+                this.zoomDelta_ = 0; // Скидаємо при початку нового перетягування
                 
-                // *** ДОДАНО: Запобігаємо стандартній поведінці браузера при початку перетягування ***
                 mapBrowserEvent.originalEvent.preventDefault(); 
                 return true;
             }
@@ -589,17 +588,23 @@
      */
     static handleDragEvent(mapBrowserEvent) {
         if (this.dragging_) {
-            // *** ДОДАНО: Запобігаємо стандартній поведінці браузера під час перетягування ***
             mapBrowserEvent.originalEvent.preventDefault(); 
 
             const view = mapBrowserEvent.map.getView();
             const deltaY = mapBrowserEvent.pixel[1] - this.lastY_;
             this.lastY_ = mapBrowserEvent.pixel[1];
 
-            this.zoomDelta_ -= deltaY * 0.01; // Налаштуйте коефіцієнт чутливості
+            // *** ЗМІНЕНО: Накопичуємо zoomDelta_ та застосовуємо його до поточного масштабу ***
+            // Коефіцієнт чутливості можна налаштувати. 0.01 здається трохи малим.
+            // Спробуємо 0.02 або 0.03 для більш помітного ефекту.
+            this.zoomDelta_ -= deltaY * 0.02; // Налаштуйте цей коефіцієнт
 
+            // Застосовуємо зміну масштабу
             view.setResolution(view.constrainResolution(view.getResolution() * Math.pow(2, this.zoomDelta_)));
-            this.zoomDelta_ = 0;
+            
+            // Важливо: НЕ скидаємо this.zoomDelta_ на 0 тут,
+            // оскільки ми хочемо, щоб він накопичувався під час перетягування.
+            // Він буде скинутий тільки при наступному handleDownEvent.
         }
     }
 
@@ -622,13 +627,13 @@
                      easing: ol.easing.easeOut 
                  });
             }
-            // *** ДОДАНО: Запобігаємо стандартній поведінці браузера при завершенні взаємодії ***
             mapBrowserEvent.originalEvent.preventDefault(); 
             return true;
         }
         return false;
     }
 }
+
 
 
 
