@@ -70,7 +70,7 @@
             /* Обрізаємо вміст, що виходить за межі панелі */
             box-sizing: border-box;
             /* Враховуємо padding у розмірі */
-            min-width: 250px;
+            min-width: 200px;
             /* Мінімальна ширина панелі */
             visibility: hidden;
             /* Приховуємо панель, поки вона не відкрита */
@@ -82,7 +82,7 @@
 
         /* Зсув нижніх елементів керування, коли панель відкрита */
         body.panel-open .map-controls-bottom {
-            right: calc(var(--panel-width, 250px) + 20px);
+            right: calc(var(--panel-width, 200px) + 20px);
             /* fallback to 50dvw */
             /*right: calc(max(50dvw, 250px) + 20px); /* Зсув на 40dvw + відступи */
             /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
@@ -431,7 +431,7 @@
             }
 
             body.panel-open .map-controls-bottom {
-                right: calc((var(--panel-width, 250px)) + 1cm);
+                right: calc((var(--panel-width, 200px)) + 40px);
                 /* Зсув на 80dvw + відступи */
                 /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
             }
@@ -770,13 +770,13 @@
 
         function adjustSidePanelWidth() {
             // Get the image width and viewport width
-            const imageWidth = img.naturalWidth || 250;
+            const imageWidth = img.naturalWidth || 200;
             const viewportWidth = window.innerWidth;
             //const leftMargin = 100;  Space for map controls
             let maxPanelWidth = Math.min(imageWidth, viewportWidth - 20); // 20px for right margin
             // Use a fallback value for panel width, e.g., 0.8 * viewport width or 400px minimum
 
-            let panelWidth = Math.min(maxPanelWidth, Math.max(viewportWidth - 100, 250));
+            let panelWidth = Math.min(maxPanelWidth, Math.max(viewportWidth - 100, 200));
             // Set panel width to (viewport width - 100px), but not more than image width
             //panelWidth = Math.min(imageWidth, viewportWidth - 100);
             //maxPanelWidth = panelWidth;
