@@ -662,7 +662,7 @@ customInteractions.push(new SingleFingerZoomInteraction());
         maxZoom: 19
             }),
     // Використовуємо нашу спеціально підготовлену колекцію взаємодій
-    interactions: customInteractions,
+    interactions: ol.interaction.defaults.defaults(),
     // *** ДОДАНО / ЗМІНЕНО ***
     loadTilesWhileInteracting: true, // Це дозволить плавніше взаємодіяти
     loadTilesWhileAnimating: true    // Це допоможе під час анімаційного завершення зуму
