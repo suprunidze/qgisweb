@@ -597,7 +597,7 @@
             // *** ЗМІНЕНО: Тепер ми НЕ використовуємо view.constrainResolution() тут ***
             // Це дозволить плавний зум під час перетягування.
             // Коефіцієнт чутливості можна налаштувати.
-            this.zoomDelta_ -= deltaY * 0.02; 
+            this.zoomDelta_ -= deltaY * 0.005; 
 
             // Застосовуємо зміну масштабу без обмеження
             view.setResolution(view.getResolution() * Math.pow(2, this.zoomDelta_));
