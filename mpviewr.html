@@ -631,18 +631,7 @@
 }
 
 
-// --- 2. Ініціалізація вашої карти з вашими параметрами та новою взаємодією ---
 
-// Припустимо, що initialCenter, initialZoom, initialMapRotationRadians,
-// mapTilerStyleUrl та customLayerUrl визначені десь вище у вашому коді.
-// Наприклад:
-const initialCenter = [0, 0]; 
-const initialZoom = 2;
-const initialMapRotationRadians = 0;
-const mapTilerStyleUrl = 'https://api.maptiler.com/maps/streets/style.json?key=YOUR_MAPTILER_API_KEY'; // ЗАМІНІТЬ НА ВАШ КЛЮЧ
-const customLayerUrl = 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'; // Приклад URL для XYZ шару
-
-// Отримуємо стандартні взаємодії як колекцію
 const defaultInteractions = ol.interaction.defaults.defaults();
 
 // Створюємо нову колекцію взаємодій, яка буде використана для карти
