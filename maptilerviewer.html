@@ -31,14 +31,14 @@
         /* Стилі для кастомних кнопок керування картою (нижній блок) */
         .map-controls-bottom {
             position: absolute;
-            bottom: 22px;
+            bottom: 20px;
             right: 20px;
             display: flex;
             flex-direction: column-reverse;
             flex-wrap: wrap-reverse;
             justify-content: flex-end;
             align-content: flex-end;
-            max-height: calc(100svh - 60px);
+            max-height: calc(100dvh - 60px);
             gap: 5px;
             z-index: 1000;
             transition: right 0.3s ease-out;
@@ -52,7 +52,7 @@
             /*left: 80px;*/
             right: -100dvw;
             /* Початково приховано за екраном справа */
-            max-width: calc(100dvw - 100px);
+            max-width: calc(100dvw - 70px);
             /* Prevent overflow */
             width: auto;
             /* width: 50dvw;  Ширина панелі: 40% від ширини вьюпорту */
@@ -82,7 +82,7 @@
 
         /* Зсув нижніх елементів керування, коли панель відкрита */
         body.panel-open .map-controls-bottom {
-            right: calc(var(--panel-width, 200px) + 20px);
+            right: calc(var(--panel-width-desktop, 200px) + 20px);
             /* fallback to 50dvw */
             /*right: calc(max(50dvw, 250px) + 20px); /* Зсув на 40dvw + відступи */
             /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
@@ -385,8 +385,8 @@
 
             .map-controls-top-left {
                 top: 50px;
-                left: 20px;
-                gap: 20px;
+                left: 10px;
+                /*gap: 20px;*/
             }
 
             .map-button {
@@ -418,12 +418,12 @@
             }
 
             .side-panel {
-                top: 80px;
+                top: 70px;
                 right: -100dvw;
                 /* Початково приховано за екраном справа */
                 max-width: calc(100dvw - 100px);
                 /* На мобільних 80% ширини */
-                height: calc(100dvh - 100px);
+                height: calc(100dvh - 90px);
             }
 
             .side-panel.open {
@@ -431,7 +431,7 @@
             }
 
             body.panel-open .map-controls-bottom {
-                right: calc((var(--panel-width, 200px)) + 40px);
+                right: calc((var(--panel-width-mobile, 200px)) + 40px);
                 /* Зсув на 80dvw + відступи */
                 /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
             }
@@ -506,6 +506,140 @@
         const initialMapRotationDegrees = -40;
         const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
 
+        class SingleFingerZoomInteraction extends ol.interaction.Pointer { // Зверніть увагу на ol.interaction.Pointer
+            constructor() {
+                super({
+                    handleDownEvent: SingleFingerZoomInteraction.handleDownEvent,
+                    handleDragEvent: SingleFingerZoomInteraction.handleDragEvent,
+                    handleUpEvent: SingleFingerZoomInteraction.handleUpEvent
+                });
+
+                /**
+                 * @private
+                 * @type {boolean}
+                 */
+                this.dragging_ = false;
+
+                /**
+                 * @private
+                 * @type {number|undefined}
+                 */
+                this.lastY_ = undefined;
+
+                /**
+                 * @private
+                 * @type {number}
+                 */
+                this.zoomDelta_ = 0;
+
+                /**
+                 * @private
+                 * @type {number}
+                 */
+                this.tapTimeout_ = null; // Для відстеження подвійного тапу
+
+                /**
+                 * @private
+                 * @type {Array<number>}
+                 */
+                this.tapCoordinates_ = null; // Координати першого тапу
+            }
+
+            /**
+             * @param {ol.MapBrowserEvent} mapBrowserEvent Map browser event.
+             * @return {boolean} 'true' if event was handled.
+             */
+            static handleDownEvent(mapBrowserEvent) {
+                if (mapBrowserEvent.originalEvent.pointerType !== 'touch' || mapBrowserEvent.originalEvent.buttons === 2) {
+                    return false;
+                }
+
+                const map = mapBrowserEvent.map;
+                const pixel = mapBrowserEvent.pixel;
+
+                if (this.tapTimeout_ && this.tapCoordinates_) {
+                    clearTimeout(this.tapTimeout_);
+                    this.tapTimeout_ = null;
+
+                    const dx = pixel[0] - this.tapCoordinates_[0];
+                    const dy = pixel[1] - this.tapCoordinates_[1];
+                    const distanceSq = dx * dx + dy * dy;
+
+                    if (distanceSq < 25 * 25) {
+                        this.dragging_ = true;
+                        this.lastY_ = pixel[1];
+                        this.zoomDelta_ = 0;
+                        return true;
+                    }
+                }
+
+                this.tapCoordinates_ = pixel;
+                this.tapTimeout_ = setTimeout(() => {
+                    this.tapTimeout_ = null;
+                    this.tapCoordinates_ = null;
+                }, 300);
+
+                return false;
+            }
+
+            /**
+             * @param {ol.MapBrowserEvent} mapBrowserEvent Map browser event.
+             */
+            static handleDragEvent(mapBrowserEvent) {
+                if (this.dragging_) {
+                    const map = mapBrowserEvent.map;
+                    const view = map.getView();
+                    const deltaY = mapBrowserEvent.pixel[1] - this.lastY_;
+                    this.lastY_ = mapBrowserEvent.pixel[1];
+
+                    this.zoomDelta_ -= deltaY * 0.01;
+
+                    view.setResolution(view.constrainResolution(view.getResolution() * Math.pow(2, this.zoomDelta_)));
+                    this.zoomDelta_ = 0;
+                }
+            }
+
+            /**
+             * @param {ol.MapBrowserEvent} mapBrowserEvent Map browser event.
+             * @return {boolean} 'true' if event was handled.
+             */
+            static handleUpEvent(mapBrowserEvent) {
+                if (this.dragging_) {
+                    this.dragging_ = false;
+                    this.lastY_ = undefined;
+
+                    const view = mapBrowserEvent.map.getView();
+                    const currentZoom = view.getZoom();
+                    if (currentZoom !== undefined) {
+                        const targetZoom = Math.round(currentZoom);
+                        view.animate({
+                            zoom: targetZoom,
+                            duration: 250,
+                            // ol.easing.easeOut - звертаємося до easing через глобальний об'єкт ol.easing
+                            easing: ol.easing.easeOut
+                        });
+                    }
+                    return true;
+                }
+                return false;
+            }
+        }
+// Отримуємо стандартні взаємодії як колекцію
+const defaultInteractions = ol.interaction.defaults.defaults();
+
+// Створюємо нову колекцію взаємодій, яка буде використана для карти
+const customInteractions = new ol.Collection();
+
+// Додаємо всі стандартні взаємодії, крім DoubleClickZoom
+defaultInteractions.forEach(function(interaction) {
+    if (!(interaction instanceof ol.interaction.DoubleClickZoom)) {
+        customInteractions.push(interaction);
+    }
+});
+
+// Додаємо нашу SingleFingerZoomInteraction
+customInteractions.push(new SingleFingerZoomInteraction());
+        //
         const map = new ol.Map({
             target: 'map',
             controls: ol.control.defaults.defaults({
@@ -517,8 +651,11 @@
                 center: initialCenter,
                 zoom: initialZoom,
                 rotation: initialMapRotationRadians
-            })
-        });
+            }),
+    // Використовуємо нашу спеціально підготовлену колекцію взаємодій
+    interactions: customInteractions
+});
+
 
         olms.apply(map, mapTilerStyleUrl).then(function (map) {
             map.addLayer(new ol.layer.Tile({
@@ -727,10 +864,10 @@
                 openPanelButton.innerHTML = '<i class="fas fa-list"></i>';
                 openPanelButton.title = 'Відкрити бічну панель';
                 spinner.classList.remove('show');
-                hideScrollbars(); //
+                hideScrollbars(); //Приховуємо скролбари при закритті панелі
                 setTimeout(() => {
                     sidePanel.style.visibility = 'hidden';
-                }, 300); // Приховуємо скролбари при закритті панелі
+                }, 300); // 
             } else {
                 // Якщо панель закрита, відкриваємо її
                 sidePanel.classList.add('open');
@@ -773,14 +910,16 @@
             const imageWidth = img.naturalWidth || 200;
             const viewportWidth = window.innerWidth;
             //const leftMargin = 100;  Space for map controls
-            let maxPanelWidth = Math.min(imageWidth, viewportWidth - 20); // 20px for right margin
+            const maxPanelWidth = Math.min(imageWidth, viewportWidth - 20); // 20px for right margin
             // Use a fallback value for panel width, e.g., 0.8 * viewport width or 400px minimum
 
-            let panelWidth = Math.min(maxPanelWidth, Math.max(viewportWidth - 100, 200));
+            const panelWidthDesktop = Math.min(maxPanelWidth, Math.max(viewportWidth - 70, 200));
+            const panelWidthMobile = Math.min(maxPanelWidth, Math.max(viewportWidth - 100, 200));
             // Set panel width to (viewport width - 100px), but not more than image width
             //panelWidth = Math.min(imageWidth, viewportWidth - 100);
             //maxPanelWidth = panelWidth;
-            document.body.style.setProperty('--panel-width', (panelWidth) + 'px');
+            document.body.style.setProperty('--panel-width-desktop', (panelWidthDesktop) + 'px');
+            document.body.style.setProperty('--panel-width-mobile', (panelWidthMobile) + 'px');
             if (sidePanel.style.width !== (maxPanelWidth + 'px')) {
                 sidePanel.style.width = maxPanelWidth + 'px';
             }
@@ -990,21 +1129,21 @@
                 imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`; // Оновлюємо позицію canvas
                 updateScrollbars(); // Перемальовуємо зображення та оновлюємо скролбари
             }
-        });        
-        canvasContainer.addEventListener('wheel', function(e) {
+        });
+        canvasContainer.addEventListener('wheel', function (e) {
             if (!isPanelContentLoaded) return;
             e.preventDefault();
             // Typical: vertical scroll (e.deltaY), horizontal scroll (e.deltaX)
             panX -= e.deltaX;
             panY -= e.deltaY;
-        showScrollbars();
-        hideScrollbars();
+            showScrollbars();
+            hideScrollbars();
             // Optionally clamp panX/panY to image bounds:
             const containerWidth = canvasContainer.clientWidth;
             const containerHeight = canvasContainer.clientHeight;
             const canvasWidth = imageCanvas.width;
             const canvasHeight = imageCanvas.height;
-        
+
             if (canvasWidth > containerWidth) {
                 const minPanX = containerWidth - canvasWidth;
                 const maxPanX = 0;
@@ -1012,7 +1151,7 @@
             } else {
                 panX = (containerWidth - canvasWidth) / 2;
             }
-        
+
             if (canvasHeight > containerHeight) {
                 const minPanY = containerHeight - canvasHeight;
                 const maxPanY = 0;
@@ -1020,7 +1159,7 @@
             } else {
                 panY = (containerHeight - canvasHeight) / 2;
             }
-        
+
             imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`;
             updateScrollbars();
         }, { passive: false });
