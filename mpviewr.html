@@ -594,17 +594,15 @@
             const deltaY = mapBrowserEvent.pixel[1] - this.lastY_;
             this.lastY_ = mapBrowserEvent.pixel[1];
 
-            // *** ЗМІНЕНО: Накопичуємо zoomDelta_ та застосовуємо його до поточного масштабу ***
-            // Коефіцієнт чутливості можна налаштувати. 0.01 здається трохи малим.
-            // Спробуємо 0.02 або 0.03 для більш помітного ефекту.
-            this.zoomDelta_ -= deltaY * 0.02; // Налаштуйте цей коефіцієнт
+            // *** ЗМІНЕНО: Тепер ми НЕ використовуємо view.constrainResolution() тут ***
+            // Це дозволить плавний зум під час перетягування.
+            // Коефіцієнт чутливості можна налаштувати.
+            this.zoomDelta_ -= deltaY * 0.02; 
 
-            // Застосовуємо зміну масштабу
-            view.setResolution(view.constrainResolution(view.getResolution() * Math.pow(2, this.zoomDelta_)));
+            // Застосовуємо зміну масштабу без обмеження
+            view.setResolution(view.getResolution() * Math.pow(2, this.zoomDelta_));
             
-            // Важливо: НЕ скидаємо this.zoomDelta_ на 0 тут,
-            // оскільки ми хочемо, щоб він накопичувався під час перетягування.
-            // Він буде скинутий тільки при наступному handleDownEvent.
+            // Важливо: НЕ скидаємо this.zoomDelta_ на 0 тут.
         }
     }
 
@@ -620,7 +618,7 @@
             const view = mapBrowserEvent.map.getView();
             const currentZoom = view.getZoom();
             if (currentZoom !== undefined) {
-                 const targetZoom = Math.round(currentZoom);
+                 const targetZoom = Math.round(currentZoom); // Округлюємо до найближчого цілого зуму в кінці
                  view.animate({
                      zoom: targetZoom,
                      duration: 250,
@@ -633,8 +631,6 @@
         return false;
     }
 }
-
-
 
 
 const defaultInteractions = ol.interaction.defaults.defaults();
