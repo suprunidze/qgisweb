@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <title>Карта OpenLayers з MapTiler</title>
     <!-- Підключення бібліотеки OpenLayers CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
@@ -15,51 +17,63 @@
             font-family: 'Inter', sans-serif;
             overflow: hidden;
         }
+
         #map {
             width: 100%;
             height: 100dvh;
             cursor: grab;
         }
-#map:active {
+
+        #map:active {
             cursor: grabbing;
         }
+
         /* Стилі для кастомних кнопок керування картою (нижній блок) */
         .map-controls-bottom {
             position: absolute;
-            bottom: 20px;
+            bottom: 22px;
             right: 20px;
             display: flex;
             flex-direction: column-reverse;
             flex-wrap: wrap-reverse;
             justify-content: flex-end;
-        align-content: flex-end;
+            align-content: flex-end;
             max-height: calc(100svh - 60px);
             gap: 5px;
             z-index: 1000;
-            transition: right 0.3s ease-out; /* Залишаємо перехід тут */
+            transition: right 0.3s ease-out;
+            /* Залишаємо перехід тут */
         }
 
-/* Стилі для бічної панелі (спливаючого вікна) */
+        /* Стилі для бічної панелі (спливаючого вікна) */
         .side-panel {
             position: absolute;
             top: 70px;
             /*left: 80px;*/
-            right: -100dvw; /* Початково приховано за екраном справа */
-           max-width: calc(100vw - 100px); /* Prevent overflow */
-    width: auto; /* width: 50dvw;  Ширина панелі: 40% від ширини вьюпорту */
+            right: -100dvw;
+            /* Початково приховано за екраном справа */
+            max-width: calc(100vw - 100px);
+            /* Prevent overflow */
+            width: auto;
+            /* width: 50dvw;  Ширина панелі: 40% від ширини вьюпорту */
             height: calc(100dvh - 90px);
             background-color: rgba(255, 255, 255, 0.514);
             backdrop-filter: blur(10px);
             z-index: 2000;
-            transition: right 0.3s ease-out; /* Перехід для панелі */
+            transition: right 0.3s ease-out;
+            /* Перехід для панелі */
             box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
             border-radius: 20px;
-            overflow: hidden; /* Обрізаємо вміст, що виходить за межі панелі */
-            box-sizing: border-box; /* Враховуємо padding у розмірі */
-            min-width: 300px; /* Мінімальна ширина панелі */
-            visibility: hidden; /* Приховуємо панель, поки вона не відкрита */
+            overflow: hidden;
+            /* Обрізаємо вміст, що виходить за межі панелі */
+            box-sizing: border-box;
+            /* Враховуємо padding у розмірі */
+            min-width: 250px;
+            /* Мінімальна ширина панелі */
+            visibility: hidden;
+            /* Приховуємо панель, поки вона не відкрита */
         }
 
         .side-panel.open {
@@ -68,17 +82,21 @@
 
         /* Зсув нижніх елементів керування, коли панель відкрита */
         body.panel-open .map-controls-bottom {
-            right: calc(max(50dvw, 300px) + 20px); /* Зсув на 40dvw + відступи */
+            right: calc(var(--panel-width, 250px) + 20px);
+            /* fallback to 50dvw */
+            /*right: calc(max(50dvw, 250px) + 20px); /* Зсув на 40dvw + відступи */
             /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
         }
-.no-transition {
-    transition: none !important; /* Важливо: !important для перевизначення */
-}
+
+        .no-transition {
+            transition: none !important;
+            /* Важливо: !important для перевизначення */
+        }
 
         /* Стилі для кастомних елементів керування картою (верхній лівий блок) */
         .map-controls-top-left {
             position: absolute;
-            top: 80px;
+            top: 70px;
             left: 10px;
             display: flex;
             flex-direction: column;
@@ -163,7 +181,8 @@
         .north-indicator i {
             font-size: 1.4em;
             text-shadow: none;
-            transform: rotate(-45deg); /* Повертаємо іконку, щоб вона вказувала прямо вгору */
+            transform: rotate(-45deg);
+            /* Повертаємо іконку, щоб вона вказувала прямо вгору */
         }
 
         /* Приховано відображення значення повороту */
@@ -241,13 +260,18 @@
         }
 
         .canvas-container {
-            flex-grow: 1; /* Займає весь доступний простір всередині side-panel */
+            flex-grow: 1;
+            /* Займає весь доступний простір всередині side-panel */
             width: 100%;
             height: 100%;
-            overflow: hidden; /* Приховуємо вміст, що виходить за межі */
-            cursor: grab; /* Курсор "рука" для перетягування вмісту */
-            position: relative; /* Для позиціонування canvas всередині */
-            border-radius: 20px; /* Додано заокруглені кути, щоб відповідати side-panel */
+            overflow: hidden;
+            /* Приховуємо вміст, що виходить за межі */
+            cursor: grab;
+            /* Курсор "рука" для перетягування вмісту */
+            position: relative;
+            /* Для позиціонування canvas всередині */
+            border-radius: 20px;
+            /* Додано заокруглені кути, щоб відповідати side-panel */
         }
 
         #imageCanvas {
@@ -272,7 +296,8 @@
             left: 50%;
             margin-top: -20px;
             margin-left: -20px;
-            z-index: 2002; /* Вище, ніж canvas, але нижче, ніж close button */
+            z-index: 2002;
+            /* Вище, ніж canvas, але нижче, ніж close button */
             display: none;
         }
 
@@ -281,18 +306,28 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         /* Стилі для кастомних скролбарів */
         .custom-scrollbar {
             position: absolute;
-            background-color: transparent; /* Фон прозорий */
-            border-radius: 5px; /* Закруглені кути */
-            opacity: 0; /* Приховано за замовчуванням */
-            transition: opacity 0.3s ease-out; /* Плавне зникнення/поява */
-            z-index: 2002; /* Вище, ніж canvas, але нижче, ніж close button */
+            background-color: transparent;
+            /* Фон прозорий */
+            border-radius: 5px;
+            /* Закруглені кути */
+            opacity: 0;
+            /* Приховано за замовчуванням */
+            transition: opacity 0.3s ease-out;
+            /* Плавне зникнення/поява */
+            z-index: 2002;
+            /* Вище, ніж canvas, але нижче, ніж close button */
         }
 
         .custom-scrollbar.show {
@@ -300,25 +335,36 @@
         }
 
         .horizontal-scrollbar {
-            height: 6px; /* Висота горизонтального бігунка */
-            bottom: 2px; /* Відступ від низу контейнера */
-            left: 5px; /* Збільшено відступ зліва */
-            right: 12px; /* Збільшено відступ, щоб не налізав на вертикальний */
+            height: 6px;
+            /* Висота горизонтального бігунка */
+            bottom: 2px;
+            /* Відступ від низу контейнера */
+            left: 5px;
+            /* Збільшено відступ зліва */
+            right: 12px;
+            /* Збільшено відступ, щоб не налізав на вертикальний */
         }
 
         .vertical-scrollbar {
-            width: 6px; /* Ширина вертикального бігунка */
-            top: 5px; /* Збільшено відступ зверху */
-            right: 2px; /* Відступ від правого краю контейнера */
-            bottom: 12px; /* Збільшено відступ, щоб не налізав на горизонтальний */
+            width: 6px;
+            /* Ширина вертикального бігунка */
+            top: 5px;
+            /* Збільшено відступ зверху */
+            right: 2px;
+            /* Відступ від правого краю контейнера */
+            bottom: 12px;
+            /* Збільшено відступ, щоб не налізав на горизонтальний */
         }
 
         .horizontal-scrollbar .thumb,
         .vertical-scrollbar .thumb {
             position: absolute;
-            background-color: rgba(0, 0, 0, 0.5); /* Темний, напівпрозорий бігунок */
-            border-radius: 4px; /* Трохи менші заокруглені кути */
-            pointer-events: none; /* Щоб не перехоплював події миші */
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Темний, напівпрозорий бігунок */
+            border-radius: 4px;
+            /* Трохи менші заокруглені кути */
+            pointer-events: none;
+            /* Щоб не перехоплював події миші */
         }
 
         .horizontal-scrollbar .thumb {
@@ -329,53 +375,67 @@
             width: 100%;
         }
 
-        /* Мобільні стилі: більші кнопки та відступи */
-        @media (pointer: coarse) and (max-width: 768px) {
+        /* Мобільні стилі: більші кнопки та відступи  @media (pointer: coarse) and (max-width: 768px) {*/
+        @media (pointer: coarse) {
             .map-controls-bottom {
-                bottom: - 170px;
+                bottom: 20px;
                 right: 20px;
                 gap: 10px;
             }
+
             .map-controls-top-left {
                 top: 50px;
                 left: 20px;
-                gap: 10px;
+                gap: 20px;
             }
+
             .map-button {
                 width: 45px;
                 height: 45px;
                 font-size: 1.2em;
             }
+
             .map-button i {
                 font-size: 1.2em;
             }
+
             .rotation-dial {
                 width: 45px;
                 height: 45px;
             }
+
             #northButton {
-                visibility:hidden
+                visibility: hidden
             }
+
             .north-indicator i {
                 font-size: 1.8em;
             }
+
             .icons8-home {
                 width: 24px;
                 height: 24px;
             }
+
             .side-panel {
                 top: 80px;
-                right: -100dvw; /* Початково приховано за екраном справа */
-                width: calc(100dvw - 100px); /* На мобільних 80% ширини */
+                right: -100dvw;
+                /* Початково приховано за екраном справа */
+                max-width: calc(100vw - 100px);
+                /* На мобільних 80% ширини */
                 height: calc(100dvh - 100px);
             }
+
             .side-panel.open {
                 right: 20px;
             }
+
             body.panel-open .map-controls-bottom {
-                right: calc(100svw - 100px + 20px + 20px); /* Зсув на 80dvw + відступи */
-                transition: right 0.3s ease-out; /* Явно встановлюємо перехід тут */
+                right: calc((var(--panel-width, 250px)) + 40px);
+                /* Зсув на 80dvw + відступи */
+                /*transition: right 0.3s ease-out;  Явно встановлюємо перехід тут */
             }
+
             .side-panel-close-button {
                 width: 30px;
                 height: 30px;
@@ -384,6 +444,7 @@
         }
     </style>
 </head>
+
 <body>
     <div id="map"></div>
 
@@ -519,44 +580,44 @@
         let hasMovedEnoughForDrag = false;
 
         function commonRotationResetHandler() {
-                const view = map.getView();
-                view.animate({
-                    rotation: 0, // Кінцевий кут обертання (0 радіан = Північ)
-                    duration: 500, // Тривалість анімації в мілісекундах
-                    easing: ol.easing.easeOut // Функція згладжування
-                })
-                updateRotationDial(0);
-            };
+            const view = map.getView();
+            view.animate({
+                rotation: 0, // Кінцевий кут обертання (0 радіан = Північ)
+                duration: 500, // Тривалість анімації в мілісекундах
+                easing: ol.easing.easeOut // Функція згладжування
+            })
+            updateRotationDial(0);
+        };
         //rotationDial.addEventListener('pointerdown', commonRotationResetHandler);
-function radiansToDegrees(radians) {
-  return radians * (180 / Math.PI);
-}
+        function radiansToDegrees(radians) {
+            return radians * (180 / Math.PI);
+        }
         northButton.addEventListener('click', commonRotationResetHandler);
 
         rotationDial.addEventListener('pointerdown', function (e) {
-                if (e.button === 0 || e.pointerType === 'touch') {
-                    if (e.pointerType === 'touch') {
-                        commonRotationResetHandler();
-                        // Optional: Запобігти будь-якій подальшій обробці для цього дотику
-                        e.preventDefault();
-                        return;
-                    }
-                    isDraggingDial = true;
-                    hasMovedEnoughForDrag = false;
-                    rotationDial.style.cursor = "move";
-
-                    const rect = rotationDial.getBoundingClientRect();
-                    dialCenterX = rect.left + rect.width / 2;
-                    dialCenterY = rect.top + rect.height / 2;
-                    startMouseAngle = Math.atan2(e.clientY - dialCenterY, e.clientX - dialCenterX);
-                    initialMapRotationOnDragStart = map.getView().getRotation();
-console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(initialMapRotationOnDragStart));
-                    rotationDial.setPointerCapture(e.pointerId);
-                    capturedPointerId = e.pointerId;
-
+            if (e.button === 0 || e.pointerType === 'touch') {
+                if (e.pointerType === 'touch') {
+                    commonRotationResetHandler();
+                    // Optional: Запобігти будь-якій подальшій обробці для цього дотику
                     e.preventDefault();
+                    return;
                 }
-            });
+                isDraggingDial = true;
+                hasMovedEnoughForDrag = false;
+                rotationDial.style.cursor = "move";
+
+                const rect = rotationDial.getBoundingClientRect();
+                dialCenterX = rect.left + rect.width / 2;
+                dialCenterY = rect.top + rect.height / 2;
+                startMouseAngle = Math.atan2(e.clientY - dialCenterY, e.clientX - dialCenterX);
+                initialMapRotationOnDragStart = map.getView().getRotation();
+                console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(initialMapRotationOnDragStart));
+                rotationDial.setPointerCapture(e.pointerId);
+                capturedPointerId = e.pointerId;
+
+                e.preventDefault();
+            }
+        });
 
         window.addEventListener('pointermove', function (e) {
             if (isDraggingDial && e.pointerId === capturedPointerId && e.pointerType === 'mouse') {
@@ -580,8 +641,8 @@ console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(in
 
                     map.getView().setRotation(newMapRotationRadians);
                     updateRotationDial(newMapRotationRadians);
-               console.log('Dragging. Current Map Rotation (radians):', radiansToDegrees(newMapRotationRadians)); // Вивід під час перетягування
- }
+                    console.log('Dragging. Current Map Rotation (radians):', radiansToDegrees(newMapRotationRadians)); // Вивід під час перетягування
+                }
             }
         });
 
@@ -596,16 +657,16 @@ console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(in
                 }
                 if (!hasMovedEnoughForDrag) {
                     commonRotationResetHandler(); // Викликаємо функцію скидання обертання
-                }else {
-            const finalRotation = radiansToDegrees(map.getView().getRotation());
-            console.log('Drag ended. Final Map Rotation (radians):', finalRotation); // Вивід після завершення перетягування
-        }
+                } else {
+                    const finalRotation = radiansToDegrees(map.getView().getRotation());
+                    console.log('Drag ended. Final Map Rotation (radians):', finalRotation); // Вивід після завершення перетягування
+                }
             }
         }
         window.addEventListener('pointerup', stopDialDrag);
-      
+
         window.addEventListener('pointercancel', stopDialDrag)
-  //window.addEventListener('pointerleave', stopDialDrag);
+        //window.addEventListener('pointerleave', stopDialDrag);
 
         map.getView().on('change:rotation', function () {
             updateRotationDial(map.getView().getRotation());
@@ -636,26 +697,26 @@ console.log('Drag started. Initial Map Rotation (radians):', radiansToDegrees(in
         const mapControlsBottom = document.querySelector('.map-controls-bottom');
 
 
-let resizeTimeout;
+        let resizeTimeout;
 
-window.addEventListener('resize', () => {
-    // Додаємо клас, який вимикає переходи, одразу при початку зміни розміру
-    if (mapControlsBottom) {
-        mapControlsBottom.classList.add('no-transition');
-    }
-    
-    // Очищаємо попередній таймаут, якщо він існував
-    clearTimeout(resizeTimeout);
-    
-    // Встановлюємо таймаут, щоб видалити клас після невеликої затримки
-    // Затримка повинна бути достатньою, щоб користувач закінчив зміну розміру,
-    // але не надто довгою. 100-200 мс зазвичай достатньо.
-    resizeTimeout = setTimeout(() => {
-        if (mapControlsBottom) {
-            mapControlsBottom.classList.remove('no-transition');
-        }
-    }, 200); // Наприклад, 200 мс
-});
+        window.addEventListener('resize', () => {
+            // Додаємо клас, який вимикає переходи, одразу при початку зміни розміру
+            if (mapControlsBottom) {
+                mapControlsBottom.classList.add('no-transition');
+            }
+
+            // Очищаємо попередній таймаут, якщо він існував
+            clearTimeout(resizeTimeout);
+
+            // Встановлюємо таймаут, щоб видалити клас після невеликої затримки
+            // Затримка повинна бути достатньою, щоб користувач закінчив зміну розміру,
+            // але не надто довгою. 100-200 мс зазвичай достатньо.
+            resizeTimeout = setTimeout(() => {
+                if (mapControlsBottom) {
+                    mapControlsBottom.classList.remove('no-transition');
+                }
+            }, 200); // Наприклад, 200 мс
+        });
 
         function toggleSidePanel() {
             if (sidePanel.classList.contains('open')) {
@@ -668,8 +729,8 @@ window.addEventListener('resize', () => {
                 spinner.classList.remove('show');
                 hideScrollbars(); //
                 setTimeout(() => {
-            sidePanel.style.visibility = 'hidden'; 
-        }, 300); // Приховуємо скролбари при закритті панелі
+                    sidePanel.style.visibility = 'hidden';
+                }, 300); // Приховуємо скролбари при закритті панелі
             } else {
                 // Якщо панель закрита, відкриваємо її
                 sidePanel.classList.add('open');
@@ -677,7 +738,7 @@ window.addEventListener('resize', () => {
                 document.body.classList.add('panel-open');
                 openPanelButton.innerHTML = '<i class="fas fa-times"></i>';
                 openPanelButton.title = 'Закрити бічну панель';
-sidePanel.style.visibility ='visible'; // Показуємо скролбари при відкритті панелі
+                sidePanel.style.visibility = 'visible'; // Показуємо скролбари при відкритті панелі
                 if (!isPanelContentLoaded) {
                     spinner.classList.add('show'); // Показуємо спінер тільки якщо контент ще не завантажено
                     img.src = canvasImageUrl; // Завантажуємо зображення
@@ -708,18 +769,30 @@ sidePanel.style.visibility ='visible'; // Показуємо скролбари 
         }
 
         function adjustSidePanelWidth() {
-    // Get the image width and viewport width
-    const imageWidth = img.naturalWidth || 300;
-   const viewportWidth = window.innerWidth;
-    //const leftMargin = 100;  Space for map controls
-    const maxPanelWidth = Math.min(imageWidth, viewportWidth - 20); // 20px for right margin
+            // Get the image width and viewport width
+            const imageWidth = img.naturalWidth || 250;
+            const viewportWidth = window.innerWidth;
+            //const leftMargin = 100;  Space for map controls
+            let maxPanelWidth = Math.min(imageWidth, viewportWidth - 20); // 20px for right margin
+            // Use a fallback value for panel width, e.g., 0.8 * viewport width or 400px minimum
 
-    sidePanel.style.width = maxPanelWidth + 'px';
-}
-img.onload = function () {
+            let panelWidth = Math.min(maxPanelWidth, Math.max(viewportWidth - 100, 250));
+            // Set panel width to (viewport width - 100px), but not more than image width
+            //panelWidth = Math.min(imageWidth, viewportWidth - 100);
+            //maxPanelWidth = panelWidth;
+            document.body.style.setProperty('--panel-width', (panelWidth) + 'px');
+            if (sidePanel.style.width !== (maxPanelWidth + 'px')) {
+                sidePanel.style.width = maxPanelWidth + 'px';
+            }
+        }
+
+        window.addEventListener('resize', adjustSidePanelWidth);
+
+        // Завантаження зображення для канвасу
+        img.onload = function () {
             spinner.classList.remove('show');
             isPanelContentLoaded = true;
-             adjustSidePanelWidth();
+            adjustSidePanelWidth();
             // Ініціалізуємо panX, panY для центрування зображення, якщо воно менше контейнера
             const containerWidth = canvasContainer.clientWidth;
             const containerHeight = canvasContainer.clientHeight;
@@ -917,8 +990,41 @@ img.onload = function () {
                 imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`; // Оновлюємо позицію canvas
                 updateScrollbars(); // Перемальовуємо зображення та оновлюємо скролбари
             }
-        });
+        });        
+        canvasContainer.addEventListener('wheel', function(e) {
+            if (!isPanelContentLoaded) return;
+            e.preventDefault();
+            // Typical: vertical scroll (e.deltaY), horizontal scroll (e.deltaX)
+            panX -= e.deltaX;
+            panY -= e.deltaY;
+        showScrollbars();
+        hideScrollbars();
+            // Optionally clamp panX/panY to image bounds:
+            const containerWidth = canvasContainer.clientWidth;
+            const containerHeight = canvasContainer.clientHeight;
+            const canvasWidth = imageCanvas.width;
+            const canvasHeight = imageCanvas.height;
+        
+            if (canvasWidth > containerWidth) {
+                const minPanX = containerWidth - canvasWidth;
+                const maxPanX = 0;
+                panX = Math.max(minPanX, Math.min(panX, maxPanX));
+            } else {
+                panX = (containerWidth - canvasWidth) / 2;
+            }
+        
+            if (canvasHeight > containerHeight) {
+                const minPanY = containerHeight - canvasHeight;
+                const maxPanY = 0;
+                panY = Math.max(minPanY, Math.min(panY, maxPanY));
+            } else {
+                panY = (containerHeight - canvasHeight) / 2;
+            }
+        
+            imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`;
+            updateScrollbars();
+        }, { passive: false });
     </script>
 </body>
-</html>
 
+</html>
