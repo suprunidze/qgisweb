@@ -509,7 +509,7 @@
         const customLayerUrl = `https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=${mapTilerApiKey}`;
         const canvasImageUrl = "https://wgis.project.co.ua/nadpilna/legend.png";
 
-        //const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
+        const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
         const initialZoom = 10;
 
         const initialMapRotationDegrees = getMapRotationDegrees(window.location.search);
@@ -618,9 +618,10 @@
                         size: map.updateSize(), // Розмір вікна карти
                         padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
                         constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
-                        duration: 1000,
+                        //duration: 1000,
                     }); // Анімований перехід за 1 секунду
-                }, 300);
+                window.cMapZoom = map.getView().getZoom();console.log(window.cMapZoom) }, 300);
+                
 
             }).catch(function (error) {
                 console.error("Помилка при завантаженні стилю MapTiler:", error);
@@ -782,9 +783,9 @@
 
         homeButton.addEventListener('click', function () {
             const view = map.getView();
-            view.setCenter(initialCenter);
-            view.setZoom(initialZoom);
-            view.setRotation(initialMapRotationRadians);
+           view.setCenter(calculatedCenter);
+           view.setZoom(window.cMapZoom);
+           view.setRotation(initialMapRotationRadians);
             updateRotationDial(initialMapRotationRadians);
         });
 
@@ -793,6 +794,7 @@
         const mapControlsBottom = document.querySelector('.map-controls-bottom');
 
 
+        
         let resizeTimeout;
 
         window.addEventListener('resize', () => {
@@ -845,8 +847,13 @@
         }
 
         openPanelButton.addEventListener('click', toggleSidePanel);
+        openPanelButton.addEventListener('click', showScrollbars);
+        openPanelButton.addEventListener('click', hideScrollbars);
         closePanelButton.addEventListener('click', toggleSidePanel);
+        sidePanel.addEventListener('pointerleave', hideScrollbars);
+        sidePanel.addEventListener('pointerover', showScrollbars);
 
+            hideScrollbars();
         // --- Логіка для канвасу та перетягування зображення ---
         function drawImage() {
             if (!img.complete || !img.naturalWidth) return;
@@ -863,6 +870,7 @@
             // Переміщуємо canvas за допомогою transform
             imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`;
         }
+window.addEventListener('onLoad',   drawImage)
 
         function adjustSidePanelWidth() {
             // Get the image width and viewport width
@@ -1096,7 +1104,7 @@
             panX -= e.deltaX;
             panY -= e.deltaY;
             showScrollbars();
-            hideScrollbars();
+            //hideScrollbars();
             // Optionally clamp panX/panY to image bounds:
             const containerWidth = canvasContainer.clientWidth;
             const containerHeight = canvasContainer.clientHeight;
