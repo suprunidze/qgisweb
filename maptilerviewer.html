@@ -498,9 +498,9 @@
     <script src="https://cdn.jsdelivr.net/npm/ol-mapbox-style@12.0.0/dist/olms.js"></script>
     <script type="module">
         //http://127.0.0.1:3000/maptilerviewer.html?minlat=49.43361763278762&minlon=32.052081732485284&maxlat=49.44040341326398&maxlon=32.05247718650831&maprotation=-40&projectname=nadpilna
-        /*import { urlParams.getExtentFromUrl } from './urlParams.getExtentFromUrl.js';*/
+        /*import { urlParams.getExtentFromUrl } from './urlParams.getExtentFromUrl.js';
 
-        import * as urlParams from './js/url-params.js';
+        import * as urlParams from './js/url-params.js';*/
         
         const mapTilerApiKey = '7JUTiyTWHkC7qe7Dy8Qj';
         const mapTilerStyleUrl = `https://api.maptiler.com/maps/01980891-51b4-7eed-89ae-ee81612e0ea5/style.json?key=${mapTilerApiKey}`;
@@ -508,19 +508,51 @@
         const canvasImageUrl = "https://wgis.project.co.ua/nadpilna/legend.png";
 
         //const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
-        const initialZoom = 19;
+        const initialZoom = 10;
         
-        const initialMapRotationDegrees = urlParams.getMapRotationDegrees(window.location.search);
+        const initialMapRotationDegrees = getMapRotationDegrees(window.location.search);
         const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
-        const urlExtent = urlParams.getExtent(window.location.search);
+        const urlExtent = getExtent(window.location.search);
         const customExtent4326 = urlExtent; /*|| [
     Math.min(32.052081732485284, 32.05247718650831),
     Math.min(49.44040341326398, 49.43361763278762),
     Math.max(32.052081732485284, 32.05247718650831),
     Math.max(49.44040341326398, 49.43361763278762)
 ]*/
-        const paddingX = Math.round(window.innerWidth * 0.20);  // 10% of viewport width
-        const paddingY = Math.round(window.innerHeight * 0.20); // 10% of viewport height
+        function getExtent(paramsSearch) {
+    console.log('getExtentFromUrl called with params:', paramsSearch);
+    const params = new URLSearchParams(paramsSearch);
+    const minLat = parseFloat(params.get('minlat'));
+    const minLon = parseFloat(params.get('minlon'));
+    const maxLat = parseFloat(params.get('maxlat'));
+    const maxLon = parseFloat(params.get('maxlon'));
+
+    // If all params are present and valid, return the extent
+    if (!isNaN(minLat) && !isNaN(minLon) &&
+        !isNaN(maxLat) && !isNaN(maxLon)) {
+        return [
+            Math.min(minLon, maxLon), // minLon
+            Math.min(minLat, maxLat), // minLat
+            Math.max(minLon, maxLon), // maxLon
+            Math.max(minLat, maxLat) // maxLat
+        ];
+    }
+    // Otherwise, return null or your default
+    return null;
+}
+function getMapRotationDegrees(paramsSearch) {
+    const params = new URLSearchParams(paramsSearch);
+    const maprotation = parseFloat(params.get('maprotation'));
+    return isNaN(maprotation) ? 0 : maprotation;
+}
+function getProjectName(paramsSearch) {
+    const params = new URLSearchParams(paramsSearch);
+    const projectname = parseFloat(params.get('projectname'));
+    return isNaN(maprotation) ? 0 : maprotation;
+}
+/**/
+const paddingX = Math.round(window.innerWidth * 0.10);  // 10% of viewport width
+        const paddingY = Math.round(window.innerHeight * 0.10); // 10% of viewport height
 
         // Перетворення екстенту з EPSG:4326 в EPSG:3857 (Web Mercator)
         const customExtent3857 = ol.proj.transformExtent(
@@ -579,7 +611,7 @@
             // щоб вмістити customExtent3857, враховуючи розмір карти та min/maxZoom.
             map.getView().fit(customExtent3857, {
                 size: map.getSize(), // Розмір вікна карти
-                padding: [paddingY + 60, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
+                padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
                 constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
                 duration: 1000 // Анімований перехід за 1 секунду
             });
