@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
     <!-- Підключення Font Awesome для іконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-<link rel="stylesheet" href="css/webkit-no-selection.css">
+    <link rel="stylesheet" href="css/webkit-no-selection.css">
     <style>
         body {
             margin: 0;
@@ -502,145 +502,69 @@
         const customLayerUrl = `https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=${mapTilerApiKey}`;
         const canvasImageUrl = "https://wgis.project.co.ua/nadpilna/legend.png";
 
-        const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
-        const initialZoom = 17;
-        const initialMapRotationDegrees = -40;
-        const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
-
-        class SingleFingerZoomInteraction extends ol.interaction.Pointer { // Зверніть увагу на ol.interaction.Pointer
-            constructor() {
-                super({
-                    handleDownEvent: SingleFingerZoomInteraction.handleDownEvent,
-                    handleDragEvent: SingleFingerZoomInteraction.handleDragEvent,
-                    handleUpEvent: SingleFingerZoomInteraction.handleUpEvent
-                });
-
-                /**
-                 * @private
-                 * @type {boolean}
-                 */
-                this.dragging_ = false;
-
-                /**
-                 * @private
-                 * @type {number|undefined}
-                 */
-                this.lastY_ = undefined;
-
-                /**
-                 * @private
-                 * @type {number}
-                 */
-                this.zoomDelta_ = 0;
-
-                /**
-                 * @private
-                 * @type {number}
-                 */
-                this.tapTimeout_ = null; // Для відстеження подвійного тапу
-
-                /**
-                 * @private
-                 * @type {Array<number>}
-                 */
-                this.tapCoordinates_ = null; // Координати першого тапу
-            }
-
-            /**
-             * @param {ol.MapBrowserEvent} mapBrowserEvent Map browser event.
-             * @return {boolean} 'true' if event was handled.
-             */
-            static handleDownEvent(mapBrowserEvent) {
-                if (mapBrowserEvent.originalEvent.pointerType !== 'touch' || mapBrowserEvent.originalEvent.buttons === 2) {
-                    return false;
-                }
-
-                const map = mapBrowserEvent.map;
-                const pixel = mapBrowserEvent.pixel;
-
-                if (this.tapTimeout_ && this.tapCoordinates_) {
-                    clearTimeout(this.tapTimeout_);
-                    this.tapTimeout_ = null;
-
-                    const dx = pixel[0] - this.tapCoordinates_[0];
-                    const dy = pixel[1] - this.tapCoordinates_[1];
-                    const distanceSq = dx * dx + dy * dy;
-
-                    if (distanceSq < 25 * 25) {
-                        this.dragging_ = true;
-                        this.lastY_ = pixel[1];
-                        this.zoomDelta_ = 0;
-                        return true;
-                    }
-                }
-
-                this.tapCoordinates_ = pixel;
-                this.tapTimeout_ = setTimeout(() => {
-                    this.tapTimeout_ = null;
-                    this.tapCoordinates_ = null;
-                }, 300);
-
-                return false;
-            }
-
-            /**
-             * @param {ol.MapBrowserEvent} mapBrowserEvent Map browser event.
-             */
-            static handleDragEvent(mapBrowserEvent) {
-                if (this.dragging_) {
-                    const map = mapBrowserEvent.map;
-                    const view = map.getView();
-                    const deltaY = mapBrowserEvent.pixel[1] - this.lastY_;
-                    this.lastY_ = mapBrowserEvent.pixel[1];
-
-                    this.zoomDelta_ -= deltaY * 0.01;
-
-                    view.setResolution(view.constrainResolution(view.getResolution() * Math.pow(2, this.zoomDelta_)));
-                    this.zoomDelta_ = 0;
-                }
-            }
-
-            /**
-             * @param {ol.MapBrowserEvent} mapBrowserEvent Map browser event.
-             * @return {boolean} 'true' if event was handled.
-             */
-            static handleUpEvent(mapBrowserEvent) {
-                if (this.dragging_) {
-                    this.dragging_ = false;
-                    this.lastY_ = undefined;
-
-                    const view = mapBrowserEvent.map.getView();
-                    const currentZoom = view.getZoom();
-                    if (currentZoom !== undefined) {
-                        const targetZoom = Math.round(currentZoom);
-                        view.animate({
-                            zoom: targetZoom,
-                            duration: 250,
-                            // ol.easing.easeOut - звертаємося до easing через глобальний об'єкт ol.easing
-                            easing: ol.easing.easeOut
-                        });
-                    }
-                    return true;
-                }
-                return false;
-            }
+        //const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
+        const initialZoom = 22;
+        function getMapRotationDegrees() {
+            const params = new URLSearchParams(window.location.search);
+            const maprotation = parseFloat(params.get('maprotation'));
+            return isNaN(maprotation) ? 0 : maprotation;
         }
-// Отримуємо стандартні взаємодії як колекцію
-const defaultInteractions = ol.interaction.defaults.defaults();
+        const initialMapRotationDegrees = getMapRotationDegrees();
+        const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
+        
+        
+        // --- Визначення кастомного екстенту ---
+        // Ваш екстент в EPSG:4326 (Широта/Довгота)
+        // Перетворення в формат [minLon, minLat, maxLon, maxLat]
+        function getExtentFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const minLat = parseFloat(params.get('minlat'));
+            const minLon = parseFloat(params.get('minlon'));
+            const maxLat = parseFloat(params.get('maxlat'));
+            const maxLon = parseFloat(params.get('maxlon'));
 
-// Створюємо нову колекцію взаємодій, яка буде використана для карти
-const customInteractions = new ol.Collection();
+            // If all params are present and valid, return the extent
+            if (
+                !isNaN(minLat) && !isNaN(minLon) &&
+                !isNaN(maxLat) && !isNaN(maxLon)
+            ) {
+                return [
+                    Math.min(minLon, maxLon), // minLon
+                    Math.min(minLat, maxLat), // minLat
+                    Math.max(minLon, maxLon), // maxLon
+                    Math.max(minLat, maxLat)  // maxLat
+                ];
+            }
+            // Otherwise, return null or your default
+            return null;
+        }
+        // Usage:
+        const urlExtent = getExtentFromUrl();
+        const customExtent4326 = urlExtent /*|| [
+    Math.min(32.052081732485284, 32.05247718650831),
+    Math.min(49.44040341326398, 49.43361763278762),
+    Math.max(32.052081732485284, 32.05247718650831),
+    Math.max(49.44040341326398, 49.43361763278762)
+]*/;
+const paddingX = Math.round(window.innerWidth * 0.10);  // 10% of viewport width
+const paddingY = Math.round(window.innerHeight * 0.10); // 10% of viewport height
 
-// Додаємо всі стандартні взаємодії, крім DoubleClickZoom
-defaultInteractions.forEach(function(interaction) {
-    if (!(interaction instanceof ol.interaction.DoubleClickZoom)) {
-        customInteractions.push(interaction);
-    }
-});
+        // Перетворення екстенту з EPSG:4326 в EPSG:3857 (Web Mercator)
+        const customExtent3857 = ol.proj.transformExtent(
+            customExtent4326,
+            'EPSG:4326',  // З якої проєкції
+            'EPSG:3857'   // У яку проєкцію (проєкція карти OpenLayers за замовчуванням)
+        );
 
-// Додаємо нашу SingleFingerZoomInteraction
-customInteractions.push(new SingleFingerZoomInteraction());
-        //
+        // --- ВИРАХУВАННЯ ЦЕНТРУ З ЕКСТЕНТУ ---
+        const calculatedCenter = ol.extent.getCenter(customExtent3857);
+        console.log("Вирахуваний центр (EPSG:3857):", calculatedCenter);
+        // Якщо вам потрібен центр у Longitude/Latitude:
+        const calculatedCenterLonLat = ol.proj.toLonLat(calculatedCenter, 'EPSG:3857');
+        console.log("Вирахуваний центр (Lon/Lat):", calculatedCenterLonLat);
+
+
+        // Ініціалізуємо карту OpenLayers з використанням MapTiler стилю
         const map = new ol.Map({
             target: 'map',
             controls: ol.control.defaults.defaults({
@@ -649,27 +573,48 @@ customInteractions.push(new SingleFingerZoomInteraction());
                 attribution: false
             }),
             view: new ol.View({
-                center: initialCenter,
+                // Ми все ще використовуємо initialCenter/Zoom як початкові,
+                // але вони будуть негайно перевизначені функцією fit().
+                // Якщо ви хочете, щоб карта одразу відображалася за розрахованим центром,
+                // можете встановити center: calculatedCenter тут.
+                center: calculatedCenter,
                 zoom: initialZoom,
-                rotation: initialMapRotationRadians
+                rotation: initialMapRotationRadians,
+                minZoom: 10,
+                maxZoom: 19
             }),
-    // Використовуємо нашу спеціально підготовлену колекцію взаємодій
-    interactions: customInteractions
-});
+            interactions: ol.interaction.defaults.defaults(),
+            loadTilesWhileInteracting: true,
+            loadTilesWhileAnimating: true
+        });
 
-
+        // Застосування стилю MapTiler
         olms.apply(map, mapTilerStyleUrl).then(function (map) {
+            // Додаємо ваш кастомний XYZ шар
             map.addLayer(new ol.layer.Tile({
                 source: new ol.source.XYZ({
                     url: customLayerUrl,
-                    attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>'
+                    attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>',
+                    // Якщо customLayerUrl покриває лише ваш customExtent, вкажіть його тут
+                    // extent: customExtent3857
                 })
             }));
+
+            // --- Автоматичне встановлення екстенту карти за допомогою fit() ---
+            // Це буде виконано після того, як основний стиль MapTiler завантажиться.
+            // Функція fit() автоматично розрахує найкращий зум і центр,
+            // щоб вмістити customExtent3857, враховуючи розмір карти та min/maxZoom.
+            map.getView().fit(customExtent3857, {
+                size: map.getSize(), // Розмір вікна карти
+                padding: [paddingY+60, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
+                constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
+                duration: 1000 // Анімований перехід за 1 секунду
+            });
+
         }).catch(function (error) {
             console.error("Помилка при завантаженні стилю MapTiler:", error);
             document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
         });
-
         const zoomInButton = document.getElementById('zoomInButton');
         const zoomOutButton = document.getElementById('zoomOutButton');
         const homeButton = document.getElementById('homeButton');
