@@ -618,9 +618,9 @@
                         size: map.updateSize(), // Розмір вікна карти
                         padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
                         constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
-                        //duration: 1000,
+                        duration: 1000,
                     }); // Анімований перехід за 1 секунду
-                }, 100);
+                }, 300);
 
             }).catch(function (error) {
                 console.error("Помилка при завантаженні стилю MapTiler:", error);

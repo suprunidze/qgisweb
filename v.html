@@ -958,11 +958,11 @@ console.log('Parent rotation handler triggered');
   function updateUrlModeParam(mode) {
   const url = new URL(window.location.href);
   // Встановити або оновити параметр 'mode'
-  if (mode === '2D3D') {
+  /*if (mode === '2D3D') {
     url.searchParams.delete('mode'); // За замовчуванням не показуємо mode=2D3D
   } else {
     url.searchParams.set('mode', mode.toLowerCase());
-  }
+  }*/
   window.history.replaceState({}, '', url);
 }
 async function loadConfig() {
