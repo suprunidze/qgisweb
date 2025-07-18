@@ -595,8 +595,9 @@
         });
 
         window.onload = function () {  //Застосування стилю MapTiler
-            const paddingX = Math.round(window.innerWidth * 0.15);  // 10% of viewport width
-            const paddingY = Math.round(window.innerHeight * 0.15); // 10% of viewport height
+            const paddingX = Math.round(window.innerWidth * 0.3);  // 10% of viewport width
+            const paddingY = Math.round(window.innerHeight * 0.3); // 10% of viewport height
+            console.log("Padding X:", paddingX, "Y:", paddingY);
             olms.apply(map, mapTilerStyleUrl).then(function (map) {
                 // Додаємо ваш кастомний XYZ шар
                 map.addLayer(new ol.layer.Tile({
@@ -617,9 +618,9 @@
                         size: map.updateSize(), // Розмір вікна карти
                         padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
                         constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
-                        duration: 1000,
+                        //duration: 1000,
                     }); // Анімований перехід за 1 секунду
-                }, 10);
+                }, 100);
 
             }).catch(function (error) {
                 console.error("Помилка при завантаженні стилю MapTiler:", error);
