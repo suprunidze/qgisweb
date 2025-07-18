@@ -498,10 +498,12 @@
     <script src="https://cdn.jsdelivr.net/npm/ol-mapbox-style@12.0.0/dist/olms.js"></script>
     <script type="module">
         //http://127.0.0.1:3000/maptilerviewer.html?minlat=49.43361763278762&minlon=32.052081732485284&maxlat=49.44040341326398&maxlon=32.05247718650831&maprotation=-40&projectname=nadpilna
+
+
         /*import { urlParams.getExtentFromUrl } from './urlParams.getExtentFromUrl.js';
 
         import * as urlParams from './js/url-params.js';*/
-        
+
         const mapTilerApiKey = '7JUTiyTWHkC7qe7Dy8Qj';
         const mapTilerStyleUrl = `https://api.maptiler.com/maps/01980891-51b4-7eed-89ae-ee81612e0ea5/style.json?key=${mapTilerApiKey}`;
         const customLayerUrl = `https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=${mapTilerApiKey}`;
@@ -509,7 +511,7 @@
 
         //const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
         const initialZoom = 10;
-        
+
         const initialMapRotationDegrees = getMapRotationDegrees(window.location.search);
         const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
         const urlExtent = getExtent(window.location.search);
@@ -520,39 +522,38 @@
     Math.max(49.44040341326398, 49.43361763278762)
 ]*/
         function getExtent(paramsSearch) {
-    console.log('getExtentFromUrl called with params:', paramsSearch);
-    const params = new URLSearchParams(paramsSearch);
-    const minLat = parseFloat(params.get('minlat'));
-    const minLon = parseFloat(params.get('minlon'));
-    const maxLat = parseFloat(params.get('maxlat'));
-    const maxLon = parseFloat(params.get('maxlon'));
+            console.log('getExtentFromUrl called with params:', paramsSearch);
+            const params = new URLSearchParams(paramsSearch);
+            const minLat = parseFloat(params.get('minlat'));
+            const minLon = parseFloat(params.get('minlon'));
+            const maxLat = parseFloat(params.get('maxlat'));
+            const maxLon = parseFloat(params.get('maxlon'));
 
-    // If all params are present and valid, return the extent
-    if (!isNaN(minLat) && !isNaN(minLon) &&
-        !isNaN(maxLat) && !isNaN(maxLon)) {
-        return [
-            Math.min(minLon, maxLon), // minLon
-            Math.min(minLat, maxLat), // minLat
-            Math.max(minLon, maxLon), // maxLon
-            Math.max(minLat, maxLat) // maxLat
-        ];
-    }
-    // Otherwise, return null or your default
-    return null;
-}
-function getMapRotationDegrees(paramsSearch) {
-    const params = new URLSearchParams(paramsSearch);
-    const maprotation = parseFloat(params.get('maprotation'));
-    return isNaN(maprotation) ? 0 : maprotation;
-}
-function getProjectName(paramsSearch) {
-    const params = new URLSearchParams(paramsSearch);
-    const projectname = parseFloat(params.get('projectname'));
-    return isNaN(maprotation) ? 0 : maprotation;
-}
-/**/
-const paddingX = Math.round(window.innerWidth * 0.10);  // 10% of viewport width
-        const paddingY = Math.round(window.innerHeight * 0.10); // 10% of viewport height
+            // If all params are present and valid, return the extent
+            if (!isNaN(minLat) && !isNaN(minLon) &&
+                !isNaN(maxLat) && !isNaN(maxLon)) {
+                return [
+                    Math.min(minLon, maxLon), // minLon
+                    Math.min(minLat, maxLat), // minLat
+                    Math.max(minLon, maxLon), // maxLon
+                    Math.max(minLat, maxLat) // maxLat
+                ];
+            }
+            // Otherwise, return null or your default
+            return null;
+        }
+        function getMapRotationDegrees(paramsSearch) {
+            const params = new URLSearchParams(paramsSearch);
+            const maprotation = parseFloat(params.get('maprotation'));
+            return isNaN(maprotation) ? 0 : maprotation;
+        }
+        function getProjectName(paramsSearch) {
+            const params = new URLSearchParams(paramsSearch);
+            const projectname = parseFloat(params.get('projectname'));
+            return isNaN(maprotation) ? 0 : maprotation;
+        }
+        /**/
+
 
         // Перетворення екстенту з EPSG:4326 в EPSG:3857 (Web Mercator)
         const customExtent3857 = ol.proj.transformExtent(
@@ -593,33 +594,38 @@ const paddingX = Math.round(window.innerWidth * 0.10);  // 10% of viewport width
             loadTilesWhileAnimating: true
         });
 
-        // Застосування стилю MapTiler
-        olms.apply(map, mapTilerStyleUrl).then(function (map) {
-            // Додаємо ваш кастомний XYZ шар
-            map.addLayer(new ol.layer.Tile({
-                source: new ol.source.XYZ({
-                    url: customLayerUrl,
-                    attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>',
-                    // Якщо customLayerUrl покриває лише ваш customExtent, вкажіть його тут
-                    // extent: customExtent3857
-                })
-            }));
+        window.onload = function () {  //Застосування стилю MapTiler
+            const paddingX = Math.round(window.innerWidth * 0.15);  // 10% of viewport width
+            const paddingY = Math.round(window.innerHeight * 0.15); // 10% of viewport height
+            olms.apply(map, mapTilerStyleUrl).then(function (map) {
+                // Додаємо ваш кастомний XYZ шар
+                map.addLayer(new ol.layer.Tile({
+                    source: new ol.source.XYZ({
+                        url: customLayerUrl,
+                        attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>',
+                        // Якщо customLayerUrl покриває лише ваш customExtent, вкажіть його тут
+                        // extent: customExtent3857
+                    })
+                }));
 
-            // --- Автоматичне встановлення екстенту карти за допомогою fit() ---
-            // Це буде виконано після того, як основний стиль MapTiler завантажиться.
-            // Функція fit() автоматично розрахує найкращий зум і центр,
-            // щоб вмістити customExtent3857, враховуючи розмір карти та min/maxZoom.
-            map.getView().fit(customExtent3857, {
-                size: map.getSize(), // Розмір вікна карти
-                padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
-                constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
-                duration: 1000 // Анімований перехід за 1 секунду
+                // --- Автоматичне встановлення екстенту карти за допомогою fit() ---
+                // Це буде виконано після того, як основний стиль MapTiler завантажиться.
+                // Функція fit() автоматично розрахує найкращий зум і центр,
+                // щоб вмістити customExtent3857, враховуючи розмір карти та min/maxZoom.
+                setTimeout(() => {
+                    map.getView().fit(customExtent3857, {
+                        size: map.updateSize(), // Розмір вікна карти
+                        padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
+                        constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
+                        duration: 1000,
+                    }); // Анімований перехід за 1 секунду
+                }, 10);
+
+            }).catch(function (error) {
+                console.error("Помилка при завантаженні стилю MapTiler:", error);
+                document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
             });
-
-        }).catch(function (error) {
-            console.error("Помилка при завантаженні стилю MapTiler:", error);
-            document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
-        });
+        }
         const zoomInButton = document.getElementById('zoomInButton');
         const zoomOutButton = document.getElementById('zoomOutButton');
         const homeButton = document.getElementById('homeButton');
