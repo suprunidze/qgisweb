@@ -24,8 +24,8 @@ export function getMapRotationDegrees(paramsSearch) {
     const maprotation = parseFloat(params.get('maprotation'));
     return isNaN(maprotation) ? 0 : maprotation;
 }
-export function getProjectName(paramsSearch) {
+/*export function getProjectName(paramsSearch) {
     const params = new URLSearchParams(paramsSearch);
     const projectname = parseFloat(params.get('projectname'));
     return isNaN(maprotation) ? 0 : maprotation;
-}
+}*/
