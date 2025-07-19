@@ -510,7 +510,7 @@
         const canvasImageUrl = "https://wgis.project.co.ua/nadpilna/legend.png";
 
         const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
-        const initialZoom = 10;
+        const initialZoom = 16.5;
 
         const initialMapRotationDegrees = getMapRotationDegrees(window.location.search);
         const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
@@ -583,7 +583,7 @@
                 // але вони будуть негайно перевизначені функцією fit().
                 // Якщо ви хочете, щоб карта одразу відображалася за розрахованим центром,
                 // можете встановити center: calculatedCenter тут.
-                center: calculatedCenter,
+                center: initialCenter,
                 zoom: initialZoom,
                 rotation: initialMapRotationRadians,
                 minZoom: 10,
@@ -613,14 +613,14 @@
                 // Це буде виконано після того, як основний стиль MapTiler завантажиться.
                 // Функція fit() автоматично розрахує найкращий зум і центр,
                 // щоб вмістити customExtent3857, враховуючи розмір карти та min/maxZoom.
-                setTimeout(() => {
+                /*setTimeout(() => {
                     map.getView().fit(customExtent3857, {
                         size: map.updateSize(), // Розмір вікна карти
                         padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
                         constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
                         //duration: 1000,
                     }); // Анімований перехід за 1 секунду
-                window.cMapZoom = map.getView().getZoom();console.log(window.cMapZoom) }, 300);
+                window.cMapZoom = map.getView().getZoom();console.log(window.cMapZoom) }, 300);*/
                 
 
             }).catch(function (error) {
@@ -783,8 +783,8 @@
 
         homeButton.addEventListener('click', function () {
             const view = map.getView();
-           view.setCenter(calculatedCenter);
-           view.setZoom(window.cMapZoom);
+           view.setCenter(initialCenter);
+           view.setZoom(initialZoom);
            view.setRotation(initialMapRotationRadians);
             updateRotationDial(initialMapRotationRadians);
         });
