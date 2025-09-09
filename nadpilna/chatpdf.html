@@ -22,23 +22,38 @@
         .header {
             background-color: #fff;
             padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            position: relative;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 10;
+            text-align: center;
         }
 
         .header h1 {
             font-size: 1.5rem;
             color: #334155;
             margin: 0;
-            text-align: center;
-            flex-grow: 1;
+            display: inline-block;
+        }
+
+        .header-icon {
+            position: absolute;
+            left: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .header-icon img {
+            width: 1.5rem;
+            height: 1.5rem;
+            vertical-align: middle;
         }
 
         .download-btn {
-            background-color: #dc2626;
+            position: absolute;
+            right: 2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #3b82f6;
             color: white;
             border: none;
             padding: 0.5rem 1rem;
@@ -53,7 +68,7 @@
         }
         
         .download-btn:hover {
-            background-color: #b91c1c;
+            background-color: #2563eb;
         }
 
         .download-btn svg {
@@ -105,27 +120,17 @@
         .iframe-container iframe::-webkit-scrollbar {
             display: none;
         }
-
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
-        }
-
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>Чат із документом</h1>
-        <a href="text.pdf" download class="download-btn">
-            <span class="sr-only">Завантажити документ</span>
+        <div class="header-icon">
+            <img src="../img/icons8-ai-48.png" alt="Іконка штучного інтелекту">
+        </div>
+        <h1>Пояснювальна записка</h1>
+        <a href="text.pdf" download class="download-btn" title="Завантажити документ">
+            <span>Завантажити</span>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
