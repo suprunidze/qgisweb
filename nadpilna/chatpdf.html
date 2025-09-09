@@ -8,7 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Базові стилі для тіла сторінки */
         body, html {
             margin: 0;
             padding: 0;
@@ -20,12 +19,11 @@
             background-color: #f0f4f8;
         }
 
-        /* Стилі для заголовка */
         .header {
             background-color: #fff;
             padding: 1rem 2rem;
             display: flex;
-            justify-content: space-between; /* Розміщує елементи по краях */
+            justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             z-index: 10;
@@ -36,12 +34,11 @@
             color: #334155;
             margin: 0;
             text-align: center;
-            flex-grow: 1; /* Дозволяє заголовку займати вільне місце */
+            flex-grow: 1;
         }
 
-        /* Стилі для кнопки завантаження */
         .download-btn {
-            background-color: #dc2626; /* Червоний колір, як у PDF */
+            background-color: #dc2626;
             color: white;
             border: none;
             padding: 0.5rem 1rem;
@@ -52,7 +49,7 @@
             gap: 0.5rem;
             font-weight: 500;
             transition: background-color 0.3s ease;
-            text-decoration: none; /* Забираємо підкреслення у посилання */
+            text-decoration: none;
         }
         
         .download-btn:hover {
@@ -64,20 +61,17 @@
             height: 1.25rem;
         }
 
-        /* Стилі для контейнера з іфреймом, який займає всю доступну висоту */
         .iframe-container {
             flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: center;
             width: 100%;
-            /* Прибираємо відступи */
             padding: 0;
             box-sizing: border-box;
-            position: relative; /* Необхідно для позиціонування спінера */
+            position: relative;
         }
 
-        /* Стилі для спінера завантаження */
         #loading-spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-top: 4px solid #3498db;
@@ -96,27 +90,32 @@
             100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        /* Стилі для самого іфрейму */
         .iframe-container iframe {
             width: 100%;
             height: 100%;
-            border: none; /* Прибираємо межу */
-            /* Зберігаємо округлені кути та тінь */
+            border: none;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden; /* Ховає скролбари */
-            
-            /* Спеціальні стилі для приховування скролбарів у різних браузерах */
-            -ms-overflow-style: none; /* Для Internet Explorer і Edge */
-            scrollbar-width: none; /* Для Firefox */
-            
-            /* Початково приховуємо іфрейм */
+            overflow: hidden;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
             visibility: hidden;
         }
         
-        /* Спеціальні стилі для WebKit (Chrome, Safari) */
         .iframe-container iframe::-webkit-scrollbar {
             display: none;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
         }
 
     </style>
@@ -126,15 +125,14 @@
     <div class="header">
         <h1>Чат із документом</h1>
         <a href="text.pdf" download class="download-btn">
-            <!-- SVG-іконка завантаження (стрілка вниз) -->
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <span class="sr-only">Завантажити документ</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
         </a>
     </div>
 
     <div class="iframe-container">
-        <!-- Спінер завантаження -->
         <div id="loading-spinner"></div>
         
         <iframe
@@ -147,15 +145,13 @@
     </div>
     
     <script>
-        // Скрипт для керування спінером
         document.addEventListener('DOMContentLoaded', (event) => {
             const iframe = document.getElementById('main-iframe');
             const spinner = document.getElementById('loading-spinner');
             
-            // Після завантаження іфрейма
             iframe.onload = () => {
-                spinner.style.display = 'none'; // Ховаємо спінер
-                iframe.style.visibility = 'visible'; // Показуємо іфрейм
+                spinner.style.display = 'none';
+                iframe.style.visibility = 'visible';
             };
         });
     </script>
