@@ -1,22 +1,16 @@
 {
   "projectTitle": "Детальний план території в межах вулиць Байди Вишневецького, Надпільна та Остафія Дашковича в м. Черкаси",
   "has3D": true,
-  "hasList": true,
-  "hasListUrl": "https://wgis.project.co.ua/nadpilna/pp.jpg",
-  "documents": [],
+  "documents": [
+    {
+      "name": "Пояснювальна записка",
+      "url": "chatpdf.html",
+      "icon": "encrypted",
+      "iconAlt": "encrypted"
+    }
+  ],
   "iframes": {
     "sketchfabUrl": "https://sketchfab.com/models/d16bd86447774231b152b3c3cb1a0276/embed?autostart=1",
-    "qgisUrl": "maptilerviewer.html?minlat=49.43361763278762&minlon=32.052081732485284&maxlat=49.44040341326398&maxlon=32.05247718650831&maprotation=-40",
-    "hasQGIS": false
-  },
-  "drawings": [
-    {
-      "name": "Проектний план",
-      "url": "https://wgis.project.co.ua/nadpilna/proj.jpg"
-    },
-    {
-      "name": "Проектний план 2",
-      "url": "https://wgis.project.co.ua/nadpilna/pp.jpg"
-    }
-  ]
+    "qgisUrl": "maptilerviewer.html?minlat=49.43361763278762&minlon=32.052081732485284&maxlat=49.44040341326398&maxlon=32.05247718650831&maprotation=-40"
+  }
 }
