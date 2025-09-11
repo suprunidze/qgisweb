@@ -1,4 +1,4 @@
-const apiEndpoint = 'http://e9yh7t2uanm.tplinkdns.com:8080/api/page-views';
+const apiEndpoint = 'https://suprunserhiy.pythonanywhere.com/api/page-views';
 const pageLoadTime = new Date();
 const sendPageView = (timeSpent) => {
     fetch(apiEndpoint, {
