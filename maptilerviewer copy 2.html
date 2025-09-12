@@ -106,6 +106,17 @@
             align-items: center;
         }
 
+        .map-controls-top-right {
+            position: absolute;
+            top: 70px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+            align-items: center;
+        }
+
         .map-button {
             width: 35px;
             height: 35px;
@@ -186,11 +197,6 @@
             /* Повертаємо іконку, щоб вона вказувала прямо вгору */
         }
 
-        /* Приховано відображення значення повороту */
-        .rotation-value-display {
-            display: none;
-        }
-
         /* Стилі для кнопки "Північ" (тепер кругла) */
         #northButton {
             width: 12px;
@@ -219,6 +225,14 @@
             width: 20px;
             height: 20px;
             background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiPjxwYXRoIGQ9Ik0gMTIgMi4wOTk2MDk0IEwgMSAxMiBMIDQgMTIgTCA0IDIxIEwgMTEgMjEgTCAxMSAxNSBMIDEzIDE1IEwgMTMgMjEgTCAyMCAyMSBMIDIwIDEyIEwgMjMgMTIgTCAxMiAyLjA5OTYwOTQgeiBNIDEyIDQuNzkxMDE1NiBMIDE4IDEwLjE5MTQwNiBMIDE4IDExIEwgMTggMTkgTCAxNSAxOSBMIDE1IDEzIEwgOSAxMyBMIDkgMTkgTCA2IDE5IEwgNiAxMC4xOTE0MDYgTCAxMiA0Ljc5MTAxNTY geiIvPjwvc3ZnPg==') 50% 50% no-repeat;
+            background-size: 100%;
+        }
+
+        .icons8-layers {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: url('https://img.icons8.com/forma-light/24/layers.png') 50% 50% no-repeat;
             background-size: 100%;
         }
 
@@ -258,6 +272,41 @@
 
         .side-panel-close-button:hover {
             background-color: rgba(192, 192, 192, 0.7);
+        }
+
+        /* Стилі для панелі шарів (layersPanel) */
+        .layers-panel {
+            position: fixed;
+            bottom: 20px;
+            /* Відступ від низу екрану */
+            right: 80px;
+            /* Відступ від правого краю */
+            width: 400px;
+            /* Фіксована ширина */
+            height: 300px;
+            /* Фіксована висота */
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            opacity: 0;
+            /* Початково невидима */
+            visibility: hidden;
+            /* Приховано, щоб не займала місце в розмітці */
+            transition:
+                opacity 0.3s ease-out,
+                visibility 0.3s ease-out;
+            /* Плавне зникнення/поява */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .layers-panel.open {
+            opacity: 1;
+            visibility: visible;
         }
 
         .canvas-container {
@@ -418,6 +467,11 @@
                 height: 24px;
             }
 
+            .icons8-layers {
+                width: 24px;
+                height: 24px;
+            }
+
             .side-panel {
                 top: 70px;
                 right: -100dvw;
@@ -453,6 +507,9 @@
         <button id="openPanelButton" class="map-button" title="Відкрити бічну панель">
             <i class="fas fa-list"></i>
         </button>
+        <button id="layersPanelOpenButton" class="map-button" title="Відкрити панель шарів">
+            <div class="icons8-layers"></div>
+        </button>
         <button id="homeButton" class="map-button" title="Повернутись до початкової позиції">
             <div class="icons8-home"></div>
         </button>
@@ -472,9 +529,6 @@
                     <i class="fas fa-location-arrow"></i>
                 </div>
             </div>
-            <div class="rotation-value-display">
-                Поворот: <span id="rotationValue">0</span>°
-            </div>
         </div>
     </div>
 
@@ -492,6 +546,14 @@
                 <div class="thumb"></div>
             </div>
         </div>
+    </div>
+
+    <div id="layersPanel" class="layers-panel">
+        <button id="closeLayersPanelButton" class="side-panel-close-button" style="top: 10px; right: 10px;">
+            <i class="fas fa-times"></i>
+            <div id="layersContent" class="layers-content">
+                <!-- Вміст панелі шарів буде тут -->
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
@@ -521,7 +583,52 @@
     Math.max(32.052081732485284, 32.05247718650831),
     Math.max(49.44040341326398, 49.43361763278762)
 ]*/
-        function getExtent(paramsSearch) {
+
+        // --- Base layers ---
+        const baseOSM = new ol.layer.Tile({
+            title: 'osm', type: 'base',
+            source: new ol.source.OSM(), visible: true
+        });
+
+        const baseGoogle = new ol.layer.Tile({
+            title: 'google',
+            type: 'base',
+            source: new ol.source.XYZ({
+                url: 'https://mt1.google.com/vt/lyrs=y&hl=uk&x={x}&y={y}&z={z}',
+                attributions: '© Google'
+            }),
+            visible: false
+        });
+
+        const baseEsri = new ol.layer.Tile({
+            title: 'esri', type: 'base',
+            source: new ol.source.XYZ({
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                attributions: 'Tiles © Esri'
+            }),
+            visible: false
+        });
+
+        const baseCarto = new ol.layer.Tile({
+            title: 'carto', type: 'base',
+            source: new ol.source.XYZ({
+                url: 'https://{a-c}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+                attributions: '© CartoDB'
+            }),
+            visible: false
+        });
+        const projectMap = new ol.layer.Tile({
+            title: 'carto', type: 'base',
+            source: new ol.source.XYZ({
+                url: 'https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=7JUTiyTWHkC7qe7Dy8Qj',
+                attributions: '© Maptiler'
+            }),
+            visible: true
+        });
+
+
+
+        /*function getExtent(paramsSearch) {
             console.log('getExtentFromUrl called with params:', paramsSearch);
             const params = new URLSearchParams(paramsSearch);
             const minLat = parseFloat(params.get('minlat'));
@@ -541,7 +648,7 @@
             }
             // Otherwise, return null or your default
             return null;
-        }
+        }*/
         function getMapRotationDegrees(paramsSearch) {
             const params = new URLSearchParams(paramsSearch);
             const maprotation = parseFloat(params.get('maprotation'));
@@ -573,10 +680,11 @@
         // Ініціалізуємо карту OpenLayers з використанням MapTiler стилю
         const map = new ol.Map({
             target: 'map',
+            layers: [baseOSM, baseGoogle, baseEsri, baseCarto, projectMap],
             controls: ol.control.defaults.defaults({
                 zoom: false,
                 rotate: false,
-                attribution: false
+                attribution: true
             }),
             view: new ol.View({
                 // Ми все ще використовуємо initialCenter/Zoom як початкові,
@@ -593,8 +701,35 @@
             loadTilesWhileInteracting: true,
             loadTilesWhileAnimating: true
         });
+        // --- Switch basemap ---
+        document.querySelectorAll('input[name="basemap"]').forEach(r => {
+            r.addEventListener('change', () => {
+                [baseOSM, baseGoogle, baseEsri, baseCarto, baseMapTiler].forEach(b => b.setVisible(b.get('title') === r.value));
+            });
+        });
+        const vectorLayer = new ol.layer.Vector({
+            source: new ol.source.Vector({
+                url: 'borders.geojson', // замініть на свій файл
+                format: new ol.format.GeoJSON()
+            }),
+            visible: false // спочатку невидимий
+        });
+        map.addLayer(vectorLayer);
 
-        window.onload = function () {  //Застосування стилю MapTiler
+
+        // --- Коли GeoJSON завантажиться, визначити екстент і встановити вид ---
+        vectorLayer.getSource().on('change', function (e) {
+            if (vectorLayer.getSource().getState() === 'ready') {
+                const extent = vectorLayer.getSource().getExtent();
+                console.log('Екстент векторного шару:', extent);
+
+
+                // Встановлюємо екстент карти під цей шар
+                map.getView().fit(extent, { size: map.getSize(), padding: [20, 20, 20, 20] });
+            }
+        });
+
+        /*window.onload = function () {  //Застосування стилю MapTiler
             const paddingX = Math.round(window.innerWidth * 0.3);  // 10% of viewport width
             const paddingY = Math.round(window.innerHeight * 0.3); // 10% of viewport height
             console.log("Padding X:", paddingX, "Y:", paddingY);
@@ -613,21 +748,21 @@
                 // Це буде виконано після того, як основний стиль MapTiler завантажиться.
                 // Функція fit() автоматично розрахує найкращий зум і центр,
                 // щоб вмістити customExtent3857, враховуючи розмір карти та min/maxZoom.
-                /*setTimeout(() => {
+                setTimeout(() => {
                     map.getView().fit(customExtent3857, {
                         size: map.updateSize(), // Розмір вікна карти
                         padding: [paddingY, paddingX, paddingY, paddingX], // Відступ у пікселях від країв карти
                         constrainResolution: false, // Дозволяє використовувати дробові рівні зуму для кращого припасування
                         //duration: 1000,
                     }); // Анімований перехід за 1 секунду
-                window.cMapZoom = map.getView().getZoom();console.log(window.cMapZoom) }, 300);*/
-                
+                window.cMapZoom = map.getView().getZoom();console.log(window.cMapZoom) }, 300);
+
 
             }).catch(function (error) {
                 console.error("Помилка при завантаженні стилю MapTiler:", error);
                 document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
             });
-        }
+        }*/
         const zoomInButton = document.getElementById('zoomInButton');
         const zoomOutButton = document.getElementById('zoomOutButton');
         const homeButton = document.getElementById('homeButton');
@@ -783,9 +918,9 @@
 
         homeButton.addEventListener('click', function () {
             const view = map.getView();
-           view.setCenter(initialCenter);
-           view.setZoom(initialZoom);
-           view.setRotation(initialMapRotationRadians);
+            view.setCenter(initialCenter);
+            view.setZoom(initialZoom);
+            view.setRotation(initialMapRotationRadians);
             updateRotationDial(initialMapRotationRadians);
         });
 
@@ -794,7 +929,7 @@
         const mapControlsBottom = document.querySelector('.map-controls-bottom');
 
 
-        
+
         let resizeTimeout;
 
         window.addEventListener('resize', () => {
@@ -853,7 +988,34 @@
         sidePanel.addEventListener('pointerleave', hideScrollbars);
         sidePanel.addEventListener('pointerover', showScrollbars);
 
-            hideScrollbars();
+
+        // --- Логіка для панелі шарів (layersPanel) ---
+        const layersPanelOpenButton = document.getElementById('layersPanelOpenButton');
+        const layersPanel = document.getElementById('layersPanel');
+        const closeLayersPanelButton = document.getElementById('closeLayersPanelButton');
+
+        function toggleLayersPanel() {
+            if (layersPanel.classList.contains('open')) {
+                // Якщо панель відкрита, закриваємо її
+                layersPanel.classList.remove('open');
+                layersPanelOpenButton.classList.remove('active');
+                document.body.classList.remove('layers-panel-open');
+                //layersPanelOpenButton.innerHTML = '<i class="fas fa-list"></i>';
+                layersPanelOpenButton.title = 'Відкрити панель шарів';
+            } else {
+                // Якщо панель закрита, відкриваємо її
+                layersPanel.classList.add('open');
+                layersPanelOpenButton.classList.add('active');
+                document.body.classList.add('layers-panel-open');
+                //layersPanelOpenButton.innerHTML = '<i class="fas fa-times"></i>';
+                layersPanelOpenButton.title = 'Закрити панель шарів';
+            }
+        }
+
+        layersPanelOpenButton.addEventListener('click', toggleLayersPanel);
+        closeLayersPanelButton.addEventListener('click', toggleLayersPanel);
+
+        hideScrollbars();
         // --- Логіка для канвасу та перетягування зображення ---
         function drawImage() {
             if (!img.complete || !img.naturalWidth) return;
@@ -870,7 +1032,7 @@
             // Переміщуємо canvas за допомогою transform
             imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`;
         }
-window.addEventListener('onLoad', drawImage);
+        window.addEventListener('onLoad', drawImage);
 
 
         function adjustSidePanelWidth() {
