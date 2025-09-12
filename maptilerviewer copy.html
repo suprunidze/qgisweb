@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта OpenLayers з MapTiler</title>
+    <!-- Підключення бібліотеки OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <!-- Підключення Font Awesome для іконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        #map {
+            width: 100%;
+            height: 100dvh;
+        }
+
+        /* Стилі для кастомних кнопок керування картою (нижній блок) */
+        .map-controls-bottom {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column-reverse;
+    flex-wrap: wrap-reverse;
+    justify-content: flex-end;
+    align-content: flex-end;
+max-height: calc(100svh - 60px);
+            gap: 5px;
+            z-index: 1000;
+            transition: right 0.3s ease-out; /* Залишаємо перехід тут */
+        }
+
+        /* Стилі для кастомних елементів керування картою (верхній лівий блок) */
+        .map-controls-top-left {
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1000;
+            align-items: center;
+        }
+
+        .map-button {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: rgba(224, 224, 224, 0.5);
+            backdrop-filter: blur(5px);
+            color: #333;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .map-button:hover {
+            background-color: rgba(192, 192, 192, 0.7);
+            transform: scale(1.05);
+        }
+
+        .map-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Стиль для активного стану кнопки списку (темний фон, біла іконка) */
+        .map-button.active {
+            background-color: rgba(51, 51, 51, 0.7);
+            color: white;
+        }
+
+        .map-button i {
+            font-size: 1em;
+        }
+
+        /* Стилі для круглого регулятора повороту */
+        .rotation-dial-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .rotation-dial {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background-color: rgba(224, 224, 224, 0.5);
+            backdrop-filter: blur(5px);
+            border: none;
+            box-shadow: none;
+            position: relative;
+            cursor: grab;
+            transition: transform 0.05s linear;
+        }
+
+        .rotation-dial:active {
+            cursor: grabbing;
+        }
+
+        .north-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            pointer-events: none;
+        }
+
+        .north-indicator i {
+            font-size: 1.4em;
+            text-shadow: none;
+            transform: rotate(-45deg); /* Повертаємо іконку, щоб вона вказувала прямо вгору */
+        }
+
+        /* Стилі для кнопки "Північ" (тепер кругла) */
+        #northButton {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #333;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        #northButton:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* Стилі для іконки будинку SVG */
+        .icons8-home {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiPjxwYXRoIGQ9Ik0gMTIgMi4wOTk2MDk0IEwgMSAxMiBMIDQgMTIgTCA0IDIxIEwgMTEgMjEgTCAxMSAxNSBMIDEzIDE1IEwgMTMgMjEgTCAyMCAyMSBMIDIwIDEyIEwgMjMgMTIgTCAxMiAyLjA5OTYwOTQgeiBNIDEyIDQuNzkxMDE1NiBMIDE4IDEwLjE5MTQwNiBMIDE4IDExIEwgMTggMTkgTCAxNSAxOSBMIDE1IDEzIEwgOSAxMyBMIDkgMTkgTCA2IDE5IEwgNiAxMC4xOTE0MDYgTCAxMiA0Ljc5MTAxNTY geiIvPjwvc3ZnPg==') 50% 50% no-repeat;
+            background-size: 100%;
+        }
+        .icons8-layers {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            background: url('https://img.icons8.com/forma-light/24/layers.png') 50% 50% no-repeat;
+            background-size: 100%;
+        }
+
+        /* Стилі для елемента керування атрибуцією OpenLayers */
+        .ol-attribution {
+            left: 10px !important;
+            right: auto !important;
+            bottom: 10px !important;
+            background-color: rgba(224, 224, 224, 0.5);
+            backdrop-filter: blur(5px);
+            border-radius: 5px;
+            padding: 2px 5px;
+            box-shadow: none;
+            z-index: 1000;
+        }
+
+        /* Стилі для бічної панелі (спливаючого вікна) */
+        .side-panel {
+            position: absolute;
+            top: 80px;
+            right: -100dvw; /* Початково приховано за екраном справа */
+            width: 50dvw; /* Ширина панелі: 40% від ширини вьюпорту */
+            height: calc(100dvh - 90px);
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            transition: right 0.3s ease-out; /* Перехід для панелі */
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            overflow: hidden; /* Обрізаємо вміст, що виходить за межі панелі */
+            box-sizing: border-box; /* Враховуємо padding у розмірі */
+        }
+
+        .side-panel.open {
+            right: 10px;
+        }
+
+        /* Зсув нижніх елементів керування, коли панель відкрита */
+        body.panel-open .map-controls-bottom {
+           right: calc(var(--panel-width-desktop, 200px) + 20px);
+        }
+
+        .side-panel-close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(224, 224, 224, 0.5);
+            backdrop-filter: blur(5px);
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #333;
+            z-index: 2003;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .side-panel-close-button:hover {
+            background-color: rgba(192, 192, 192, 0.7);
+        }
+        /* Стилі для панелі шарів (layersPanel) */
+        .layers-panel {
+            position: fixed;
+            bottom: 20px; /* Відступ від низу екрану */
+            right: 20px;  /* Відступ від правого краю */
+            width: 400px; /* Фіксована ширина */
+            height: 300px; /* Фіксована висота */
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            opacity: 0; /* Початково невидима */
+            visibility: hidden; /* Приховано, щоб не займала місце в розмітці */
+            transition:
+                opacity 0.3s ease-out,
+                visibility 0.3s ease-out; /* Плавне зникнення/поява */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            border-radius: 20px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }   
+        .layers-panel.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        /*body.layers-panel-open .map-controls-bottom {
+            right: calc(50dvw + 10px + 10px); // Зсув на 40dvw + відступи 
+            transition: right 0.3s ease-out; // Явно встановлюємо перехід тут 
+        }
+        .layers-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+         Стилі для контейнера canvas */
+
+
+        .canvas-container {
+            flex-grow: 1; /* Займає весь доступний простір всередині side-panel */
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Приховуємо вміст, що виходить за межі */
+            cursor: grab; /* Курсор "рука" для перетягування вмісту */
+            position: relative; /* Для позиціонування canvas всередині */
+            border-radius: 20px; /* Додано заокруглені кути, щоб відповідати side-panel */
+        }
+
+        #imageCanvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* Переходи для плавного переміщення, якщо потрібно */
+            /* transition: transform 0.05s linear; */
+        }
+
+        /* Стилі для спінера завантаження */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #333;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -20px;
+            margin-left: -20px;
+            z-index: 2002; /* Вище, ніж canvas, але нижче, ніж close button */
+            display: none;
+        }
+
+        .spinner.show {
+            display: block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Стилі для кастомних скролбарів */
+        .custom-scrollbar {
+            position: absolute;
+            background-color: transparent; /* Фон прозорий */
+            border-radius: 5px; /* Закруглені кути */
+            opacity: 0; /* Приховано за замовчуванням */
+            transition: opacity 0.3s ease-out; /* Плавне зникнення/поява */
+            z-index: 2002; /* Вище, ніж canvas, але нижче, ніж close button */
+        }
+
+        .custom-scrollbar.show {
+            opacity: 1;
+        }
+
+        .horizontal-scrollbar {
+            height: 6px; /* Висота горизонтального бігунка */
+            bottom: 2px; /* Відступ від низу контейнера */
+            left: 5px; /* Збільшено відступ зліва */
+            right: 12px; /* Збільшено відступ, щоб не налізав на вертикальний */
+        }
+
+        .vertical-scrollbar {
+            width: 6px; /* Ширина вертикального бігунка */
+            top: 5px; /* Збільшено відступ зверху */
+            right: 2px; /* Відступ від правого краю контейнера */
+            bottom: 12px; /* Збільшено відступ, щоб не налізав на горизонтальний */
+        }
+
+        .horizontal-scrollbar .thumb,
+        .vertical-scrollbar .thumb {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.5); /* Темний, напівпрозорий бігунок */
+            border-radius: 4px; /* Трохи менші заокруглені кути */
+            pointer-events: none; /* Щоб не перехоплював події миші */
+        }
+
+        .horizontal-scrollbar .thumb {
+            height: 100%;
+        }
+
+        .vertical-scrollbar .thumb {
+            width: 100%;
+        }
+
+        /* Мобільні стилі: більші кнопки та відступи */
+        @media (pointer: coarse) and (max-width: 768px) {
+            .map-controls-bottom {
+                bottom: - 160px;
+                right: 20px;
+                gap: 10px;
+            }
+            .map-controls-top-left {
+                top: 50px;
+                left: 10px;
+                gap: 10px;
+            }
+            .map-button {
+                width: 45px;
+                height: 45px;
+                font-size: 1.2em;
+            }
+            .map-button i {
+                font-size: 1.2em;
+            }
+            .rotation-dial {
+                width: 45px;
+                height: 45px;
+            }
+            #northButton {
+                visibility:hidden
+            }
+            .north-indicator i {
+                font-size: 1.8em;
+            }
+            .icons8-home {
+                width: 24px;
+                height: 24px;
+            }
+            .icons8-layers {
+                width: 24px;
+                height: 24px;
+            }
+            .side-panel {
+                top: 80px;
+                right: -100dvw; /* Початково приховано за екраном справа */
+                width: calc(100dvw - 100px); /* На мобільних 80% ширини */
+                height: calc(100dvh - 120px);
+            }
+            .side-panel.open {
+                right: 20px;
+            }
+            body.panel-open .map-controls-bottom {
+                right: calc(100svw - 100px + 20px + 20px); /* Зсув на 80dvw + відступи */
+                transition: right 0.3s ease-out; /* Явно встановлюємо перехід тут */
+            }
+            .side-panel-close-button {
+                width: 30px;
+                height: 30px;
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="map-controls-bottom">
+        <button id="openPanelButton" class="map-button" title="Відкрити бічну панель">
+            <i class="fas fa-list"></i>
+        </button>
+        <button id="layersPanelOpenButton" class="map-button" title="Відкрити панель шарів">
+            <div class="icons8-layers"></div>
+        </button>
+        <button id="homeButton" class="map-button" title="Повернутись до початкової позиції">
+            <div class="icons8-home"></div>
+        </button>
+        <button id="zoomInButton" class="map-button" title="Збільшити">
+            <i class="fas fa-plus"></i>
+        </button>
+        <button id="zoomOutButton" class="map-button" title="Зменшити">
+            <i class="fas fa-minus"></i>
+        </button>
+    </div>
+
+    <div class="map-controls-top-left">
+        <button id="northButton" title="Встановити північ"></button>
+        <div class="rotation-dial-container">
+            <div id="rotationDial" class="rotation-dial">
+                <div id="northIndicator" class="north-indicator">
+                    <i class="fas fa-location-arrow"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidePanel" class="side-panel">
+        <button id="closePanelButton" class="side-panel-close-button">
+            <i class="fas fa-times"></i>
+        </button>
+        <div id="spinner" class="spinner"></div>
+        <div id="canvasContainer" class="canvas-container">
+            <canvas id="imageCanvas"></canvas>
+            <div id="horizontalScrollbar" class="custom-scrollbar horizontal-scrollbar">
+                <div class="thumb"></div>
+            </div>
+            <div id="verticalScrollbar" class="custom-scrollbar vertical-scrollbar">
+                <div class="thumb"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="layersPanel" class="layers-panel">
+        <button id="closeLayersPanelButton" class="side-panel-close-button" style="top: 10px; right: 10px;">
+            <i class="fas fa-times"></i>
+        <div id="layersContent" class="layers-content">
+            <!-- Вміст панелі шарів буде тут -->    
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ol-mapbox-style@12.0.0/dist/olms.js"></script>
+    <script>
+        const mapTilerApiKey = '7JUTiyTWHkC7qe7Dy8Qj';
+        const mapTilerStyleUrl = `https://api.maptiler.com/maps/01980891-51b4-7eed-89ae-ee81612e0ea5/style.json?key=${mapTilerApiKey}`;
+        const customLayerUrl = `https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=${mapTilerApiKey}`;
+        const canvasImageUrl = "https://wgis.project.co.ua/nadpilna/legend.png";
+
+        const initialCenter = ol.proj.fromLonLat([32.052061716737846, 49.43710241800906]);
+        const initialZoom = 17;
+        const initialMapRotationDegrees = -40;
+        const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
+
+        const map = new ol.Map({
+            target: 'map',
+            controls: ol.control.defaults.defaults({
+                zoom: false,
+                rotate: false,
+                attribution: false
+            }),
+            view: new ol.View({
+                center: initialCenter,
+                zoom: initialZoom,
+                rotation: initialMapRotationRadians
+            })
+        });
+
+        olms.apply(map, mapTilerStyleUrl).then(function (map) {
+            map.addLayer(new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: customLayerUrl,
+                    attributions: 'Map data &copy; <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>'
+                })
+            }));
+        }).catch(function(error) {
+            console.error("Помилка при завантаженні стилю MapTiler:", error);
+            document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
+        });
+
+        const zoomInButton = document.getElementById('zoomInButton');
+        const zoomOutButton = document.getElementById('zoomOutButton');
+        const homeButton = document.getElementById('homeButton');
+        const rotationDial = document.getElementById('rotationDial');
+        const northButton = document.getElementById('northButton');
+        const openPanelButton = document.getElementById('openPanelButton');
+        const sidePanel = document.getElementById('sidePanel');
+        const closePanelButton = document.getElementById('closePanelButton');
+        const spinner = document.getElementById('spinner');
+
+        
+
+        let isDraggingDial = false;
+        let dialCenterX, dialCenterY;
+        let startMouseAngle;
+        let initialMapRotationOnDragStart;
+        let isPanelContentLoaded = false; // Прапорець для відстеження завантаження вмісту панелі
+
+        // Змінні для канвасу
+        const canvasContainer = document.getElementById('canvasContainer');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const ctx = imageCanvas.getContext('2d');
+        const img = new Image();
+
+        let panX = 0; // Поточне зміщення зображення по X
+        let panY = 0; // Поточне зміщення зображення по Y
+        let isDraggingCanvas = false; // Прапорець для перетягування канвасу
+        let startCursorX, startCursorY; // Початкові координати курсору при перетягуванні
+        let startPanX, startPanY; // Початкові значення panX, panY при перетягуванні
+
+        // Елементи скролбарів
+        const horizontalScrollbar = document.getElementById('horizontalScrollbar');
+        const horizontalThumb = horizontalScrollbar.querySelector('.thumb');
+        const verticalScrollbar = document.getElementById('verticalScrollbar');
+        const verticalThumb = verticalScrollbar.querySelector('.thumb');
+
+        let scrollbarHideTimeout;
+
+        function updateRotationDial(mapRotationRadians) {
+            // Візуальний поворот регулятора має бути протилежним повороту карти,
+            // щоб стрілка завжди вказувала на географічну північ
+            rotationDial.style.transform = `rotate(${mapRotationRadians * 180 / Math.PI}deg)`;
+        }
+
+        updateRotationDial(initialMapRotationRadians);
+
+        rotationDial.addEventListener('mousedown', function(e) {
+            isDraggingDial = true;
+            rotationDial.style.cursor = 'grabbing';
+            const rect = rotationDial.getBoundingClientRect();
+            dialCenterX = rect.left + rect.width / 2;
+            dialCenterY = rect.top + rect.height / 2;
+            startMouseAngle = Math.atan2(e.clientY - dialCenterY, e.clientX - dialCenterX);
+            initialMapRotationOnDragStart = map.getView().getRotation();
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (isDraggingDial) {
+                const currentMouseX = e.clientX - dialCenterX;
+                const currentMouseY = e.clientY - dialCenterY;
+                let currentMouseAngle = Math.atan2(currentMouseY, currentMouseX);
+                let angleDelta = currentMouseAngle - startMouseAngle;
+                let newMapRotationRadians = initialMapRotationOnDragStart - angleDelta;
+                map.getView().setRotation(newMapRotationRadians);
+                updateRotationDial(newMapRotationRadians);
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            if (isDraggingDial) {
+                isDraggingDial = false;
+                rotationDial.style.cursor = 'grab';
+            }
+        });
+
+        window.addEventListener('mouseleave', function() {
+            if (isDraggingDial) {
+                isDraggingDial = false;
+                rotationDial.style.cursor = 'grab';
+            }
+        });
+
+        map.getView().on('change:rotation', function() {
+            updateRotationDial(map.getView().getRotation());
+        });
+
+        zoomInButton.addEventListener('click', function() {
+            const view = map.getView();
+            const currentZoom = view.getZoom();
+            view.setZoom(currentZoom + 1);
+        });
+
+        zoomOutButton.addEventListener('click', function() {
+            const view = map.getView();
+            const currentZoom = view.getZoom();
+            view.setZoom(currentZoom - 1);
+        });
+
+        homeButton.addEventListener('click', function() {
+            const view = map.getView();
+            view.setCenter(initialCenter);
+            view.setZoom(initialZoom);
+            view.setRotation(initialMapRotationRadians);
+            updateRotationDial(initialMapRotationRadians);
+        });
+
+        northButton.addEventListener('click', function() {
+            const view = map.getView();
+            view.setRotation(0);
+            updateRotationDial(0);
+        });
+
+        function toggleSidePanel() {
+            if (sidePanel.classList.contains('open')) {
+                // Якщо панель відкрита, закриваємо її
+                sidePanel.classList.remove('open');
+                openPanelButton.classList.remove('active');
+                document.body.classList.remove('panel-open');
+                openPanelButton.innerHTML = '<i class="fas fa-list"></i>';
+                openPanelButton.title = 'Відкрити бічну панель';
+                spinner.classList.remove('show');
+                hideScrollbars(); // Приховуємо скролбари при закритті панелі
+            } else {
+                // Якщо панель закрита, відкриваємо її
+                sidePanel.classList.add('open');
+                openPanelButton.classList.add('active');
+                document.body.classList.add('panel-open');
+                openPanelButton.innerHTML = '<i class="fas fa-times"></i>';
+                openPanelButton.title = 'Закрити бічну панель';
+
+                if (!isPanelContentLoaded) {
+                    spinner.classList.add('show'); // Показуємо спінер тільки якщо контент ще не завантажено
+                    img.src = canvasImageUrl; // Завантажуємо зображення
+                } else {
+                    updateScrollbars(); // Оновлюємо скролбари, якщо контент вже завантажено
+                }
+            }
+        }
+
+        openPanelButton.addEventListener('click', toggleSidePanel);
+        closePanelButton.addEventListener('click', toggleSidePanel);
+
+        // --- Логіка для панелі шарів (layersPanel) ---
+        const layersPanelOpenButton = document.getElementById('layersPanelOpenButton');
+        const layersPanel = document.getElementById('layersPanel');
+        const closeLayersPanelButton = document.getElementById('closeLayersPanelButton');
+
+        function toggleLayersPanel() {
+            if (layersPanel.classList.contains('open')) {
+                // Якщо панель відкрита, закриваємо її
+                layersPanel.classList.remove('open');
+                layersPanelOpenButton.classList.remove('active');
+                document.body.classList.remove('layers-panel-open');
+                //layersPanelOpenButton.innerHTML = '<i class="fas fa-list"></i>';
+                layersPanelOpenButton.title = 'Відкрити панель шарів';
+            } else {
+                // Якщо панель закрита, відкриваємо її
+                layersPanel.classList.add('open');
+                layersPanelOpenButton.classList.add('active');
+                document.body.classList.add('layers-panel-open');
+                //layersPanelOpenButton.innerHTML = '<i class="fas fa-times"></i>';
+                layersPanelOpenButton.title = 'Закрити панель шарів';
+            }
+        }
+
+        layersPanelOpenButton.addEventListener('click', toggleLayersPanel);
+        closeLayersPanelButton.addEventListener('click', toggleLayersPanel);
+
+        // --- Логіка для канвасу та перетягування зображення ---
+        function drawImage() {
+            if (!img.complete || !img.naturalWidth) return;
+
+            // Встановлюємо розміри canvas відповідно до оригінальних розмірів зображення
+            imageCanvas.width = img.naturalWidth;
+            imageCanvas.height = img.naturalHeight;
+
+            // Очищуємо канвас перед малюванням
+            ctx.clearRect(0, 0, imageCanvas.width, imageCanvas.height);
+            // Малюємо зображення в оригінальному розмірі
+            ctx.drawImage(img, 0, 0);
+
+            // Переміщуємо canvas за допомогою transform
+            imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`;
+        }
+
+        img.onload = function() {
+            spinner.classList.remove('show');
+            isPanelContentLoaded = true;
+            // Ініціалізуємо panX, panY для центрування зображення, якщо воно менше контейнера
+            const containerWidth = canvasContainer.clientWidth;
+            const containerHeight = canvasContainer.clientHeight;
+
+            if (img.naturalWidth < containerWidth) {
+                panX = (containerWidth - img.naturalWidth) / 2;
+            } else {
+                panX = 0;
+            }
+            if (img.naturalHeight < containerHeight) {
+                panY = (containerHeight - img.naturalHeight) / 2;
+            } else {
+                panY = 0;
+            }
+            drawImage(); // Малюємо зображення на canvas після завантаження
+            updateScrollbars(); // Оновлюємо скролбари після завантаження
+        };
+
+        img.onerror = function() {
+            spinner.classList.remove('show');
+            console.error("Помилка завантаження зображення для канвасу.");
+            const errorDiv = document.createElement('div');
+            errorDiv.textContent = 'Не вдалося завантажити зображення.';
+            errorDiv.style.color = 'red';
+            errorDiv.style.textAlign = 'center';
+            canvasContainer.appendChild(errorDiv);
+        };
+
+        // Обробники подій для перетягування канвасу
+        canvasContainer.addEventListener('mousedown', startPan);
+        canvasContainer.addEventListener('touchstart', startPan, { passive: false });
+
+        function startPan(e) {
+            if (!isPanelContentLoaded) return;
+            e.preventDefault(); // Запобігаємо стандартній поведінці браузера (наприклад, виділенню тексту)
+            isDraggingCanvas = true;
+            canvasContainer.style.cursor = 'grabbing';
+            const touch = e.touches ? e.touches[0] : e; // Отримуємо дані для сенсорних або миші
+            startCursorX = touch.clientX;
+            startCursorY = touch.clientY;
+            startPanX = panX;
+            startPanY = panY;
+
+            showScrollbars(); // Показуємо скролбари
+
+            // Додаємо глобальні слухачі для перетягування
+            document.addEventListener('mousemove', doPan);
+            document.addEventListener('mouseup', stopPan);
+            document.addEventListener('touchmove', doPan, { passive: false });
+            document.addEventListener('touchend', stopPan);
+            document.addEventListener('touchcancel', stopPan);
+        }
+
+        function doPan(e) {
+            if (!isDraggingCanvas) return;
+            e.preventDefault(); // Запобігаємо стандартній поведінці браузера
+            const touch = e.touches ? e.touches[0] : e;
+            const deltaX = touch.clientX - startCursorX;
+            const deltaY = touch.clientY - startCursorY;
+
+            let newPanX = startPanX + deltaX;
+            let newPanY = startPanY + deltaY;
+
+            // Обмежуємо перетягування в межах контейнера
+            const containerWidth = canvasContainer.clientWidth;
+            const containerHeight = canvasContainer.clientHeight;
+            const canvasWidth = imageCanvas.width;
+            const canvasHeight = imageCanvas.height;
+
+            // Горизонтальні обмеження
+            if (canvasWidth > containerWidth) {
+                const minPanX = containerWidth - canvasWidth;
+                const maxPanX = 0;
+                newPanX = Math.max(minPanX, Math.min(newPanX, maxPanX));
+            } else {
+                // Якщо канвас менший за контейнер, центруємо його
+                newPanX = (containerWidth - canvasWidth) / 2;
+            }
+
+            // Вертикальні обмеження
+            if (canvasHeight > containerHeight) {
+                const minPanY = containerHeight - canvasHeight;
+                const maxPanY = 0;
+                newPanY = Math.max(minPanY, Math.min(newPanY, maxPanY));
+            } else {
+                // Якщо канвас менший за контейнер, центруємо його
+                newPanY = (containerHeight - canvasHeight) / 2;
+            }
+
+            panX = newPanX;
+            panY = newPanY;
+            imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`; // Оновлюємо позицію canvas
+            updateScrollbars(); // Оновлюємо положення скролбарів
+        }
+
+        function stopPan() {
+            if (!isDraggingCanvas) return;
+            isDraggingCanvas = false;
+            canvasContainer.style.cursor = 'grab';
+
+            hideScrollbars(); // Приховуємо скролбари після затримки
+
+            // Видаляємо глобальні слухачі
+            document.removeEventListener('mousemove', doPan);
+            document.removeEventListener('mouseup', stopPan);
+            document.removeEventListener('touchmove', doPan);
+            document.removeEventListener('touchend', stopPan);
+            document.removeEventListener('touchcancel', stopPan);
+        }
+
+        // Функція для оновлення положення та розміру скролбарів
+        function updateScrollbars() {
+            const containerWidth = canvasContainer.clientWidth;
+            const containerHeight = canvasContainer.clientHeight;
+            const contentWidth = imageCanvas.width;
+            const contentHeight = imageCanvas.height;
+
+            // Відступи для скролбарів від країв контейнера
+            const scrollbarPadding = 5; // Загальний відступ від країв контейнера
+            const scrollbarThickness = 6; // Товщина бігунка
+            const scrollbarGap = 4; // Відстань між скролбарами в куті
+
+            // Горизонтальний скролбар
+            if (contentWidth > containerWidth) {
+                horizontalScrollbar.style.display = 'block';
+                // Доступна ширина для треку скролбара (враховуємо відступи та можливий вертикальний скролбар)
+                const availableTrackWidth = containerWidth - (scrollbarPadding * 2) - (verticalScrollbar.style.display === 'block' ? scrollbarThickness + scrollbarGap : 0);
+                const scrollRange = contentWidth - containerWidth;
+                const thumbRatio = containerWidth / contentWidth;
+                const thumbWidth = thumbRatio * availableTrackWidth;
+                const thumbPosition = (-panX / scrollRange) * (availableTrackWidth - thumbWidth);
+
+                horizontalThumb.style.width = `${thumbWidth}px`;
+                horizontalThumb.style.left = `${scrollbarPadding + thumbPosition}px`;
+                horizontalScrollbar.style.right = `${scrollbarPadding + (verticalScrollbar.style.display === 'block' ? scrollbarThickness + scrollbarGap : 0)}px`;
+            } else {
+                horizontalScrollbar.style.display = 'none';
+            }
+
+            // Вертикальний скролбар
+            if (contentHeight > containerHeight) {
+                verticalScrollbar.style.display = 'block';
+                // Доступна висота для треку скролбара (враховуємо відступи та можливий горизонтальний скролбар)
+                const availableTrackHeight = containerHeight - (scrollbarPadding * 2) - (horizontalScrollbar.style.display === 'block' ? scrollbarThickness + scrollbarGap : 0);
+                const scrollRange = contentHeight - containerHeight;
+                const thumbRatio = containerHeight / contentHeight;
+                const thumbHeight = thumbRatio * availableTrackHeight;
+                const thumbPosition = (-panY / scrollRange) * (availableTrackHeight - thumbHeight);
+
+                verticalThumb.style.height = `${thumbHeight}px`;
+                verticalThumb.style.top = `${scrollbarPadding + thumbPosition}px`;
+                verticalScrollbar.style.bottom = `${scrollbarPadding + (horizontalScrollbar.style.display === 'block' ? scrollbarThickness + scrollbarGap : 0)}px`;
+            } else {
+                verticalScrollbar.style.display = 'none';
+            }
+        }
+
+        // Функція для показу скролбарів
+        function showScrollbars() {
+            clearTimeout(scrollbarHideTimeout);
+            horizontalScrollbar.classList.add('show');
+            verticalScrollbar.classList.add('show');
+        }
+
+        // Функція для приховування скролбарів
+        function hideScrollbars() {
+            clearTimeout(scrollbarHideTimeout);
+            scrollbarHideTimeout = setTimeout(() => {
+                horizontalScrollbar.classList.remove('show');
+                verticalScrollbar.classList.remove('show');
+            }, 800); // Приховуємо через 800 мс
+        }
+
+
+        // Обробник зміни розміру вікна для адаптації канвасу та його позиціонування
+        window.addEventListener('resize', () => {
+            if (isPanelContentLoaded) {
+                // Перерахунок panX та panY для коректного відображення після зміни розміру контейнера
+                const containerWidth = canvasContainer.clientWidth;
+                const containerHeight = canvasContainer.clientHeight;
+                const canvasWidth = imageCanvas.width;
+                const canvasHeight = imageCanvas.height;
+
+                if (canvasWidth < containerWidth) {
+                    panX = (containerWidth - canvasWidth) / 2;
+                } else {
+                    panX = Math.max(containerWidth - canvasWidth, Math.min(panX, 0));
+                }
+
+                if (canvasHeight < containerHeight) {
+                    panY = (containerHeight - canvasHeight) / 2;
+                } else {
+                    panY = Math.max(containerHeight - canvasHeight, Math.min(panY, 0));
+                }
+                imageCanvas.style.transform = `translate(${panX}px, ${panY}px)`; // Оновлюємо позицію canvas
+                updateScrollbars(); // Перемальовуємо зображення та оновлюємо скролбари
+            }
+        });
+    </script>
+</body>
+</html>
+
