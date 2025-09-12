@@ -6,7 +6,7 @@
 <title>Детальний план території</title>
 <link rel="icon" href="/pkfaviconblue.png" type="image/png">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
-
+<script src="js/statcounter.js"></script>
 <style>
   /* Базові стилі для HTML та body */
   html, body {
@@ -243,7 +243,7 @@
   /* Основний контейнер вмісту для iframe */
   #container {
     display: flex;
-    height: 100svh; /* Займає 100% висоти вікна перегляду */
+    height: 100dvh; /* Займає 100% висоти вікна перегляду */
     width: 100dvw;
     margin-top: 0;
   }
@@ -257,19 +257,18 @@
   /* Специфічні стилі для iframe Sketchfab (#leftFrame) */
   #leftFrame iframe {
     position: absolute; /* Позиціонування для центрування */
-    top: 50%; /* Центрування по вертикалі */
+    top: 0; /* Центрування по вертикалі */
     left: 50%; /* Центрування по горизонталі */
-    transform: translate(-50%, -50%); /* Зміщення для точного центрування */
+    transform: translate(-50%, 0); /* Зміщення для точного центрування */
     width: 100dvw; /* Ширина іфрейма дорівнює ширині вікна браузера */
-    height: 100svh; /* Висота іфрейма дорівнює висоті вікна браузера */
+    height: calc(100dvh + 40px); /* Висота іфрейма дорівнює висоті вікна браузера */
   }
 
   /* Специфічні стилі для iframe QGIS.cloud (#rightFrame) */
   #rightFrame iframe {
-    width: 100%; /* Ширина іфрейма дорівнює ширині батьківського контейнера */
-    height: 100svh; /* Висота іфрейма дорівнює висоті батьківського контейнера */
-    position: relative; /* Скидання позиціонування для нормального потоку */
-    top: auto;
+    width: 100%;  
+    height: 100dvh; 
+    position: relative; 
     left: auto;
     transform: none;
   }
@@ -426,7 +425,7 @@
     opacity: 0;
     transform: translateY(-10px);
     transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s;
-    max-height: calc(100vh - 56px);
+    max-height: calc(100dvh - 56px);
     overflow-y: auto;
     box-sizing: border-box;
   }
@@ -717,8 +716,8 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100dvw;
+    height: 100dvh;
     background-color: rgba(255, 255, 255, 0.9); /* Напівпрозорий білий фон */
     backdrop-filter: blur(5px); /* Додатковий ефект розмиття */
     z-index: 9999; /* Вище за будь-який інший елемент */
@@ -925,7 +924,7 @@
     image: 'https://img.icons8.com/color/48/image-file.png',
     code: 'https://img.icons8.com/color/48/code-file.png',
     xml: 'https://img.icons8.com/color/48/xml-file.png',
-    encrypted: 'https://img.icons8.com/external-beshi-flat-kerismaker/48/external-Encrypted-File-cyber-security-beshi-flat-kerismaker.png'
+    encrypted: '../img/icons8-ai-48.png'
   };
 
   const placeholderIconMap = {
@@ -943,18 +942,47 @@
     encrypted: 'https://placehold.co/20x20/e74c3c/ffffff?text=ENC'
   };
 
+function parentRotationHandler() {
+            topBar.style.cursor = 'move';
+console.log('Parent rotation handler triggered');
+           
+        }
+        
+
   /**
    * Завантажує дані конфігурації з config.json.
    * Використовує параметр 'p' з URL для формування шляху до config.json.
    * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
    */
-  async function loadConfig() {
-    let configUrl = 'https://raw.githubusercontent.com/suprunidze/qgisweb/refs/heads/main/testconfig.json'; // За замовчуванням: config.json у поточній директорії
+  function updateUrlModeParam(mode) {
+  const url = new URL(window.location.href);
+  // Встановити або оновити параметр 'mode'
+  /*if (mode === '2D3D') {
+    url.searchParams.delete('mode'); // За замовчуванням не показуємо mode=2D3D
+  } else {
+    url.searchParams.set('mode', mode.toLowerCase());
+  }*/
+  window.history.replaceState({}, '', url);
+}
+async function loadConfig() {
+    let configUrl = 'testconfig.json'; // За замовчуванням: config.json у поточній директорії
 
     // Отримати параметр 'p' з URL
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Додатковий параметр "mode" для примусового режиму
+    const modeParam = urlParams.get('mode');
+    if (modeParam === '3d') {
+      currentDesktopMode = '3D';
+      currentMobileMode = '3D';
+    } else if (modeParam === '2d') {
+      currentDesktopMode = '2D';
+      currentMobileMode = '2D';
+    } else {
+      currentDesktopMode = '2D3D'; // За замовчуванням
+      currentMobileMode = '2D'; // За замовчуванням для мобільних пристроїв
+    }
     const pParam = urlParams.get('p');
-
     if (pParam) {
       // Сформувати URL на основі параметра 'p'
       configUrl = `${pParam}/config.json`;
@@ -1080,6 +1108,7 @@
    */
   function setDesktopMode(mode) {
     // Видалити активний клас з усіх кнопок робочого столу
+    updateUrlModeParam(mode);
     btn2D.classList.remove('active');
     btn3D.classList.remove('active');
     btn2D3D.classList.remove('active');
@@ -1123,6 +1152,7 @@
    */
   function setMobileMode(mode) {
     // Видалити активний клас з усіх мобільних кнопок
+    updateUrlModeParam(mode);
     btnMobile2D.classList.remove('active');
     btnMobile3D.classList.remove('active');
 

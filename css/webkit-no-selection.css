@@ -1,0 +1,9 @@
+button,
+a,
+input,
+textarea,
+select,
+div { 
+    -webkit-tap-highlight-color: transparent; /* Робить виділення прозорим */
+    -webkit-touch-callout: none;
+}

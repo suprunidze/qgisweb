@@ -49,6 +49,6 @@
   ],
   "iframes": {
     "sketchfabUrl": "https://sketchfab.com/models/d16bd86447774231b152b3c3cb1a0276/embed?autostart=1",
-    "qgisUrl": "nadpilna/maps.html"
+    "qgisUrl": "maptilerviewer.html"
   }
 }
