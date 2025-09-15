@@ -278,25 +278,16 @@
         .layers-panel {
             position: fixed;
             bottom: 20px;
-            /* Відступ від низу екрану */
             right: 80px;
-            /* Відступ від правого краю */
             width: 400px;
-            /* Фіксована ширина */
             height: 300px;
-            /* Фіксована висота */
-            background-color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(255, 255, 255, 0.514);
             backdrop-filter: blur(10px);
             z-index: 2000;
             opacity: 0;
-            /* Початково невидима */
             visibility: hidden;
-            /* Приховано, щоб не займала місце в розмітці */
-            transition:
-                opacity 0.3s ease-out,
-                visibility 0.3s ease-out;
-            /* Плавне зникнення/поява */
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
             display: flex;
             flex-direction: column;
             border-radius: 20px;
@@ -304,9 +295,75 @@
             box-sizing: border-box;
         }
 
+        /* Стиль для відображення панелі */
         .layers-panel.open {
             opacity: 1;
             visibility: visible;
+        }
+
+        /* Стиль для кнопки закриття панелі, що імітує стиль .map-button */
+        .layers-panel-close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(224, 224, 224, 0.5);
+            backdrop-filter: blur(5px);
+            border: none;
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #333;
+            z-index: 2003;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .layers-panel-close-button:hover {
+            background-color: rgba(192, 192, 192, 0.7);
+        }
+
+        /* Стилі для елементів списку підкладок */
+        .basemap-option {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .basemap-option:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Стиль для активної (обраної) підкладки */
+        .basemap-option.active {
+            background-color: rgba(16, 185, 129, 0.2);
+            /* Світло-зелений фон */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #10B981;
+            /* Зелена рамка */
+        }
+
+        /* Стилі для елементів списку оверлейних шарів */
+        .overlay-option {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .overlay-option:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Стиль для іконки ока, коли шар увімкнений */
+        .overlay-option.active .eye-icon {
+            color: #10B981;
+            /* Зелений колір */
+        }
+
+        /* Стиль для іконки ока, коли шар вимкнений */
+        .overlay-option .eye-icon {
+            color: #6B7280;
+            /* Сірий колір */
         }
 
         .canvas-container {
@@ -548,12 +605,23 @@
         </div>
     </div>
 
-    <div id="layersPanel" class="layers-panel">
-        <button id="closeLayersPanelButton" class="side-panel-close-button" style="top: 10px; right: 10px;">
+    <div id="layersPanel" class="layers-panel p-6">
+        <button id="closeLayersPanelButton" class="side-panel-close-button">
             <i class="fas fa-times"></i>
-            <div id="layersContent" class="layers-content">
-                <!-- Вміст панелі шарів буде тут -->
+        </button>
+        <div class="flex flex-col space-y-6 text-gray-800 pt-8 h-full overflow-y-auto">
+            <div class="space-y-3">
+                <h3 class="text-xl font-bold">Підкладки</h3>
+                <!-- Basemap list will be populated dynamically by JavaScript -->
+                <div id="basemapList" class="space-y-2 text-gray-600"></div>
             </div>
+            <hr class="border-gray-400">
+            <div class="space-y-3">
+                <h3 class="text-xl font-bold">Оверлейні шари</h3>
+                <!-- Overlay layers list will be populated dynamically by JavaScript -->
+                <div id="layersList" class="space-y-2 text-gray-600"></div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
@@ -576,57 +644,62 @@
 
         const initialMapRotationDegrees = getMapRotationDegrees(window.location.search);
         const initialMapRotationRadians = initialMapRotationDegrees * Math.PI / 180;
-        const urlExtent = getExtent(window.location.search);
-        const customExtent4326 = urlExtent; /*|| [
+        //const urlExtent = getExtent(window.location.search);
+
+        //const customExtent4326 = urlExtent; 
+        /*|| [
     Math.min(32.052081732485284, 32.05247718650831),
     Math.min(49.44040341326398, 49.43361763278762),
     Math.max(32.052081732485284, 32.05247718650831),
     Math.max(49.44040341326398, 49.43361763278762)
 ]*/
-
-        // --- Base layers ---
-        const baseOSM = new ol.layer.Tile({
-            title: 'osm', type: 'base',
-            source: new ol.source.OSM(), visible: true
-        });
-
-        const baseGoogle = new ol.layer.Tile({
-            title: 'google',
-            type: 'base',
-            source: new ol.source.XYZ({
-                url: 'https://mt1.google.com/vt/lyrs=y&hl=uk&x={x}&y={y}&z={z}',
-                attributions: '© Google'
-            }),
-            visible: false
-        });
-
-        const baseEsri = new ol.layer.Tile({
-            title: 'esri', type: 'base',
-            source: new ol.source.XYZ({
-                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-                attributions: 'Tiles © Esri'
-            }),
-            visible: false
-        });
-
-        const baseCarto = new ol.layer.Tile({
-            title: 'carto', type: 'base',
-            source: new ol.source.XYZ({
-                url: 'https://{a-c}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-                attributions: '© CartoDB'
-            }),
-            visible: false
-        });
-        const projectMap = new ol.layer.Tile({
-            title: 'carto', type: 'base',
-            source: new ol.source.XYZ({
-                url: 'https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=7JUTiyTWHkC7qe7Dy8Qj',
-                attributions: '© Maptiler'
-            }),
-            visible: true
-        });
-
-
+        /*
+                // --- Base layers ---
+                const baseOSM = new ol.layer.Tile({
+                    title: 'osm', type: 'base',
+                    source: new ol.source.OSM(), visible: true
+                });
+        
+                const baseGoogle = new ol.layer.Tile({
+                    title: 'google',
+                    type: 'base',
+                    source: new ol.source.XYZ({
+                        url: 'https://mt1.google.com/vt/lyrs=y&hl=uk&x={x}&y={y}&z={z}',
+                        attributions: '© Google'
+                    }),
+                    visible: false
+                });
+        
+                const baseEsri = new ol.layer.Tile({
+                    title: 'esri', type: 'base',
+                    source: new ol.source.XYZ({
+                        url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                        attributions: 'Tiles © Esri'
+                    }),
+                    visible: false
+                });
+        
+                const baseCarto = new ol.layer.Tile({
+                    title: 'carto', type: 'base',
+                    source: new ol.source.XYZ({
+                        url: 'http://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png',
+                        attributions: '© CartoDB'
+                    }),
+                    visible: false
+                });
+                const projectMap = new ol.layer.Tile({
+                    title: 'carto', type: 'base',
+                    source: new ol.source.XYZ({
+                        url: customLayerUrl,
+                        attributions: '© Maptiler'
+                    }),
+                    visible: true
+                });
+        
+                const baseMapLayerGroup = new ol.layer.Group({
+                    title: 'Base Maps',
+                    layers: [baseOSM, baseGoogle, baseEsri, baseCarto, projectMap]
+                });*/
 
         /*function getExtent(paramsSearch) {
             console.log('getExtentFromUrl called with params:', paramsSearch);
@@ -663,71 +736,169 @@
 
 
         // Перетворення екстенту з EPSG:4326 в EPSG:3857 (Web Mercator)
-        const customExtent3857 = ol.proj.transformExtent(
-            customExtent4326,
-            'EPSG:4326',  // З якої проєкції
-            'EPSG:3857'   // У яку проєкцію (проєкція карти OpenLayers за замовчуванням)
-        );
-
-        // --- ВИРАХУВАННЯ ЦЕНТРУ З ЕКСТЕНТУ ---
-        const calculatedCenter = ol.extent.getCenter(customExtent3857);
-        console.log("Вирахуваний центр (EPSG:3857):", calculatedCenter);
-        // Якщо вам потрібен центр у Longitude/Latitude:
-        const calculatedCenterLonLat = ol.proj.toLonLat(calculatedCenter, 'EPSG:3857');
-        console.log("Вирахуваний центр (Lon/Lat):", calculatedCenterLonLat);
 
 
-        // Ініціалізуємо карту OpenLayers з використанням MapTiler стилю
-        const map = new ol.Map({
+        let map;
+        let geojsonLoaded = false;
+        let geojsonExtent;
+        const overlayLayers = {};
+        const basemapLayers = {};
+
+        // JSON configuration for basemaps
+        const basemapsConfig = [
+            { id: 'osm', title: 'OpenStreetMap', iconClass: 'fa-map', url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png', attributions: '© OpenStreetMap contributors' },
+            { id: 'google', title: 'Google Hybrid', iconClass: 'fa-satellite-dish', url: 'https://mt1.google.com/vt/lyrs=y&hl=uk&x={x}&y={y}&z={z}', attributions: '© Google' },
+            { id: 'esri', title: 'Esri World Imagery', iconClass: 'fa-earth-americas', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attributions: 'Tiles © Esri' },
+            { id: 'carto', title: 'CartoDB Voyager', iconClass: 'fa-compass', url: 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', attributions: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © <a href="https://carto.com/attributions">CARTO</a>' }
+        ];
+
+        // JSON configuration for overlay layers
+        const overlayLayersConfig = [
+            { id: 'borders', title: 'Кордони України', tooltip: 'Цей шар використовується для центрування карти і не може бути вимкнений', togglable: false, url: 'https://wgis.project.co.ua/borders.geojson', type: 'vector' },
+            { id: 'maptiler_overlay', title: 'Maptiler Overlay', tooltip: 'Оверлейний шар з Maptiler', togglable: true, url: 'https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=7JUTiyTWHkC7qe7Dy8Qj', type: 'tile' },
+            { id: 'highways', title: 'Автомагістралі', tooltip: 'Демонстраційний шар автомагістралей', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector' },
+            { id: 'hydrography', title: 'Гідрографія', tooltip: 'Демонстраційний шар річок та водойм', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector' },
+            { id: 'air_raids', title: 'Повітряні тривоги', tooltip: 'Дані недоступні. Цей шар є лише демонстрацією можливостей.', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector' }
+        ];
+
+        // Function to create and return a new basemap layer based on config
+        const createBasemapLayer = (id) => {
+            const config = basemapsConfig.find(c => c.id === id);
+            if (!config) return null;
+            const source = new ol.source.XYZ({ url: config.url, attributions: config.attributions });
+            return new ol.layer.Tile({ title: id, type: 'base', source });
+        };
+
+        // Dynamically create and add basemap layers and their list items
+        const baseMapLayerGroup = new ol.layer.Group({ title: 'Base Maps', layers: [] });
+        basemapsConfig.forEach(config => {
+            const layer = createBasemapLayer(config.id);
+            if (layer) {
+                basemapLayers[config.id] = layer;
+                baseMapLayerGroup.getLayers().push(layer);
+
+                const listItem = document.createElement('div');
+                listItem.classList.add('flex', 'items-center', 'space-x-4', 'p-3', 'rounded-lg', 'border-2', 'border-transparent', 'cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
+                listItem.setAttribute('data-basemap', config.id);
+                listItem.innerHTML = `
+                        <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-300">
+                            <i class="fa-solid ${config.iconClass} text-gray-800 text-xl"></i>
+                        </div>
+                        <span>${config.title}</span>
+                    `;
+                basemapList.appendChild(listItem);
+            }
+        });
+
+        // Dynamically create and add overlay layer list items
+        overlayLayersConfig.forEach(config => {
+            const listItem = document.createElement('div');
+            listItem.classList.add('flex', 'items-center', 'space-x-2', 'p-3', 'rounded-lg', 'cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
+            listItem.setAttribute('data-layer-id', config.id);
+            if (config.tooltip) {
+                listItem.setAttribute('title', config.tooltip);
+            }
+            const iconClass = config.togglable ? 'fa-eye-slash' : 'fa-eye text-gray-400';
+            listItem.innerHTML = `
+                    <i class="fas ${iconClass} text-lg"></i>
+                    <span class="flex-grow">${config.title}</span>
+                `;
+            layersList.appendChild(listItem);
+        });
+
+        map = new ol.Map({
             target: 'map',
-            layers: [baseOSM, baseGoogle, baseEsri, baseCarto, projectMap],
+            layers: [baseMapLayerGroup],
             controls: ol.control.defaults.defaults({
                 zoom: false,
                 rotate: false,
                 attribution: true
             }),
             view: new ol.View({
-                // Ми все ще використовуємо initialCenter/Zoom як початкові,
-                // але вони будуть негайно перевизначені функцією fit().
-                // Якщо ви хочете, щоб карта одразу відображалася за розрахованим центром,
-                // можете встановити center: calculatedCenter тут.
-                center: initialCenter,
-                zoom: initialZoom,
-                rotation: initialMapRotationRadians,
-                minZoom: 10,
-                maxZoom: 19
-            }),
-            interactions: ol.interaction.defaults.defaults(),
-            loadTilesWhileInteracting: true,
-            loadTilesWhileAnimating: true
+                center: ol.proj.fromLonLat([31.1656, 48.3794]), // Center of Ukraine    
+                zoom: 2,
+                minZoom: 6,
+                maxZoom: 19,
+                rotation: initialMapRotationRadians
+            })
         });
-        // --- Switch basemap ---
-        document.querySelectorAll('input[name="basemap"]').forEach(r => {
-            r.addEventListener('change', () => {
-                [baseOSM, baseGoogle, baseEsri, baseCarto, baseMapTiler].forEach(b => b.setVisible(b.get('title') === r.value));
-            });
-        });
-        const vectorLayer = new ol.layer.Vector({
-            source: new ol.source.Vector({
-                url: 'borders.geojson', // замініть на свій файл
-                format: new ol.format.GeoJSON()
-            }),
-            visible: false // спочатку невидимий
-        });
-        map.addLayer(vectorLayer);
 
+        // Create a vector source to load the GeoJSON data
+        const geojsonSource = new ol.source.Vector({
+            url: 'https://wgis.project.co.ua/borders.geojson',
+            format: new ol.format.GeoJSON()
+        });
+
+        // Create the vector layer for the GeoJSON data
+        const geojsonLayer = new ol.layer.Vector({
+            source: geojsonSource,
+            // The layer is visible, but its style makes it transparent
+            style: new ol.style.Style({
+                stroke: new ol.style.Stroke({
+                    color: 'rgba(0, 0, 0, 0)', // Fully transparent stroke
+                    width: 0
+                }),
+                fill: new ol.style.Fill({
+                    color: 'rgba(0, 0, 0, 0)' // Fully transparent fill
+                })
+            })
+        });
+
+        // Add the layer to the map
+        map.addLayer(geojsonLayer);
+
+        // Add an event listener to the source. Once the data is loaded,
+        // fit the map view to the extent of the data.
+        geojsonSource.on('change', function (e) {
+            // Check if the source is ready and has features
+            if (geojsonSource.getState() === 'ready' && geojsonSource.getFeatures().length > 0) {
+                getExtentFromGeoJSON(map)
+            }
+        });
+        function getExtentFromGeoJSON(source) {
+
+            const extent = geojsonSource.getExtent();
+            // Fit the view to the extent of the GeoJSON source
+            source.getView().fit(extent, {
+                padding: [20, 20, 20, 20], // Add padding for better visibility
+                duration: 1000 // Animate the view change
+            });
+            return null;
+        }
 
         // --- Коли GeoJSON завантажиться, визначити екстент і встановити вид ---
-        vectorLayer.getSource().on('change', function (e) {
+        /*vectorLayer.getSource().on('change', function (e) {
+            if (vectorLayer.getSource().getState() === 'ready') {
+                const customExtent4326 = vectorLayer.getSource().getExtent();
+                console.log('Екстент векторного шару:', extent);
+
+
+                // Встановлюємо екстент карти під цей шар
+                map.getView().fit(customExtent4326, { size: map.getSize(), padding: [10, 10, 10, 10] });
+            }
+            const customExtent3857 = ol.proj.transformExtent(
+                customExtent4326,
+                'EPSG:4326',  // З якої проєкції
+                'EPSG:3857'   // У яку проєкцію (проєкція карти OpenLayers за замовчуванням)
+            );
+
+            // --- ВИРАХУВАННЯ ЦЕНТРУ З ЕКСТЕНТУ ---
+            const calculatedCenter = ol.extent.getCenter(customExtent3857);
+            console.log("Вирахуваний центр (EPSG:3857):", calculatedCenter);
+            // Якщо вам потрібен центр у Longitude/Latitude:
+            const calculatedCenterLonLat = ol.proj.toLonLat(calculatedCenter, 'EPSG:3857');
+            console.log("Вирахуваний центр (Lon/Lat):", calculatedCenterLonLat);
+        });
+        vectorLayer.getSource().on('change', function () {
             if (vectorLayer.getSource().getState() === 'ready') {
                 const extent = vectorLayer.getSource().getExtent();
                 console.log('Екстент векторного шару:', extent);
 
 
-                // Встановлюємо екстент карти під цей шар
+                // Встановлюємо початковий центр і масштаб по екстенту
                 map.getView().fit(extent, { size: map.getSize(), padding: [20, 20, 20, 20] });
             }
-        });
+        });*/
 
         /*window.onload = function () {  //Застосування стилю MapTiler
             const paddingX = Math.round(window.innerWidth * 0.3);  // 10% of viewport width
@@ -763,6 +934,14 @@
                 document.getElementById('map').innerText = 'Не вдалося завантажити карту. Перевірте консоль для деталей.';
             });
         }*/
+
+        // --- Switch basemap ---
+        document.querySelectorAll('input[name="basemap"]').forEach(r => {
+            r.addEventListener('change', () => {
+                [baseOSM, baseGoogle, baseEsri, baseCarto, baseMapTiler].forEach(b => b.setVisible(b.get('title') === r.value));
+            });
+        });
+        // --- Custom Controls ---
         const zoomInButton = document.getElementById('zoomInButton');
         const zoomOutButton = document.getElementById('zoomOutButton');
         const homeButton = document.getElementById('homeButton');
@@ -917,13 +1096,8 @@
         });
 
         homeButton.addEventListener('click', function () {
-            const view = map.getView();
-            view.setCenter(initialCenter);
-            view.setZoom(initialZoom);
-            view.setRotation(initialMapRotationRadians);
-            updateRotationDial(initialMapRotationRadians);
+            getExtentFromGeoJSON(map);
         });
-
         // --- Логіка для кастомних скролбарів ---
 
         const mapControlsBottom = document.querySelector('.map-controls-bottom');

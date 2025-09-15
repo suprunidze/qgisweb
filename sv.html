@@ -1,0 +1,339 @@
+<html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта України з OpenLayers</title>
+    <!-- Importing OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@v8.2.0/ol.css">
+    <!-- Importing Tailwind CSS for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importing Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+    <div id="map" class="w-full h-screen"></div>
+    <!-- Loading overlay for a better user experience -->
+    
+    <!-- Error message display -->
+    <div id="error-message"
+        class="hidden absolute top-4 left-1/2 -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        Не вдалося завантажити кордони. Показано стандартний вигляд карти.
+    </div>
+
+    <!-- Map controls container -->
+    <div class="map-controls-bottom absolute bottom-5 right-5 z-40 flex flex-col items-end space-y-2">
+        <!-- Main button to open the layers panel -->
+        <button id="openLayersPanelButton" class="p-3 bg-white text-gray-800 rounded-full shadow-lg">
+            <i class="fas fa-layer-group text-lg"></i>
+        </button>
+        <!-- Reset View button -->
+        <button id="resetView" class="p-3 bg-white text-gray-800 rounded-full shadow-lg">
+            <i class="fas fa-home text-lg"></i>
+        </button>
+    </div>
+
+    <!-- The sleek, modern layers panel -->
+    <div id="layersPanel"
+        class="hidden absolute bottom-20 right-20 w-80 max-h-96 bg-white bg-opacity-70 backdrop-blur-md rounded-lg shadow-2xl p-6 flex flex-col">
+        <button id="closeLayersPanelButton" class="absolute top-2 right-2 text-gray-500 hover:text-gray-900 text-xl">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="flex flex-col space-y-6 text-gray-800 pt-8 h-full overflow-y-auto">
+            <div class="space-y-3">
+                <h3 class="text-xl font-bold">Підкладки</h3>
+                <!-- Basemap list will be populated dynamically by JavaScript -->
+                <div id="basemapList" class="space-y-2 text-gray-600"></div>
+            </div>
+            <hr class="border-gray-400">
+            <div class="space-y-3">
+                <h3 class="text-xl font-bold">Оверлейні шари</h3>
+                <!-- Overlay layers list will be populated dynamically by JavaScript -->
+                <div id="layersList" class="space-y-2 text-gray-600"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importing OpenLayers library -->
+    <script src="https://cdn.jsdelivr.net/npm/ol@v8.2.0/dist/ol.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const errorMessage = document.getElementById('error-message');
+            const openPanelButton = document.getElementById('openLayersPanelButton');
+            const closePanelButton = document.getElementById('closeLayersPanelButton');
+            const layersPanel = document.getElementById('layersPanel');
+            const basemapList = document.getElementById('basemapList');
+            const layersList = document.getElementById('layersList');
+            const resetViewButton = document.getElementById('resetView');
+
+            let map;
+            let geojsonLoaded = false;
+            let geojsonExtent;
+            const overlayLayers = {};
+            const basemapLayers = {};
+
+            // JSON configuration for basemaps
+            const basemapsConfig = [
+                { id: 'osm', title: 'OpenStreetMap', iconClass: 'fa-map', url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png', attributions: '© OpenStreetMap contributors', initialVisible: false },
+                { id: 'google', title: 'Google Hybrid', iconClass: 'fa-satellite-dish', url: 'https://mt1.google.com/vt/lyrs=y&hl=uk&x={x}&y={y}&z={z}', attributions: '© Google', initialVisible: false },
+                { id: 'esri', title: 'Esri World Imagery', iconClass: 'fa-earth-americas', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attributions: 'Tiles © Esri', initialVisible: false },
+                { id: 'carto', title: 'CartoDB Voyager', iconClass: 'fa-compass', url: 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', attributions: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © <a href="https://carto.com/attributions">CARTO</a>', initialVisible: true }
+            ];
+
+            // JSON configuration for overlay layers
+            const overlayLayersConfig = [
+                /**/{ id: 'borders', title: 'Кордони України', tooltip: 'Цей шар використовується для центрування карти і не може бути вимкнений', togglable: false, url: 'https://wgis.project.co.ua/borders.geojson', type: 'vector', visible: false },
+                { id: 'maptiler_overlay', title: 'Maptiler Overlay', tooltip: 'Оверлейний шар з Maptiler', togglable: true, url: 'https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=7JUTiyTWHkC7qe7Dy8Qj', type: 'tile', visible: true },
+                { id: 'highways', title: 'Автомагістралі', tooltip: 'Демонстраційний шар автомагістралей', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector', visible: false },
+                { id: 'hydrography', title: 'Гідрографія', tooltip: 'Демонстраційний шар річок та водойм', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector', visible: false },
+                { id: 'air_raids', title: 'Повітряні тривоги', tooltip: 'Дані недоступні. Цей шар є лише демонстрацією можливостей.', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector', visible: false }
+            ];
+
+            // Function to create and return a new basemap layer based on config
+            const createBasemapLayer = (config) => {
+                const source = new ol.source.XYZ({ url: config.url, attributions: config.attributions });
+                return new ol.layer.Tile({ title: config.id, type: 'base', source, visible: config.initialVisible });
+            };
+
+            // Dynamically create and add basemap layers and their list items
+            const baseMapLayerGroup = new ol.layer.Group({ title: 'Base Maps', layers: [] });
+            basemapsConfig.forEach(config => {
+                const layer = createBasemapLayer(config);
+                if (layer) {
+                    basemapLayers[config.id] = layer;
+                    baseMapLayerGroup.getLayers().push(layer);
+
+                    const listItem = document.createElement('div');
+                    listItem.classList.add('flex', 'items-center', 'space-x-4', 'p-3', 'rounded-lg', 'border-2', 'border-transparent', 'cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
+                    listItem.setAttribute('data-basemap', config.id);
+                    listItem.innerHTML = `
+                        <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-300">
+                            <i class="fa-solid ${config.iconClass} text-gray-800 text-xl"></i>
+                        </div>
+                        <span>${config.title}</span>
+                    `;
+                    if (config.initialVisible) {
+                        listItem.classList.add('bg-teal-600', 'text-white');
+                    }
+                    basemapList.appendChild(listItem);
+                }
+            });
+
+            // Dynamically create and add overlay layer list items
+            const nonBordersLayersConfig = overlayLayersConfig.filter(config => config.id !== 'borders');
+            nonBordersLayersConfig.forEach(config => {
+                const listItem = document.createElement('div');
+                listItem.classList.add('flex', 'items-center', 'space-x-2', 'p-3', 'rounded-lg', 'cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
+                listItem.setAttribute('data-layer-id', config.id);
+                if (config.tooltip) {
+                    listItem.setAttribute('title', config.tooltip);
+                }
+                const iconClass = config.visible ? 'fa-eye' : 'fa-eye-slash';
+                listItem.innerHTML = `
+                    <i class="fas ${iconClass} text-lg"></i>
+                    <span class="flex-grow">${config.title}</span>
+                `;
+                layersList.appendChild(listItem);
+            });
+
+            // Initialize the map with the base map layer group
+            map = new ol.Map({
+                target: 'map',
+                layers: [baseMapLayerGroup],
+                view: new ol.View({
+                    center: ol.proj.fromLonLat([31.1656, 48.3794]),
+                    zoom: 6,
+                    minZoom: 6,
+                    maxZoom: 19
+                })
+            });
+
+            // Function to create a new overlay layer
+            const createOverlayLayer = (id) => {
+                const config = overlayLayersConfig.find(c => c.id === id);
+                if (!config) return null;
+
+                let source;
+                let layer;
+
+                if (config.type === 'tile') {
+                    source = new ol.source.XYZ({ url: config.url });
+                    layer = new ol.layer.Tile({ source: source, visible: config.visible });
+                } else if (config.type === 'vector') {
+                    source = new ol.source.Vector({
+                        url: config.url,
+                        format: new ol.format.GeoJSON()
+                    });
+
+                    switch (id) {
+                        case 'highways':
+                            layer = new ol.layer.Vector({
+                                source: source,
+                                style: new ol.style.Style({
+                                    stroke: new ol.style.Stroke({
+                                        color: 'rgba(255, 0, 0, 0.5)',
+                                        width: 2
+                                    })
+                                }),
+                                visible: config.visible
+                            });
+                            break;
+                        case 'hydrography':
+                            layer = new ol.layer.Vector({
+                                source: source,
+                                style: new ol.style.Style({
+                                    stroke: new ol.style.Stroke({
+                                        color: 'rgba(0, 0, 255, 0.5)',
+                                        width: 1
+                                    })
+                                }),
+                                visible: config.visible
+                            });
+                            break;
+                        case 'air_raids':
+                            layer = new ol.layer.Vector({
+                                source: source,
+                                style: new ol.style.Style({
+                                    fill: new ol.style.Fill({
+                                        color: 'rgba(255, 255, 0, 0.5)'
+                                    })
+                                }),
+                                visible: config.visible
+                            });
+                            break;
+                        default:
+                            layer = new ol.layer.Vector({ source: source, visible: config.visible });
+                            break;
+                    }
+                }
+
+                return layer;
+            };
+
+            // Add initial visible overlay layers
+            nonBordersLayersConfig.filter(c => c.visible).forEach(config => {
+                const layer = createOverlayLayer(config.id);
+                if (layer) {
+                    map.addLayer(layer);
+                    overlayLayers[config.id] = layer;
+                }
+            });
+
+            // Create a vector source to load the GeoJSON data for borders
+            const geojsonSource = new ol.source.Vector({
+                url: 'https://wgis.project.co.ua/borders.geojson',
+                format: new ol.format.GeoJSON()
+            });
+
+            // Create the vector layer for the GeoJSON data
+
+            const geojsonLayer = new ol.layer.Vector({
+                source: geojsonSource,
+                // The layer is visible, but its style makes it transparent
+                style: new ol.style.Style({
+                    stroke: new ol.style.Stroke({
+                        color: 'rgba(0, 0, 0, 0)', // Fully transparent stroke
+                        width: 0
+                    }),
+                    fill: new ol.style.Fill({
+                        color: 'rgba(0, 0, 0, 0)' // Fully transparent fill
+                    })
+                })
+            });
+
+            // Add the layer to the map
+            map.addLayer(geojsonLayer);
+
+            // Add an event listener to the source. Once the data is loaded,
+            // fit the map view to the extent of the data.
+            geojsonSource.on('change', function (e) {
+                // Check if the source is ready and has features
+                if (geojsonSource.getState() === 'ready' && geojsonSource.getFeatures().length > 0) {
+                    getExtentFromGeoJSON(map)
+                }
+            });
+            function getExtentFromGeoJSON(source) {
+
+                const extent = geojsonSource.getExtent();
+                // Fit the view to the extent of the GeoJSON source
+                source.getView().fit(extent, {
+                    padding: [20, 20, 20, 20], // Add padding for better visibility
+                    duration: 1000 // Animate the view change
+                });
+                return null;
+            }
+
+            // Event listeners for the layers panel
+            openPanelButton.addEventListener('click', () => {
+                layersPanel.classList.remove('hidden');
+            });
+
+            closePanelButton.addEventListener('click', () => {
+                layersPanel.classList.add('hidden');
+            });
+
+            // Event listener for basemap options
+            basemapList.addEventListener('click', (event) => {
+                const target = event.target.closest('[data-basemap]');
+                if (!target || !map) return;
+
+                const type = target.dataset.basemap;
+
+                // Update active state in UI
+                document.querySelectorAll('[data-basemap]').forEach(option => {
+                    option.classList.remove('bg-teal-600', 'text-white');
+                });
+                target.classList.add('bg-teal-600', 'text-white');
+
+                // Switch the layers
+                baseMapLayerGroup.getLayers().forEach(layer => {
+                    layer.setVisible(layer.get('title') === type);
+                });
+            });
+
+            // Event listener for overlay layers
+            layersList.addEventListener('click', (event) => {
+                const target = event.target.closest('[data-layer-id]');
+                if (!target || !map) return;
+
+                const layerId = target.dataset.layerId;
+                const icon = target.querySelector('i');
+
+                // Get or create the layer
+                let layer = overlayLayers[layerId];
+                if (!layer) {
+                    layer = createOverlayLayer(layerId);
+                    if (layer) {
+                        map.addLayer(layer);
+                        overlayLayers[layerId] = layer;
+                    }
+                }
+
+                if (layer) {
+                    const isVisible = layer.getVisible();
+                    layer.setVisible(!isVisible);
+                    icon.classList.toggle('fa-eye', !isVisible);
+                    icon.classList.toggle('fa-eye-slash', isVisible);
+                }
+            });
+
+            // Event listener for the "Reset View" button
+            resetViewButton.addEventListener('click', () => {
+                if (map && geojsonLoaded) {
+                    map.getView().fit(geojsonExtent, {
+                        padding: [50, 50, 50, 50],
+                        duration: 1000
+                    });
+                } else if (map) {
+                    map.getView().setCenter(ol.proj.fromLonLat([30.5234, 50.4501]));
+                    map.getView().setZoom(6);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
