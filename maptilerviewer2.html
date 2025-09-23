@@ -1019,7 +1019,7 @@ document.addEventListener('touchstart', function (e) {
             }
         });
         function getExtentFromGeoJSON(source) {
-
+source.getView().setRotation(initialMapRotationRadians, { duration: 1000 }); // Animate rotation to initial value
             const extent = geojsonSource.getExtent();
             // Fit the view to the extent of the GeoJSON source
             source.getView().fit(extent, {
