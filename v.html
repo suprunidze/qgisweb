@@ -1,739 +1,842 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
-<title>Детальний план території</title>
-<link rel="icon" href="/pkfaviconblue.png" type="image/png">
-<link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
-<script src="js/statcounter.js"></script>
-<style>
-  /* Базові стилі для HTML та body */
-  html, body {
-    margin: 0;
-    padding: 0;
-    height: 100dvh; /* Займає 100% висоти вікна перегляду */
-    overflow: hidden;
-    font-family: 'Montserrat', Arial, sans-serif;
-    background: #f9f9f9;
-  }
-
-  /* Стилі для верхньої панелі навігації */
-  #topBar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 56px;
-    background-color: white;
-    color: #333;
-    display: flex;
-    align-items: center;
-    padding: 0 10px;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    user-select: none;
-    z-index: 1000; /* Перекриває вміст iframe */
-  }
-
-  /* Стилі для логотипу */
-  #logo {
-    margin-right: 5px;
-    flex-shrink: 0;
-  }
-
-  #logo img {
-    height: 40px;
-    width: 40px;
-    vertical-align: middle;
-    border-radius: 5px;
-    object-fit: contain;
-  }
-
-  /* Стилі для кнопки заголовка - тепер стилізовані як кнопки режиму */
-  #titleButton {
-    background-color: #e0e0e0;
-    border: none;
-    color: #333;
-    padding: 9px 18px;
-    font-size: 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-weight: 600;
-    transition: background-color 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    flex: 1; /* Дозволяє кнопці займати доступний простір */
-    margin: 0 5px;
-    font-family: 'Montserrat', Arial, sans-serif;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: clip;
-    position: relative;
-    text-align: left;
-    padding-right: 45px;
-    display: block;
-  }
-
-  #titleButton:hover {
-    background-color: #c0c0c0;
-  }
-
-  /* Псевдоелемент для іконки трикутника */
-  #titleButton::after {
-    content: "\25BC";
-    position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    color: #333;
-    background-color: #e0e0e0;
-    padding-left: 15px;
-    padding-right: 8px;
-    padding-top: 9px;
-    padding-bottom: 9px;
-    pointer-events: none;
-    transition: background-color 0.3s ease;
-  }
-
-  /* Ефект наведення для фону трикутника */
-  #titleButton:hover::after {
-    background-color: #c0c0c0;
-  }
-
-  /* Стилі для мітки режиму */
-  .mode-label {
-    font-weight: 600;
-    margin-left: 20px;
-    margin-right: 10px;
-    color: #444;
-    user-select: none;
-    flex-shrink: 0;
-  }
-
-  /* Стилі для контейнера кнопок */
-  .buttons-group {
-    display: flex;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
-  }
-
-  .buttons-group button {
-    background-color: #e0e0e0;
-    border: none;
-    color: #333;
-    padding: 9px 18px;
-    font-size: 15px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    font-family: 'Montserrat', Arial, sans-serif;
-  }
-
-  /* Специфічний border-radius для першої та останньої кнопки */
-  .buttons-group button:first-child {
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-  }
-
-  .buttons-group button:last-child {
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-  }
-
-  .buttons-group button.active {
-    background-color: #007bff;
-    color: white;
-  }
-
-  .buttons-group button:hover:not(.active) {
-    background-color: #c0c0c0;
-  }
-
-  /* Стилі для кнопки повноекранного режиму */
-  #fullscreenBtn {
-    background-color: #e0e0e0;
-    border: none;
-    color: #333;
-    padding: 9px 12px; /* 9px top/bottom padding + 20px SVG height = 38px total height */
-    font-size: 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-weight: 600;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-family: 'Montserrat', Arial, sans-serif;
-    margin-left: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  /* Стилі для кнопки "Поділитись" */
-  #shareBtn {
-    background-color: #e0e0e0;
-    border: none;
-    color: #333;
-    padding: 11px 12px; /* Збільшено відступ, щоб відповідати висоті fullscreenBtn */
-    font-size: 15px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-weight: 600;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-family: 'Montserrat', Arial, sans-serif;
-    margin-left: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  #fullscreenBtn:hover, #shareBtn:hover {
-    background-color: #c0c0c0;
-  }
-
-  #fullscreenBtn svg {
-    width: 20px;
-    height: 20px;
-    fill: currentColor;
-  }
-
-  #shareBtn img {
-    width: 16px; /* Зменшено розмір іконки до 16px */
-    height: 16px; /* Зменшено розмір іконки до 16px */
-    margin-left: -2px; /* Зсув іконки лівіше */
-  }
-
-  /* Стилі підказки для кнопки повноекранного режиму */
-  #fullscreenBtn::before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: -30px;
-    right: 0;
-    left: auto;
-    background-color: #333;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease; /* Перехід для приховування */
-    z-index: 1001;
-  }
-
-  /* Клас для явного відображення підказки */
-  #fullscreenBtn.show-tooltip::before {
-    opacity: 1;
-    visibility: visible;
-    transition: opacity 0.3s ease, visibility 0.3s ease; /* Перехід для відображення */
-  }
-
-  /* Активний стан для кнопки повноекранного режиму */
-  #fullscreenBtn.active {
-    background-color: #007bff;
-    color: white;
-  }
-
-
-  /* Основний контейнер вмісту для iframe */
-  #container {
-    display: flex;
-    height: 100dvh; /* Займає 100% висоти вікна перегляду */
-    width: 100dvw;
-    margin-top: 0;
-  }
-
-  /* Базові стилі для всіх iframe (скидання загальних властивостей) */
-  iframe {
-    border: none;
-    display: block;
-  }
-
-  /* Специфічні стилі для iframe Sketchfab (#leftFrame) */
-  #leftFrame iframe {
-    position: absolute; /* Позиціонування для центрування */
-    top: 0; /* Центрування по вертикалі */
-    left: 50%; /* Центрування по горизонталі */
-    transform: translate(-50%, 0); /* Зміщення для точного центрування */
-    width: 100dvw; /* Ширина іфрейма дорівнює ширині вікна браузера */
-    height: calc(100dvh + 40px); /* Висота іфрейма дорівнює висоті вікна браузера */
-  }
-
-  /* Специфічні стилі для iframe QGIS.cloud (#rightFrame) */
-  #rightFrame iframe {
-    width: 100%;  
-    height: 100dvh; 
-    position: relative; 
-    left: auto;
-    transform: none;
-  }
-
-  /* Обгортка для iframe для обробки переповнення та переходів */
-  .frameWrapper {
-    position: relative;
-    overflow: hidden; /* Обрізає вміст, що виходить за межі контейнера */
-    height: 100dvh; /* Займає 100% висоти вікна перегляду */
-    transition: width 0.5s ease;
-    background: white;
-  }
-
-  /* Мінімальна ширина для фреймів */
-  #leftFrame, #rightFrame {
-    min-width: 0px;
-  }
-
-  /* Стилі розділювача */
-  #divider {
-    width: 4px; /* Зроблено тоншим */
-    background-color: #e0e0e0;
-    cursor: col-resize; /* Змінено курсор на col-resize */
-    user-select: none;
-    z-index: 2;
-    position: relative;
-    display: flex;
-    flex-direction: column; /* Дозволяє елементам всередині вирівнюватися по вертикалі */
-    justify-content: center;
-    align-items: center;
-    transition: background-color 0.3s ease;
-  }
-
-  /* Стилі для трьох вертикальних крапок на слайдері */
-  #divider::before {
-    content: ""; /* Приховано, оскільки тепер є кнопка */
-    font-size: 20px;
-    color: #333333;
-    pointer-events: none;
-  }
-
-  /* Ефект наведення для розділювача */
-  #divider:hover {
-    background-color: #c0c0c0;
-  }
-
-  /* Стилі для кнопки перетягування */
-  #draggableHandle {
-    width: 24px; /* Менша ширина */
-    height: 24px; /* Менша висота */
-    background-color: #e0e0e0; /* Колір як у розділювача */
-    border-radius: 50%; /* Кругла форма */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #333; /* Чорний колір для іконки */
-    font-size: 16px; /* Зменшений розмір шрифту для центрування */
-    font-weight: bold;
-    cursor: col-resize; /* Курсор для перетягування */
-    position: absolute; /* Позиціонування всередині розділювача */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); /* Центрування */
-    box-shadow: none; /* Тінь прибрана */
-    transition: background-color 0.3s ease, box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease; /* Додано перехід для розміру */
-    z-index: 3; /* Переконайтеся, що вона над розділювачем */
-  }
-
-  /* Стилі для кнопки перетягування при наведенні або коли розділювач наведений */
-  #draggableHandle.hovered,
-  #draggableHandle:hover {
-    background-color: #c0c0c0; /* Колір як у розділювача при наведенні */
-    box-shadow: none; /* Тінь прибрана */
-  }
-
-  #draggableHandle .icon {
-    font-size: 16px; /* Розмір символу Unicode */
-    line-height: 1; /* Забезпечує правильне вертикальне вирівнювання */
-    position: relative; /* Додано для точного позиціонування */
-    top: -1px; /* Підняти іконку на 1px для меншого розміру */
-  }
-
-  /* Накладання для зміни розміру */
-  #overlay {
-    display: none;
-    position: fixed;
-    top: 56px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    cursor: col-resize; /* Змінено курсор на col-resize */
-    z-index: 10;
-  }
-
-  /* Накладання спінера для станів завантаження */
-  .spinner-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.7);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    z-index: 5;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    opacity: 1;
-    transition: opacity 0.5s ease;
-    font-size: 18px;
-    color: #3498db;
-    font-weight: bold;
-    border-radius: 8px;
-  }
-
-  /* Анімація спінера */
-  .spinner {
-    border: 6px solid #e0e0e0;
-    border-top: 6px solid #3498db;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 10px;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* Допоміжний клас для приховування елементів */
-  .hidden {
-    display: none;
-  }
-
-  /* Допоміжний клас для вимкнення переходів */
-  .no-transition {
-    transition: none !important;
-  }
-
-  /* Панель випадаючого списку інформації про проект (нова) */
-  #titleDropdownPanel {
-    position: absolute;
-    top: 56px;
-    max-width: 600px;
-    background-color: white;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    border-radius: 0 0 8px 8px;
-    padding: 15px 20px;
-    z-index: 999;
-    display: none;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s;
-    max-height: calc(100dvh - 56px);
-    overflow-y: auto;
-    box-sizing: border-box;
-  }
-
-  #titleDropdownPanel.visible {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .dropdown-title-full {
-    font-size: 18px;
-    font-weight: 700;
-    color: #222;
-    margin-bottom: 15px;
-    line-height: 1.4;
-    /* Відкоригований відступ, щоб запобігти накладанню на кнопку закриття */
-    margin-right: 40px;
-    margin-left: 10px;
-  }
-
-  .dropdown-links {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow-y: auto;
-    padding-right: 5px;
-  }
-
-  /* Максимальна висота для посилань випадаючого списку для настільних ПК */
-  @media (min-width: 769px) {
-    .dropdown-links {
-      max-height: 336px; /* Висота 5.5 посилань (приблизно 60px на посилання + 10px проміжок) */
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no" />
+  <title>Детальний план території</title>
+  <link rel="icon" href="/pkfaviconblue.png" type="image/png">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet" />
+  <script src="js/statcounter.js"></script>
+  <style>
+    /* Базові стилі для HTML та body */
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100dvh;
+      /* Займає 100% висоти вікна перегляду */
+      overflow: hidden;
+      font-family: 'Montserrat', Arial, sans-serif;
+      background: #f9f9f9;
     }
-    .dropdown-title-full {
-      text-align: left; /* Вирівнювання заголовка по лівому краю на настільних ПК */
-    }
-    .dropdown-link span {
-      text-align: left; /* Вирівнювання тексту в посиланнях випадаючого списку по лівому краю на настільних ПК */
-      flex-grow: 1; /* Дозволяє тексту займати доступний простір */
-    }
-  }
 
-  .dropdown-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px;
-    background-color: #f0f0f0;
-    border-radius: 5px;
-    text-decoration: none;
-    color: #333;
-    font-size: 15px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-
-  .dropdown-link:hover {
-    background-color: #e0e0e0;
-  }
-
-  /* Базовий стиль іконки файлу для PDF, DOC та Web */
-  .file-icon-base {
-    width: 32px;
-    height: 32px;
-    margin-right: 10px;
-    flex-shrink: 0;
-    object-fit: contain;
-  }
-
-  .external-link-icon {
-    width: 16px;
-    height: 16px;
-    fill: #666;
-    margin-left: 10px;
-    flex-shrink: 0;
-  }
-
-  /* Кнопка закриття для панелі випадаючого списку */
-  #closeDropdownPanel, #closeSharePanel {
-    position: absolute; /* Змінено на absolute для забезпечення послідовного позиціонування */
-    top: 10px;
-    right: 10px;
-    background-color: white;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #888;
-    transition: color 0.3s ease, background-color 0.3s ease;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1002;
-  }
-
-  #closeDropdownPanel:hover, #closeSharePanel:hover {
-    color: #333;
-    background-color: #f0f0f0;
-  }
-
-  /* Стилі для панелі Поділитись */
-  #shareDropdownPanel {
-    position: absolute;
-    top: 56px;
-    right: 10px; /* Відступ від правого краю */
-    width: 180px; /* Фіксована ширина для попапу, відповідає QR-коду */
-    background-color: white;
-    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-    border-radius: 0 0 8px 8px; /* Верхні кути не заокруглені */
-    padding: 15px;
-    z-index: 999;
-    display: none;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    box-sizing: border-box;
-  }
-
-  #shareDropdownPanel.visible {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .share-panel-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 10px;
-    text-align: left; /* Вирівнювання по лівому краю */
-  }
-
-  #shareUrlContainer {
-    display: flex;
-    align-items: center;
-    margin-bottom: 15px;
-    width: 100%; /* Займає всю доступну ширину панелі */
-  }
-
-  #shareUrlInput {
-    flex-grow: 1;
-    min-width: 0; /* Додано для запобігання переповненню в flex-контейнерах */
-    padding: 8px 10px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-    background-color: #f5f5f5;
-    color: #555;
-    height: 38px; /* Низька висота */
-    box-sizing: border-box;
-    white-space: nowrap; /* Запобігає переносу тексту */
-    overflow: hidden; /* Обрізає текст, що виходить за межі */
-    text-overflow: ellipsis; /* Додає три крапки, якщо текст обрізаний */
-  }
-
-  #copyUrlBtn {
-    background-color: #e0e0e0;
-    border: none;
-    padding: 8px;
-    border-radius: 5px;
-    margin-left: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 38px;
-    width: 38px; /* Фіксована ширина для кнопки копіювання */
-    flex-shrink: 0; /* Запобігає зменшенню */
-    box-sizing: border-box;
-  }
-
-  #copyUrlBtn:hover {
-    background-color: #c0c0c0;
-  }
-
-  #copyUrlBtn img {
-    width: 16px;
-    height: 16px;
-  }
-
-  #qrCodeImage {
-    display: block;
-    margin: 0 auto;
-    width: 150px;
-    height: 150px;
-    border: 1px solid #eee;
-    border-radius: 5px;
-  }
-
-  /* --- Стилі, специфічні для мобільних пристроїв --- */
-  @media (max-width: 768px) {
+    /* Стилі для верхньої панелі навігації */
     #topBar {
-      padding: 0 5px; /* Зменшити відступ для мобільних пристроїв */
-      justify-content: space-between; /* Рівномірно розподілити елементи */
-      flex-wrap: nowrap; /* Запобігти переносу */
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 56px;
+      background-color: white;
+      color: #333;
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+      user-select: none;
+      z-index: 1000;
+      /* Перекриває вміст iframe */
     }
 
+    /* Стилі для логотипу */
     #logo {
       margin-right: 5px;
+      flex-shrink: 0;
     }
 
+    #logo img {
+      height: 40px;
+      width: 40px;
+      vertical-align: middle;
+      border-radius: 5px;
+      object-fit: contain;
+    }
+
+    /* Стилі для кнопки заголовка - тепер стилізовані як кнопки режиму */
     #titleButton {
-      flex: 1; /* Дозволити розтягуватися */
-      max-width: none; /* Зняти обмеження максимальної ширини */
-      padding: 9px 10px; /* Налаштувати відступ */
+      background-color: #e0e0e0;
+      border: none;
+      color: #333;
+      padding: 9px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      flex: 1;
+      /* Дозволяє кнопці займати доступний простір */
       margin: 0 5px;
-      font-size: 13px; /* Менший розмір шрифту */
-      padding-right: 30px; /* Налаштувати для трикутника */
+      font-family: 'Montserrat', Arial, sans-serif;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+      position: relative;
+      text-align: left;
+      padding-right: 45px;
+      display: block;
     }
 
+    #titleButton:hover {
+      background-color: #c0c0c0;
+    }
+
+    /* Псевдоелемент для іконки трикутника */
     #titleButton::after {
-      padding-left: 5px; /* Налаштувати для трикутника */
-      padding-right: 5px; /* Налаштувати для трикутника */
+      content: "\25BC";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #333;
+      background-color: #e0e0e0;
+      padding-left: 15px;
+      padding-right: 8px;
+      padding-top: 9px;
+      padding-bottom: 9px;
+      pointer-events: none;
+      transition: background-color 0.3s ease;
     }
 
-    /* Додано: Приховати мітку режиму на мобільних пристроях */
+    /* Ефект наведення для фону трикутника */
+    #titleButton:hover::after {
+      background-color: #c0c0c0;
+    }
+
+    /* Стилі для мітки режиму */
     .mode-label {
-      display: none;
+      font-weight: 600;
+      margin-left: 20px;
+      margin-right: 10px;
+      color: #444;
+      user-select: none;
+      flex-shrink: 0;
     }
 
-    #desktop-mode-buttons {
-      display: none; /* Приховати кнопки робочого столу на мобільних пристроях */
+    /* Стилі для контейнера кнопок */
+    .buttons-group {
+      display: flex;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
     }
 
-    #mobile-mode-buttons {
-      display: flex; /* Показати кнопки мобільних пристроїв на мобільних пристроях */
-      margin-left: 5px; /* Додати трохи простору */
-      flex-shrink: 0; /* Запобігти зменшенню */
+    .buttons-group button {
+      background-color: #e0e0e0;
+      border: none;
+      color: #333;
+      padding: 9px 18px;
+      font-size: 15px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      font-family: 'Montserrat', Arial, sans-serif;
     }
 
+    /* Специфічний border-radius для першої та останньої кнопки */
+    .buttons-group button:first-child {
+      border-top-left-radius: 5px;
+      border-bottom-left-radius: 5px;
+    }
+
+    .buttons-group button:last-child {
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 5px;
+    }
+
+    .buttons-group button.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+    .buttons-group button:hover:not(.active) {
+      background-color: #c0c0c0;
+    }
+
+    /* Стилі для кнопки повноекранного режиму */
     #fullscreenBtn {
-      margin-left: 5px; /* Зменшити відступ для мобільних пристроїв */
-      flex-shrink: 0; /* Запобігти зменшенню */
+      background-color: #e0e0e0;
+      border: none;
+      color: #333;
+      padding: 9px 12px;
+      /* 9px top/bottom padding + 20px SVG height = 38px total height */
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
     }
 
-    /* Приховати кнопку "Поділитись" на мобільних пристроях */
+    /* Стилі для кнопки "Поділитись" */
     #shareBtn {
+      background-color: #e0e0e0;
+      border: none;
+      color: #333;
+      padding: 11px 12px;
+      /* Збільшено відступ, щоб відповідати висоті fullscreenBtn */
+      font-size: 15px;
+      cursor: pointer;
+      border-radius: 5px;
+      font-weight: 600;
+      transition: background-color 0.3s ease, color 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    #fullscreenBtn:hover,
+    #shareBtn:hover {
+      background-color: #c0c0c0;
+    }
+
+    #fullscreenBtn svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    #shareBtn img {
+      width: 16px;
+      /* Зменшено розмір іконки до 16px */
+      height: 16px;
+      /* Зменшено розмір іконки до 16px */
+      margin-left: -2px;
+      /* Зсув іконки лівіше */
+    }
+
+    /* Стилі підказки для кнопки повноекранного режиму */
+    #fullscreenBtn::before {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: -30px;
+      right: 0;
+      left: auto;
+      background-color: #333;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      /* Перехід для приховування */
+      z-index: 1001;
+    }
+
+    /* Клас для явного відображення підказки */
+    #fullscreenBtn.show-tooltip::before {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+      /* Перехід для відображення */
+    }
+
+    /* Активний стан для кнопки повноекранного режиму */
+    #fullscreenBtn.active {
+      background-color: #007bff;
+      color: white;
+    }
+
+
+    /* Основний контейнер вмісту для iframe */
+    #container {
+      display: flex;
+      height: 100dvh;
+      /* Займає 100% висоти вікна перегляду */
+      width: 100dvw;
+      margin-top: 0;
+    }
+
+    /* Базові стилі для всіх iframe (скидання загальних властивостей) */
+    iframe {
+      border: none;
+      display: block;
+    }
+
+    /* Специфічні стилі для iframe Sketchfab (#leftFrame) */
+    #leftFrame iframe {
+      position: absolute;
+      /* Позиціонування для центрування */
+      top: 0;
+      /* Центрування по вертикалі */
+      left: 50%;
+      /* Центрування по горизонталі */
+      transform: translate(-50%, 0);
+      /* Зміщення для точного центрування */
+      width: 100dvw;
+      /* Ширина іфрейма дорівнює ширині вікна браузера */
+      height: calc(100dvh + 40px);
+      /* Висота іфрейма дорівнює висоті вікна браузера */
+    }
+
+    /* Специфічні стилі для iframe QGIS.cloud (#rightFrame) */
+    #rightFrame iframe {
+      width: 100%;
+      height: 100dvh;
+      position: relative;
+      left: auto;
+      transform: none;
+    }
+
+    /* Обгортка для iframe для обробки переповнення та переходів */
+    .frameWrapper {
+      position: relative;
+      overflow: hidden;
+      /* Обрізає вміст, що виходить за межі контейнера */
+      height: 100dvh;
+      /* Займає 100% висоти вікна перегляду */
+      transition: width 0.5s ease;
+      background: white;
+    }
+
+    /* Мінімальна ширина для фреймів */
+    #leftFrame,
+    #rightFrame {
+      min-width: 0px;
+    }
+
+    /* Стилі розділювача */
+    #divider {
+      width: 4px;
+      /* Зроблено тоншим */
+      background-color: #e0e0e0;
+      cursor: col-resize;
+      /* Змінено курсор на col-resize */
+      user-select: none;
+      z-index: 2;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      /* Дозволяє елементам всередині вирівнюватися по вертикалі */
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+
+    /* Стилі для трьох вертикальних крапок на слайдері */
+    #divider::before {
+      content: "";
+      /* Приховано, оскільки тепер є кнопка */
+      font-size: 20px;
+      color: #333333;
+      pointer-events: none;
+    }
+
+    /* Ефект наведення для розділювача */
+    #divider:hover {
+      background-color: #c0c0c0;
+    }
+
+    /* Стилі для кнопки перетягування */
+    #draggableHandle {
+      width: 24px;
+      /* Менша ширина */
+      height: 24px;
+      /* Менша висота */
+      background-color: #e0e0e0;
+      /* Колір як у розділювача */
+      border-radius: 50%;
+      /* Кругла форма */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #333;
+      /* Чорний колір для іконки */
+      font-size: 16px;
+      /* Зменшений розмір шрифту для центрування */
+      font-weight: bold;
+      cursor: col-resize;
+      /* Курсор для перетягування */
+      position: absolute;
+      /* Позиціонування всередині розділювача */
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      /* Центрування */
+      box-shadow: none;
+      /* Тінь прибрана */
+      transition: background-color 0.3s ease, box-shadow 0.3s ease, width 0.3s ease, height 0.3s ease;
+      /* Додано перехід для розміру */
+      z-index: 3;
+      /* Переконайтеся, що вона над розділювачем */
+    }
+
+    /* Стилі для кнопки перетягування при наведенні або коли розділювач наведений */
+    #draggableHandle.hovered,
+    #draggableHandle:hover {
+      background-color: #c0c0c0;
+      /* Колір як у розділювача при наведенні */
+      box-shadow: none;
+      /* Тінь прибрана */
+    }
+
+    #draggableHandle .icon {
+      font-size: 16px;
+      /* Розмір символу Unicode */
+      line-height: 1;
+      /* Забезпечує правильне вертикальне вирівнювання */
+      position: relative;
+      /* Додано для точного позиціонування */
+      top: -1px;
+      /* Підняти іконку на 1px для меншого розміру */
+    }
+
+    /* Накладання для зміни розміру */
+    #overlay {
+      display: none;
+      position: fixed;
+      top: 56px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      cursor: col-resize;
+      /* Змінено курсор на col-resize */
+      z-index: 10;
+    }
+
+    /* Накладання спінера для станів завантаження */
+    .spinner-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.7);
+      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(20px);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.5s ease;
+      font-size: 18px;
+      color: #3498db;
+      font-weight: bold;
+      border-radius: 8px;
+    }
+
+    /* Анімація спінера */
+    .spinner {
+      border: 6px solid #e0e0e0;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 10px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Допоміжний клас для приховування елементів */
+    .hidden {
       display: none;
     }
 
-    /* Налаштувати панель випадаючого списку для мобільних пристроїв */
+    /* Допоміжний клас для вимкнення переходів */
+    .no-transition {
+      transition: none !important;
+    }
+
+    /* Панель випадаючого списку інформації про проект (нова) */
     #titleDropdownPanel {
-      left: 5px !important; /* Вирівняти по лівому краю екрана з відступом */
-      right: 5px !important; /* Вирівняти по правому краю екрана з відступом */
-      width: auto !important; /* Дозволити бути гнучким */
-      max-width: none; /* Видалити обмеження максимальної ширини */
+      position: absolute;
+      top: 56px;
+      max-width: 600px;
+      background-color: white;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 0 0 8px 8px;
+      padding: 15px 20px;
+      z-index: 999;
+      display: none;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s;
+      max-height: calc(100dvh - 56px);
+      overflow-y: auto;
+      box-sizing: border-box;
     }
 
-    /* Специфічно для мобільних пристроїв: без максимальної висоти для посилань випадаючого списку */
-    .dropdown-links {
-      max-height: none;
+    #titleDropdownPanel.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
     }
+
     .dropdown-title-full {
-      text-align: center; /* Вирівнювання заголовка по центру на мобільних пристроях */
-    }
-    .dropdown-link span {
-      text-align: center; /* Вирівнювання тексту в посиланнях випадаючого списку по центру на мобільних пристроях */
-      flex-grow: 1; /* Дозволяє тексту займати доступний простір */
+      font-size: 18px;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 15px;
+      line-height: 1.4;
+      /* Відкоригований відступ, щоб запобігти накладанню на кнопку закриття */
+      margin-right: 40px;
+      margin-left: 10px;
     }
 
-    /* Налаштування панелі Поділитись для мобільних пристроїв */
+    .dropdown-links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    /* Максимальна висота для посилань випадаючого списку для настільних ПК */
+    @media (min-width: 769px) {
+      .dropdown-links {
+        max-height: 336px;
+        /* Висота 5.5 посилань (приблизно 60px на посилання + 10px проміжок) */
+      }
+
+      .dropdown-title-full {
+        text-align: left;
+        /* Вирівнювання заголовка по лівому краю на настільних ПК */
+      }
+
+      .dropdown-link span {
+        text-align: left;
+        /* Вирівнювання тексту в посиланнях випадаючого списку по лівому краю на настільних ПК */
+        flex-grow: 1;
+        /* Дозволяє тексту займати доступний простір */
+      }
+    }
+
+    .dropdown-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 15px;
+      background-color: #f0f0f0;
+      border-radius: 5px;
+      text-decoration: none;
+      color: #333;
+      font-size: 15px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .dropdown-link:hover {
+      background-color: #e0e0e0;
+    }
+
+    /* Базовий стиль іконки файлу для PDF, DOC та Web */
+    .file-icon-base {
+      width: 32px;
+      height: 32px;
+      margin-right: 10px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+
+    .external-link-icon {
+      width: 16px;
+      height: 16px;
+      fill: #666;
+      margin-left: 10px;
+      flex-shrink: 0;
+    }
+
+    /* Кнопка закриття для панелі випадаючого списку */
+    #closeDropdownPanel,
+    #closeSharePanel {
+      position: absolute;
+      /* Змінено на absolute для забезпечення послідовного позиціонування */
+      top: 10px;
+      right: 10px;
+      background-color: white;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #888;
+      transition: color 0.3s ease, background-color 0.3s ease;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1002;
+    }
+
+    #closeDropdownPanel:hover,
+    #closeSharePanel:hover {
+      color: #333;
+      background-color: #f0f0f0;
+    }
+
+    /* Стилі для панелі Поділитись */
     #shareDropdownPanel {
-      left: 5px;
-      right: 5px;
-      width: auto;
+      position: absolute;
+      top: 56px;
+      right: 10px;
+      /* Відступ від правого краю */
+      width: 180px;
+      /* Фіксована ширина для попапу, відповідає QR-коду */
+      background-color: white;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 0 0 8px 8px;
+      /* Верхні кути не заокруглені */
+      padding: 15px;
+      z-index: 999;
+      display: none;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      box-sizing: border-box;
     }
+
+    #shareDropdownPanel.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .share-panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+      text-align: left;
+      /* Вирівнювання по лівому краю */
+    }
+
+    #shareUrlContainer {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+      width: 100%;
+      /* Займає всю доступну ширину панелі */
+    }
+
+    #shareUrlInput {
+      flex-grow: 1;
+      min-width: 0;
+      /* Додано для запобігання переповненню в flex-контейнерах */
+      padding: 8px 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      background-color: #f5f5f5;
+      color: #555;
+      height: 38px;
+      /* Низька висота */
+      box-sizing: border-box;
+      white-space: nowrap;
+      /* Запобігає переносу тексту */
+      overflow: hidden;
+      /* Обрізає текст, що виходить за межі */
+      text-overflow: ellipsis;
+      /* Додає три крапки, якщо текст обрізаний */
+    }
+
+    #copyUrlBtn {
+      background-color: #e0e0e0;
+      border: none;
+      padding: 8px;
+      border-radius: 5px;
+      margin-left: 10px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 38px;
+      width: 38px;
+      /* Фіксована ширина для кнопки копіювання */
+      flex-shrink: 0;
+      /* Запобігає зменшенню */
+      box-sizing: border-box;
+    }
+
+    #copyUrlBtn:hover {
+      background-color: #c0c0c0;
+    }
+
+    #copyUrlBtn img {
+      width: 16px;
+      height: 16px;
+    }
+
     #qrCodeImage {
-      display: none; /* Приховати QR-код на мобільних пристроях */
-    }
-  }
-
-  /* --- Стилі, специфічні для настільних ПК (переконайтеся, що мобільні кнопки приховані) --- */
-  @media (min-width: 769px) {
-    #desktop-mode-buttons {
-      display: flex; /* Показати кнопки робочого столу на настільних ПК */
+      display: block;
+      margin: 0 auto;
+      width: 150px;
+      height: 150px;
+      border: 1px solid #eee;
+      border-radius: 5px;
     }
 
-    #mobile-mode-buttons {
-      display: none; /* Приховати кнопки мобільних пристроїв на настільних ПК */
+    /* --- Стилі, специфічні для мобільних пристроїв --- */
+    @media (max-width: 768px) {
+      #topBar {
+        padding: 0 5px;
+        /* Зменшити відступ для мобільних пристроїв */
+        justify-content: space-between;
+        /* Рівномірно розподілити елементи */
+        flex-wrap: nowrap;
+        /* Запобігти переносу */
+      }
+
+      #logo {
+        margin-right: 5px;
+      }
+
+      #titleButton {
+        flex: 1;
+        /* Дозволити розтягуватися */
+        max-width: none;
+        /* Зняти обмеження максимальної ширини */
+        padding: 9px 10px;
+        /* Налаштувати відступ */
+        margin: 0 5px;
+        font-size: 13px;
+        /* Менший розмір шрифту */
+        padding-right: 30px;
+        /* Налаштувати для трикутника */
+      }
+
+      #titleButton::after {
+        padding-left: 5px;
+        /* Налаштувати для трикутника */
+        padding-right: 5px;
+        /* Налаштувати для трикутника */
+      }
+
+      /* Додано: Приховати мітку режиму на мобільних пристроях */
+      .mode-label {
+        display: none;
+      }
+
+      #desktop-mode-buttons {
+        display: none;
+        /* Приховати кнопки робочого столу на мобільних пристроях */
+      }
+
+      #mobile-mode-buttons {
+        display: flex;
+        /* Показати кнопки мобільних пристроїв на мобільних пристроях */
+        margin-left: 5px;
+        /* Додати трохи простору */
+        flex-shrink: 0;
+        /* Запобігти зменшенню */
+      }
+
+      #fullscreenBtn {
+        margin-left: 5px;
+        /* Зменшити відступ для мобільних пристроїв */
+        flex-shrink: 0;
+        /* Запобігти зменшенню */
+      }
+
+      /* Приховати кнопку "Поділитись" на мобільних пристроях */
+      #shareBtn {
+        display: none;
+      }
+
+      /* Налаштувати панель випадаючого списку для мобільних пристроїв */
+      #titleDropdownPanel {
+        left: 5px !important;
+        /* Вирівняти по лівому краю екрана з відступом */
+        right: 5px !important;
+        /* Вирівняти по правому краю екрана з відступом */
+        width: auto !important;
+        /* Дозволити бути гнучким */
+        max-width: none;
+        /* Видалити обмеження максимальної ширини */
+      }
+
+      /* Специфічно для мобільних пристроїв: без максимальної висоти для посилань випадаючого списку */
+      .dropdown-links {
+        max-height: none;
+      }
+
+      .dropdown-title-full {
+        text-align: center;
+        /* Вирівнювання заголовка по центру на мобільних пристроях */
+      }
+
+      .dropdown-link span {
+        text-align: center;
+        /* Вирівнювання тексту в посиланнях випадаючого списку по центру на мобільних пристроях */
+        flex-grow: 1;
+        /* Дозволяє тексту займати доступний простір */
+      }
+
+      /* Налаштування панелі Поділитись для мобільних пристроїв */
+      #shareDropdownPanel {
+        left: 5px;
+        right: 5px;
+        width: auto;
+      }
+
+      #qrCodeImage {
+        display: none;
+        /* Приховати QR-код на мобільних пристроях */
+      }
     }
-  }
 
-  /* Стилі для основного оверлею завантаження */
-  #mainLoadingOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100dvw;
-    height: 100dvh;
-    background-color: rgba(255, 255, 255, 0.9); /* Напівпрозорий білий фон */
-    backdrop-filter: blur(5px); /* Додатковий ефект розмиття */
-    z-index: 9999; /* Вище за будь-який інший елемент */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    transition: opacity 0.5s ease;
-  }
+    /* --- Стилі, специфічні для настільних ПК (переконайтеся, що мобільні кнопки приховані) --- */
+    @media (min-width: 769px) {
+      #desktop-mode-buttons {
+        display: flex;
+        /* Показати кнопки робочого столу на настільних ПК */
+      }
 
-  #mainLoadingOverlay.hidden {
-    opacity: 0;
-    pointer-events: none; /* Дозволити кліки крізь при приховуванні */
-  }
-</style>
+      #mobile-mode-buttons {
+        display: none;
+        /* Приховати кнопки мобільних пристроїв на настільних ПК */
+      }
+    }
+
+    /* Стилі для основного оверлею завантаження */
+    #mainLoadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100dvw;
+      height: 100dvh;
+      background-color: rgba(255, 255, 255, 0.9);
+      /* Напівпрозорий білий фон */
+      backdrop-filter: blur(5px);
+      /* Додатковий ефект розмиття */
+      z-index: 9999;
+      /* Вище за будь-який інший елемент */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      transition: opacity 0.5s ease;
+    }
+
+    #mainLoadingOverlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+      /* Дозволити кліки крізь при приховуванні */
+    }
+  </style>
 </head>
+
 <body>
 
   <div id="mainLoadingOverlay">
@@ -745,7 +848,8 @@
 
   <div id="topBar" style="display: none;">
     <a href="/" id="logo">
-      <img src="https://www.logoai.com/oss/icons/2021/12/02/SU8HhT2n6tL-p-_.png" alt="Company Logo" onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=Logo+Error';" />
+      <img src="https://www.logoai.com/oss/icons/2021/12/02/SU8HhT2n6tL-p-_.png" alt="Company Logo"
+        onerror="this.onerror=null;this.src='https://placehold.co/40x40/cccccc/333333?text=Logo+Error';" />
     </a>
     <button id="titleButton" title="">
       Завантаження...
@@ -757,16 +861,17 @@
       <button id="btn2D">2D</button>
     </div>
     <div id="mobile-mode-buttons" class="buttons-group">
-        <button id="btnMobile2D">2D</button>
-        <button id="btnMobile3D">3D</button>
+      <button id="btnMobile2D">2D</button>
+      <button id="btnMobile3D">3D</button>
     </div>
     <button id="fullscreenBtn" data-tooltip="На весь екран">
       <svg class="fullscreen-icon" viewBox="0 0 24 24">
-        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
       </svg>
     </button>
     <button id="shareBtn">
-      <img src="https://img.icons8.com/material-sharp/48/737373/share.png" alt="Поділитись" onerror="this.onerror=null;this.src='https://placehold.co/16x16/cccccc/333333?text=Share';"/>
+      <img src="https://img.icons8.com/material-sharp/48/737373/share.png" alt="Поділитись"
+        onerror="this.onerror=null;this.src='https://placehold.co/16x16/cccccc/333333?text=Share';" />
     </button>
   </div>
 
@@ -776,7 +881,7 @@
       Завантаження...
     </div>
     <div class="dropdown-links">
-      </div>
+    </div>
   </div>
 
   <div id="shareDropdownPanel">
@@ -785,7 +890,8 @@
     <div id="shareUrlContainer">
       <input type="text" id="shareUrlInput" readonly />
       <button id="copyUrlBtn">
-        <img src="https://img.icons8.com/tiny-glyph/16/737373/documents.png" alt="Копіювати" onerror="this.onerror=null;this.src='https://placehold.co/16x16/cccccc/333333?text=Copy';"/>
+        <img src="https://img.icons8.com/tiny-glyph/16/737373/documents.png" alt="Копіювати"
+          onerror="this.onerror=null;this.src='https://placehold.co/16x16/cccccc/333333?text=Copy';" />
       </button>
     </div>
     <img id="qrCodeImage" alt="QR Code" />
@@ -797,14 +903,8 @@
         <div class="spinner"></div>
         <div>3D модель</div>
       </div>
-      <iframe
-        title=""
-        src=""
-        allowfullscreen
-        mozallowfullscreen="true"
-        webkitallowfullscreen="true"
-        allow="autoplay; fullscreen; xr-spatial-tracking"
-      ></iframe>
+      <iframe title="" src="" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true"
+        allow="autoplay; fullscreen; xr-spatial-tracking"></iframe>
     </div>
 
     <div id="divider">
@@ -818,757 +918,756 @@
         <div class="spinner"></div>
         <div>2D карта</div>
       </div>
-      <iframe
-        title=""
-        src=""
-        allowfullscreen
-        mozallowfullscreen="true"
-        webkitallowfullscreen="true"
-      ></iframe>
+      <iframe title="" src="" allowfullscreen mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
     </div>
   </div>
 
   <div id="overlay"></div>
 
-<script>
-  // Функції для приховування спінерів
-  /**
-   * Приховує спінер для лівого фрейма.
-   */
-  function hideSpinnerLeft() {
-    spinnerLeft.style.opacity = '0';
-    setTimeout(() => {
-      spinnerLeft.classList.add('hidden');
-      spinnerLeft.style.opacity = '1'; // Скинути непрозорість для наступного використання
-    }, 500);
-  }
-
-  /**
-   * Приховує спінер для правого фрейма.
-   */
-  function hideSpinnerRight() {
-    spinnerRight.style.opacity = '0';
-    setTimeout(() => {
-      spinnerRight.classList.add('hidden');
-      spinnerRight.style.opacity = '1'; // Скинути непрозорість для наступного використання
-    }, 500);
-  }
-
-  // Отримання елементів DOM
-  const divider = document.getElementById('divider');
-  const leftFrame = document.getElementById('leftFrame');
-  const rightFrame = document.getElementById('rightFrame');
-  const overlay = document.getElementById('overlay');
-  const draggableHandle = document.getElementById('draggableHandle'); // Новий елемент
-
-  // Кнопки режиму для настільних ПК
-  const desktopModeButtons = document.getElementById('desktop-mode-buttons');
-  const btn3D = document.getElementById('btn3D');
-  const btn2D3D = document.getElementById('btn2D3D');
-  const btn2D = document.getElementById('btn2D');
-
-  // Кнопки режиму для мобільних пристроїв
-  const mobileModeButtons = document.getElementById('mobile-mode-buttons');
-  const btnMobile2D = document.getElementById('btnMobile2D');
-  const btnMobile3D = document.getElementById('btnMobile3D');
-
-  const spinnerLeft = document.getElementById('spinnerLeft');
-  const spinnerRight = document.getElementById('spinnerRight');
-
-  const titleButton = document.getElementById('titleButton');
-  const titleDropdownPanel = document.getElementById('titleDropdownPanel');
-  const closeDropdownPanel = document.getElementById('closeDropdownPanel');
-  const dropdownLinksContainer = document.querySelector('.dropdown-links');
-  const dropdownTitleFull = document.querySelector('.dropdown-title-full');
-  const leftIframe = document.querySelector('#leftFrame iframe');
-  const rightIframe = document.querySelector('#rightFrame iframe');
-
-  // Основний оверлей завантаження
-  const mainLoadingOverlay = document.getElementById('mainLoadingOverlay');
-
-  // Елементи для функції "Поділитись"
-  const fullscreenBtn = document.getElementById('fullscreenBtn');
-  const shareBtn = document.getElementById('shareBtn');
-  const shareDropdownPanel = document.getElementById('shareDropdownPanel');
-  const closeSharePanel = document.getElementById('closeSharePanel');
-  const shareUrlInput = document.getElementById('shareUrlInput');
-  const copyUrlBtn = document.getElementById('copyUrlBtn');
-  const qrCodeImage = document.getElementById('qrCodeImage');
-  let tooltipTimeout; // Змінна для зберігання таймера підказки
-
-
-  const minWidth = 0;
-  let currentDesktopMode = '2D3D'; // Зберігає останній активний режим робочого столу
-  let currentMobileMode = '2D'; // Зберігає останній активний мобільний режим
-  let currentLeftFramePercentage = 50; // Зберігає відсоткову ширину лівого фрейма в режимі 2D/3D
-
-  // Глобальні змінні для відстеження стану перетягування
-  let isResizing = false;
-  let isDragging = false;
-  let initialPointerX = 0; // Початкова X-координата вказівника (миші/дотику)
-  let initialLeftFrameWidth = 0; // Початкова ширина лівого фрейма
-
-  // Глобальна змінна для відстеження наявності 3D-вмісту
-  let has3DContent = true; // За замовчуванням true, буде оновлено після завантаження config.json
-
-  // Мапування типів іконок на URL-адреси
-  const iconMap = {
-    pdf: 'https://img.icons8.com/color/48/pdf.png',
-    word: 'https://img.icons8.com/color/48/word.png',
-    'domain--v1': 'https://img.icons8.com/color/48/external-link.png', // Оновлено
-    zip: 'https://img.icons8.com/color/48/zip.png',
-    'google-drive--v2': 'https://img.icons8.com/color/48/google-drive--v2.png',
-    'microsoft-onedrive-2019': 'https://img.icons8.com/color/48/microsoft-onedrive-2019.png',
-    xls: 'https://img.icons8.com/color/48/xls.png',
-    file: 'https://img.icons8.com/color/48/file.png',
-    image: 'https://img.icons8.com/color/48/image-file.png',
-    code: 'https://img.icons8.com/color/48/code-file.png',
-    xml: 'https://img.icons8.com/color/48/xml-file.png',
-    encrypted: '../img/icons8-ai-48.png'
-  };
-
-  const placeholderIconMap = {
-    pdf: 'https://placehold.co/20x20/dc3545/ffffff?text=PDF',
-    word: 'https://placehold.co/20x20/007bff/ffffff?text=DOC',
-    'domain--v1': 'https://placehold.co/20x20/17a2b8/ffffff?text=LINK', // Оновлено
-    zip: 'https://placehold.co/20x20/808080/ffffff?text=ZIP',
-    'google-drive--v2': 'https://placehold.co/20x20/4285F4/ffffff?text=Drive',
-    'microsoft-onedrive-2019': 'https://placehold.co/20x20/0F6FBF/ffffff?text=OneDrive',
-    xls: 'https://placehold.co/20x20/217346/ffffff?text=XLS',
-    file: 'https://placehold.co/20x20/666666/ffffff?text=FILE',
-    image: 'https://placehold.co/20x20/28a745/ffffff?text=IMG',
-    code: 'https://placehold.co/20x20/3498db/ffffff?text=CODE',
-    xml: 'https://placehold.co/20x20/f39c12/ffffff?text=XML',
-    encrypted: 'https://placehold.co/20x20/e74c3c/ffffff?text=ENC'
-  };
-
-function parentRotationHandler() {
-            topBar.style.cursor = 'move';
-console.log('Parent rotation handler triggered');
-           
-        }
-        
-
-  /**
-   * Завантажує дані конфігурації з config.json.
-   * Використовує параметр 'p' з URL для формування шляху до config.json.
-   * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
-   */
-  function updateUrlModeParam(mode) {
-  const url = new URL(window.location.href);
-  // Встановити або оновити параметр 'mode'
-  /*if (mode === '2D3D') {
-    url.searchParams.delete('mode'); // За замовчуванням не показуємо mode=2D3D
-  } else {
-    url.searchParams.set('mode', mode.toLowerCase());
-  }*/
-  window.history.replaceState({}, '', url);
-}
-async function loadConfig() {
-    let configUrl = 'testconfig.json'; // За замовчуванням: config.json у поточній директорії
-
-    // Отримати параметр 'p' з URL
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Додатковий параметр "mode" для примусового режиму
-    const modeParam = urlParams.get('mode');
-    if (modeParam === '3d') {
-      currentDesktopMode = '3D';
-      currentMobileMode = '3D';
-    } else if (modeParam === '2d') {
-      currentDesktopMode = '2D';
-      currentMobileMode = '2D';
-    } else {
-      currentDesktopMode = '2D3D'; // За замовчуванням
-      currentMobileMode = '2D'; // За замовчуванням для мобільних пристроїв
-    }
-    const pParam = urlParams.get('p');
-    if (pParam) {
-      // Сформувати URL на основі параметра 'p'
-      configUrl = `${pParam}/config.json`;
-    }
-
-    try {
-      const response = await fetch(configUrl);
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const config = await response.json();
-      has3DContent = config.has3D === true; // Оновити глобальну змінну has3DContent
-      applyConfig(config); // Застосувати загальну конфігурацію (заголовки, посилання на документи, src iframe)
-
-      // Тепер, на основі has3DContent, налаштувати видимість та макет інтерфейсу
-      updateUIBasedOn3D(); // Викликати нову функцію оновлення інтерфейсу
-      updateDraggableHandleSize(); // Оновити розмір кнопки слайдера
-
-      // Приховати основний оверлей завантаження та показати вміст
-      mainLoadingOverlay.classList.add('hidden');
+  <script>
+    // Функції для приховування спінерів
+    /**
+     * Приховує спінер для лівого фрейма.
+     */
+    function hideSpinnerLeft() {
+      spinnerLeft.style.opacity = '0';
       setTimeout(() => {
-        mainLoadingOverlay.style.display = 'none';
-        document.getElementById('topBar').style.display = 'flex';
-        document.getElementById('container').style.display = 'flex';
-        // updateViewBasedOnWidth() тепер не потрібен тут, оскільки updateUIBasedOn3D вже встановлює початковий вигляд
-      }, 500); // Дозволити завершитись переходу
-    } catch (error) {
-      console.error(`Помилка завантаження конфігурації: ${error.message}`);
-      has3DContent = false; // Припустити відсутність 3D, якщо конфігурація не завантажилася
-      updateUIBasedOn3D(); // Застосувати зміни інтерфейсу на основі припущення про відсутність 3D
-      // Показати повідомлення про помилку на оверлеї спінера
-      const spinnerOverlayDiv = mainLoadingOverlay.querySelector('.spinner-overlay div:last-child');
-      if (spinnerOverlayDiv) {
-        spinnerOverlayDiv.textContent = `Помилка завантаження даних. Спробуйте оновити сторінку.`;
-        mainLoadingOverlay.querySelector('.spinner').style.display = 'none'; // Приховати спінер
-      }
-      // Залишити оверлей видимим, щоб показати помилку
+        spinnerLeft.classList.add('hidden');
+        spinnerLeft.style.opacity = '1'; // Скинути непрозорість для наступного використання
+      }, 500);
     }
-  }
 
-  /**
-   * Застосовує завантажені дані конфігурації до DOM.
-   * @param {object} config - Об'єкт конфігурації.
-   */
-  function applyConfig(config) {
-    // Оновити заголовок сторінки у браузері
-    document.title = config.projectTitle;
+    /**
+     * Приховує спінер для правого фрейма.
+     */
+    function hideSpinnerRight() {
+      spinnerRight.style.opacity = '0';
+      setTimeout(() => {
+        spinnerRight.classList.add('hidden');
+        spinnerRight.style.opacity = '1'; // Скинути непрозорість для наступного використання
+      }, 500);
+    }
 
-    // Оновити заголовок кнопки
-    titleButton.setAttribute('title', config.projectTitle);
-    titleButton.textContent = config.projectTitle;
+    // Отримання елементів DOM
+    const divider = document.getElementById('divider');
+    const leftFrame = document.getElementById('leftFrame');
+    const rightFrame = document.getElementById('rightFrame');
+    const overlay = document.getElementById('overlay');
+    const draggableHandle = document.getElementById('draggableHandle'); // Новий елемент
 
-    // Оновити повний заголовок у випадаючому вікні
-    dropdownTitleFull.textContent = config.projectTitle;
+    // Кнопки режиму для настільних ПК
+    const desktopModeButtons = document.getElementById('desktop-mode-buttons');
+    const btn3D = document.getElementById('btn3D');
+    const btn2D3D = document.getElementById('btn2D3D');
+    const btn2D = document.getElementById('btn2D');
 
-    // Очистити існуючі посилання та додати нові з конфігурації
-    // Перевірка, чи є документи, щоб відображати або приховувати контейнер посилань
-    if (!config.documents || config.documents.length === 0) {
-      dropdownLinksContainer.innerHTML = ''; // Переконатися, що він порожній
-      dropdownLinksContainer.style.display = 'none'; // Приховати контейнер
-    } else {
-      dropdownLinksContainer.style.display = 'flex'; // Переконатися, що він видимий, якщо є документи
-      dropdownLinksContainer.innerHTML = ''; // Очистити існуючі посилання перед додаванням нових
-      config.documents.forEach(doc => {
-        const link = document.createElement('a');
-        link.href = doc.url;
-        link.target = '_blank';
-        link.classList.add('dropdown-link');
+    // Кнопки режиму для мобільних пристроїв
+    const mobileModeButtons = document.getElementById('mobile-mode-buttons');
+    const btnMobile2D = document.getElementById('btnMobile2D');
+    const btnMobile3D = document.getElementById('btnMobile3D');
 
-        const iconSrc = iconMap[doc.icon] || placeholderIconMap[doc.icon] || 'https://placehold.co/20x20/cccccc/333333?text=File';
-        const iconAlt = doc.iconAlt || 'File icon';
+    const spinnerLeft = document.getElementById('spinnerLeft');
+    const spinnerRight = document.getElementById('spinnerRight');
 
-        link.innerHTML = `
+    const titleButton = document.getElementById('titleButton');
+    const titleDropdownPanel = document.getElementById('titleDropdownPanel');
+    const closeDropdownPanel = document.getElementById('closeDropdownPanel');
+    const dropdownLinksContainer = document.querySelector('.dropdown-links');
+    const dropdownTitleFull = document.querySelector('.dropdown-title-full');
+    const leftIframe = document.querySelector('#leftFrame iframe');
+    const rightIframe = document.querySelector('#rightFrame iframe');
+
+    // Основний оверлей завантаження
+    const mainLoadingOverlay = document.getElementById('mainLoadingOverlay');
+
+    // Елементи для функції "Поділитись"
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const shareBtn = document.getElementById('shareBtn');
+    const shareDropdownPanel = document.getElementById('shareDropdownPanel');
+    const closeSharePanel = document.getElementById('closeSharePanel');
+    const shareUrlInput = document.getElementById('shareUrlInput');
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
+    const qrCodeImage = document.getElementById('qrCodeImage');
+    let tooltipTimeout; // Змінна для зберігання таймера підказки
+
+
+    const minWidth = 0;
+    let currentDesktopMode = '2D3D'; // Зберігає останній активний режим робочого столу
+    let currentMobileMode = '2D'; // Зберігає останній активний мобільний режим
+    let currentLeftFramePercentage = 50; // Зберігає відсоткову ширину лівого фрейма в режимі 2D/3D
+
+    // Глобальні змінні для відстеження стану перетягування
+    let isResizing = false;
+    let isDragging = false;
+    let initialPointerX = 0; // Початкова X-координата вказівника (миші/дотику)
+    let initialLeftFrameWidth = 0; // Початкова ширина лівого фрейма
+
+    // Глобальна змінна для відстеження наявності 3D-вмісту
+    let has3DContent = true; // За замовчуванням true, буде оновлено після завантаження config.json
+
+    // Мапування типів іконок на URL-адреси
+    const iconMap = {
+      pdf: 'https://img.icons8.com/color/48/pdf.png',
+      word: 'https://img.icons8.com/color/48/word.png',
+      'domain--v1': 'https://img.icons8.com/color/48/external-link.png', // Оновлено
+      zip: 'https://img.icons8.com/color/48/zip.png',
+      'google-drive--v2': 'https://img.icons8.com/color/48/google-drive--v2.png',
+      'microsoft-onedrive-2019': 'https://img.icons8.com/color/48/microsoft-onedrive-2019.png',
+      xls: 'https://img.icons8.com/color/48/xls.png',
+      file: 'https://img.icons8.com/color/48/file.png',
+      image: 'https://img.icons8.com/color/48/image-file.png',
+      code: 'https://img.icons8.com/color/48/code-file.png',
+      xml: 'https://img.icons8.com/color/48/xml-file.png',
+      encrypted: '../img/icons8-ai-48.png'
+    };
+
+    const placeholderIconMap = {
+      pdf: 'https://placehold.co/20x20/dc3545/ffffff?text=PDF',
+      word: 'https://placehold.co/20x20/007bff/ffffff?text=DOC',
+      'domain--v1': 'https://placehold.co/20x20/17a2b8/ffffff?text=LINK', // Оновлено
+      zip: 'https://placehold.co/20x20/808080/ffffff?text=ZIP',
+      'google-drive--v2': 'https://placehold.co/20x20/4285F4/ffffff?text=Drive',
+      'microsoft-onedrive-2019': 'https://placehold.co/20x20/0F6FBF/ffffff?text=OneDrive',
+      xls: 'https://placehold.co/20x20/217346/ffffff?text=XLS',
+      file: 'https://placehold.co/20x20/666666/ffffff?text=FILE',
+      image: 'https://placehold.co/20x20/28a745/ffffff?text=IMG',
+      code: 'https://placehold.co/20x20/3498db/ffffff?text=CODE',
+      xml: 'https://placehold.co/20x20/f39c12/ffffff?text=XML',
+      encrypted: 'https://placehold.co/20x20/e74c3c/ffffff?text=ENC'
+    };
+
+    function parentRotationHandler() {
+      topBar.style.cursor = 'move';
+      console.log('Parent rotation handler triggered');
+
+    }
+
+
+    /**
+     * Завантажує дані конфігурації з config.json.
+     * Використовує параметр 'p' з URL для формування шляху до config.json.
+     * Якщо параметр 'p' відсутній, намагається завантажити 'config.json' з поточної директорії.
+     */
+    function updateUrlModeParam(mode) {
+      const url = new URL(window.location.href);
+      // Встановити або оновити параметр 'mode'
+      /*if (mode === '2D3D') {
+        url.searchParams.delete('mode'); // За замовчуванням не показуємо mode=2D3D
+      } else {
+        url.searchParams.set('mode', mode.toLowerCase());
+      }*/
+      window.history.replaceState({}, '', url);
+    }
+    async function loadConfig() {
+      let configUrl = 'testconfig.json'; // За замовчуванням: config.json у поточній директорії
+
+      // Отримати параметр 'p' з URL
+      const urlParams = new URLSearchParams(window.location.search);
+
+      // Додатковий параметр "mode" для примусового режиму
+      const modeParam = urlParams.get('mode');
+      if (modeParam === '3d') {
+        currentDesktopMode = '3D';
+        currentMobileMode = '3D';
+      } else if (modeParam === '2d') {
+        currentDesktopMode = '2D';
+        currentMobileMode = '2D';
+      } else {
+        currentDesktopMode = '2D3D'; // За замовчуванням
+        currentMobileMode = '2D'; // За замовчуванням для мобільних пристроїв
+      }
+      const pParam = urlParams.get('p');
+      if (pParam) {
+        // Сформувати URL на основі параметра 'p'
+        configUrl = `${pParam}/config.json`;
+      } else {
+        // Якщо pParam невалідний, перенаправити на сторінку помилки
+          window.location.href = '/404.html';
+      }
+
+      try {
+        const response = await fetch(configUrl);
+        if (!response.ok) {
+          // Redirect to custom 404 page if config not found or error
+          window.location.href = '/404.html';
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const config = await response.json();
+        has3DContent = config.has3D === true; // Оновити глобальну змінну has3DContent
+        applyConfig(config); // Застосувати загальну конфігурацію (заголовки, посилання на документи, src iframe)
+
+        // Тепер, на основі has3DContent, налаштувати видимість та макет інтерфейсу
+        updateUIBasedOn3D(); // Викликати нову функцію оновлення інтерфейсу
+        updateDraggableHandleSize(); // Оновити розмір кнопки слайдера
+
+        // Приховати основний оверлей завантаження та показати вміст
+        mainLoadingOverlay.classList.add('hidden');
+        setTimeout(() => {
+          mainLoadingOverlay.style.display = 'none';
+          document.getElementById('topBar').style.display = 'flex';
+          document.getElementById('container').style.display = 'flex';
+          // updateViewBasedOnWidth() тепер не потрібен тут, оскільки updateUIBasedOn3D вже встановлює початковий вигляд
+        }, 500); // Дозволити завершитись переходу
+      } catch (error) {
+        console.error(`Помилка завантаження конфігурації: ${error.message}`);
+        has3DContent = false; // Припустити відсутність 3D, якщо конфігурація не завантажилася
+        updateUIBasedOn3D(); // Застосувати зміни інтерфейсу на основі припущення про відсутність 3D
+        // Показати повідомлення про помилку на оверлеї спінера
+        const spinnerOverlayDiv = mainLoadingOverlay.querySelector('.spinner-overlay div:last-child');
+        if (spinnerOverlayDiv) {
+          spinnerOverlayDiv.textContent = `Помилка завантаження даних. Спробуйте оновити сторінку.`;
+          mainLoadingOverlay.querySelector('.spinner').style.display = 'none'; // Приховати спінер
+        }
+        // Залишити оверлей видимим, щоб показати помилку
+      }
+    }
+
+    /**
+     * Застосовує завантажені дані конфігурації до DOM.
+     * @param {object} config - Об'єкт конфігурації.
+     */
+    function applyConfig(config) {
+      // Оновити заголовок сторінки у браузері
+      document.title = config.projectTitle;
+
+      // Оновити заголовок кнопки
+      titleButton.setAttribute('title', config.projectTitle);
+      titleButton.textContent = config.projectTitle;
+
+      // Оновити повний заголовок у випадаючому вікні
+      dropdownTitleFull.textContent = config.projectTitle;
+
+      // Очистити існуючі посилання та додати нові з конфігурації
+      // Перевірка, чи є документи, щоб відображати або приховувати контейнер посилань
+      if (!config.documents || config.documents.length === 0) {
+        dropdownLinksContainer.innerHTML = ''; // Переконатися, що він порожній
+        dropdownLinksContainer.style.display = 'none'; // Приховати контейнер
+      } else {
+        dropdownLinksContainer.style.display = 'flex'; // Переконатися, що він видимий, якщо є документи
+        dropdownLinksContainer.innerHTML = ''; // Очистити існуючі посилання перед додаванням нових
+        config.documents.forEach(doc => {
+          const link = document.createElement('a');
+          link.href = doc.url;
+          link.target = '_blank';
+          link.classList.add('dropdown-link');
+
+          const iconSrc = iconMap[doc.icon] || placeholderIconMap[doc.icon] || 'https://placehold.co/20x20/cccccc/333333?text=File';
+          const iconAlt = doc.iconAlt || 'File icon';
+
+          link.innerHTML = `
           <img class="file-icon-base" src="${iconSrc}" alt="${iconAlt}" onerror="this.onerror=null;this.src='${placeholderIconMap[doc.icon] || 'https://placehold.co/20x20/cccccc/333333?text=ERR'}';" />
           <span>${doc.name}</span>
           <svg class="external-link-icon" viewBox="0 0 24 24">
             <path d="M14 3v2h3.59L9.4 12.09l1.41 1.41L19 6.41V10h2V3h-7zM19 18v2H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7z"/>
           </svg>
         `;
-        dropdownLinksContainer.appendChild(link);
-      });
+          dropdownLinksContainer.appendChild(link);
+        });
+      }
+
+      // Оновити URL-адреси iframe
+      leftIframe.src = config.iframes.sketchfabUrl;
+      leftIframe.title = config.projectTitle; // Оновлено title для iframe
+      rightIframe.src = config.iframes.qgisUrl;
+      rightIframe.title = config.projectTitle; // Оновлено title для iframe
     }
 
-    // Оновити URL-адреси iframe
-    leftIframe.src = config.iframes.sketchfabUrl;
-    leftIframe.title = config.projectTitle; // Оновлено title для iframe
-    rightIframe.src = config.iframes.qgisUrl;
-    rightIframe.title = config.projectTitle; // Оновлено title для iframe
-  }
-
-  /**
-   * Допоміжна функція для визначення, чи є поточний вигляд мобільним.
-   * @returns {boolean} - True, якщо мобільний вигляд (ширина екрана <= 768px), інакше false.
-   */
-  function isMobileView() {
-    return window.innerWidth <= 768;
-  }
-
-  /**
-   * Перевіряє, чи пристрій підтримує сенсорне введення.
-   * @returns {boolean} - True, якщо пристрій підтримує сенсорне введення, інакше false.
-   */
-  function isTouchDevice() {
-    return ('ontouchstart' in window) ||
-           (navigator.maxTouchPoints > 0) ||
-           (navigator.msMaxTouchPoints > 0);
-  }
-
-  /**
-   * Тимчасово показує лівий спінер протягом 3 секунд.
-   */
-  function showSpinnerTemporaryLeft() {
-    spinnerLeft.style.opacity = '0';
-    setTimeout(() => {
-      spinnerLeft.classList.add('hidden');
-      spinnerLeft.style.opacity = '1'; // Скинути непрозорість для наступного використання
-    }, 500);
-  }
-
-  /**
-   * Встановлює режим відображення для фреймів у вигляді робочого столу.
-   * @param {string} mode - Бажаний режим ('3D', '2D' або '2D3D').
-   */
-  function setDesktopMode(mode) {
-    // Видалити активний клас з усіх кнопок робочого столу
-    updateUrlModeParam(mode);
-    btn2D.classList.remove('active');
-    btn3D.classList.remove('active');
-    btn2D3D.classList.remove('active');
-
-    // Додати активний клас до кнопки поточного режиму
-    if (mode === '2D') btn2D.classList.add('active');
-    else if (mode === '3D') btn3D.classList.add('active');
-    else btn2D3D.classList.add('active');
-
-    // Налаштувати ширину фреймів залежно від вибраного режиму
-    switch(mode) {
-      case '3D':
-        // В режимі 3D лівий фрейм займає 100% ширини мінус ширина розділювача
-        leftFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
-        rightFrame.style.width = '0px';
-        divider.style.display = 'flex'; // Завжди показувати розділювач
-        break;
-      case '2D':
-        // В режимі 2D лівий фрейм займає 0% ширини, правий - 100% мінус ширина розділювача
-        // Додаємо невелику затримку перед встановленням ширини лівого фрейма в 0
-        // щоб дати браузеру час на плавніший перехід для 3D-контенту.
-        setTimeout(() => {
-          leftFrame.style.width = '0px';
-        }, 50); // Можна експериментувати з цією затримкою (наприклад, 20-100 мс)
-        rightFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
-        divider.style.display = 'flex'; // Завжди показувати розділювач
-        break;
-      default: // Режим 2D/3D
-        // Завжди скидати до 50/50 при натисканні кнопки 2D/3D
-        leftFrame.style.width = '50%';
-        rightFrame.style.width = '50%';
-        currentLeftFramePercentage = 50; // Скинути збережений відсоток
-        divider.style.display = 'flex'; // Переконатися, що розділювач видимий
+    /**
+     * Допоміжна функція для визначення, чи є поточний вигляд мобільним.
+     * @returns {boolean} - True, якщо мобільний вигляд (ширина екрана <= 768px), інакше false.
+     */
+    function isMobileView() {
+      return window.innerWidth <= 768;
     }
-    currentDesktopMode = mode; // Оновити поточний режим робочого столу
-  }
 
-  /**
-   * Встановлює режим відображення для фреймів у мобільному вигляді.
-   * @param {string} mode - Бажаний режим ('2D' або '3D').
-   */
-  function setMobileMode(mode) {
-    // Видалити активний клас з усіх мобільних кнопок
-    updateUrlModeParam(mode);
-    btnMobile2D.classList.remove('active');
-    btnMobile3D.classList.remove('active');
-
-    // Додати активний клас до кнопки поточного режиму
-    if (mode === '2D') btnMobile2D.classList.add('active');
-    else if (mode === '3D') btnMobile3D.classList.add('active');
-
-    // Налаштувати ширину фреймів залежно від вибраного режиму
-    switch(mode) {
-      case '2D':
-        leftFrame.style.width = '0%'; // Приховати 3D фрейм
-        rightFrame.style.width = '100%'; // Показати 2D фрейм на всю ширину
-        divider.style.display = 'none'; // Приховати розділювач
-        break;
-      case '3D':
-        rightFrame.style.width = '0%'; // Приховати 2D фрейм
-        leftFrame.style.width = '100%'; // Показати 3D фрейм на всю ширину
-        divider.style.display = 'none'; // Приховати розділювач
-        // showSpinnerTemporaryLeft(); // Спінер більше не запускається при переході в 3D на мобільних пристроях
-        break;
+    /**
+     * Перевіряє, чи пристрій підтримує сенсорне введення.
+     * @returns {boolean} - True, якщо пристрій підтримує сенсорне введення, інакше false.
+     */
+    function isTouchDevice() {
+      return ('ontouchstart' in window) ||
+        (navigator.maxTouchPoints > 0) ||
+        (navigator.msMaxTouchPoints > 0);
     }
-    currentMobileMode = mode; // Оновити поточний мобільний режим
-  }
 
-  /**
-   * Оновлює активний стан кнопок перемикання режиму робочого столу на основі ширини фреймів.
-   * Це актуально лише для вигляду робочого столу.
-   */
-  function updateDesktopToggleButtons() {
-    // Ця функція викликається лише якщо has3DContent є true
-    const leftWidth = leftFrame.getBoundingClientRect().width;
-    const rightWidth = rightFrame.getBoundingClientRect().width;
-
-    // Видалити активний клас з усіх кнопок
-    btn2D.classList.remove('active');
-    btn3D.classList.remove('active');
-    btn2D3D.classList.remove('active');
-
-    // Додати активний клас до відповідної кнопки на основі ширини фреймів
-    if (leftWidth < 10) { // Використовуємо невеликий поріг замість minWidth + 1
-      btn2D.classList.add('active');
-    } else if (rightWidth < 10) { // Використовуємо невеликий поріг замість minWidth + 1
-      btn3D.classList.add('active');
-    } else {
-      btn2D3D.classList.add('active');
+    /**
+     * Тимчасово показує лівий спінер протягом 3 секунд.
+     */
+    function showSpinnerTemporaryLeft() {
+      spinnerLeft.style.opacity = '0';
+      setTimeout(() => {
+        spinnerLeft.classList.add('hidden');
+        spinnerLeft.style.opacity = '1'; // Скинути непрозорість для наступного використання
+      }, 500);
     }
-  }
 
-  // Обробники подій для кнопок режиму робочого столу
-  btn3D.addEventListener('click', () => { if (has3DContent) setDesktopMode('3D'); });
-  btn2D.addEventListener('click', () => { if (has3DContent) setDesktopMode('2D'); });
-  btn2D3D.addEventListener('click', () => { if (has3DContent) setDesktopMode('2D3D'); });
+    /**
+     * Встановлює режим відображення для фреймів у вигляді робочого столу.
+     * @param {string} mode - Бажаний режим ('3D', '2D' або '2D3D').
+     */
+    function setDesktopMode(mode) {
+      // Видалити активний клас з усіх кнопок робочого столу
+      updateUrlModeParam(mode);
+      btn2D.classList.remove('active');
+      btn3D.classList.remove('active');
+      btn2D3D.classList.remove('active');
 
-  // Обробники подій для кнопок мобільного режиму
-  btnMobile2D.addEventListener('click', () => { if (has3DContent) setMobileMode('2D'); });
-  btnMobile3D.addEventListener('click', () => { if (has3DContent) setMobileMode('3D'); });
+      // Додати активний клас до кнопки поточного режиму
+      if (mode === '2D') btn2D.classList.add('active');
+      else if (mode === '3D') btn3D.classList.add('active');
+      else btn2D3D.classList.add('active');
 
-
-  // Функція для обробки логіки зміни розміру як для миші, так і для дотику
-  function handleMove(currentClientX) {
-    if (!isResizing) return; // Перевірка, щоб уникнути виконання, якщо isResizing === false
-    isDragging = true; // Встановити isDragging лише якщо відбувається рух
-    const deltaX = currentClientX - initialPointerX; // Обчислити зміну в X
-    let newLeftWidth = initialLeftFrameWidth + deltaX; // Обчислити нову ширину лівого фрейма
-
-    const containerWidth = divider.parentNode.getBoundingClientRect().width;
-    // Переконайтеся, що newLeftWidth знаходиться в межах контейнера
-    newLeftWidth = Math.max(0, Math.min(newLeftWidth, containerWidth - divider.offsetWidth));
-
-    let newRightWidth = containerWidth - newLeftWidth - divider.offsetWidth;
-
-    leftFrame.style.width = newLeftWidth + 'px';
-    rightFrame.style.width = newRightWidth + 'px';
-
-    // Оновити збережений відсоток лише в режимі 2D/3D на робочому столі
-    if (!isMobileView() && currentDesktopMode === '2D3D') {
-        currentLeftFramePercentage = (newLeftWidth / containerWidth) * 100;
+      // Налаштувати ширину фреймів залежно від вибраного режиму
+      switch (mode) {
+        case '3D':
+          // В режимі 3D лівий фрейм займає 100% ширини мінус ширина розділювача
+          leftFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
+          rightFrame.style.width = '0px';
+          divider.style.display = 'flex'; // Завжди показувати розділювач
+          break;
+        case '2D':
+          // В режимі 2D лівий фрейм займає 0% ширини, правий - 100% мінус ширина розділювача
+          // Додаємо невелику затримку перед встановленням ширини лівого фрейма в 0
+          // щоб дати браузеру час на плавніший перехід для 3D-контенту.
+          setTimeout(() => {
+            leftFrame.style.width = '0px';
+          }, 50); // Можна експериментувати з цією затримкою (наприклад, 20-100 мс)
+          rightFrame.style.width = `calc(100% - ${divider.offsetWidth}px)`;
+          divider.style.display = 'flex'; // Завжди показувати розділювач
+          break;
+        default: // Режим 2D/3D
+          // Завжди скидати до 50/50 при натисканні кнопки 2D/3D
+          leftFrame.style.width = '50%';
+          rightFrame.style.width = '50%';
+          currentLeftFramePercentage = 50; // Скинути збережений відсоток
+          divider.style.display = 'flex'; // Переконатися, що розділювач видимий
+      }
+      currentDesktopMode = mode; // Оновити поточний режим робочого столу
     }
-    // updateDesktopToggleButtons() викликається лише якщо has3DContent є true
-    if (has3DContent) {
-        updateDesktopToggleButtons();
+
+    /**
+     * Встановлює режим відображення для фреймів у мобільному вигляді.
+     * @param {string} mode - Бажаний режим ('2D' або '3D').
+     */
+    function setMobileMode(mode) {
+      // Видалити активний клас з усіх мобільних кнопок
+      updateUrlModeParam(mode);
+      btnMobile2D.classList.remove('active');
+      btnMobile3D.classList.remove('active');
+
+      // Додати активний клас до кнопки поточного режиму
+      if (mode === '2D') btnMobile2D.classList.add('active');
+      else if (mode === '3D') btnMobile3D.classList.add('active');
+
+      // Налаштувати ширину фреймів залежно від вибраного режиму
+      switch (mode) {
+        case '2D':
+          leftFrame.style.width = '0%'; // Приховати 3D фрейм
+          rightFrame.style.width = '100%'; // Показати 2D фрейм на всю ширину
+          divider.style.display = 'none'; // Приховати розділювач
+          break;
+        case '3D':
+          rightFrame.style.width = '0%'; // Приховати 2D фрейм
+          leftFrame.style.width = '100%'; // Показати 3D фрейм на всю ширину
+          divider.style.display = 'none'; // Приховати розділювач
+          // showSpinnerTemporaryLeft(); // Спінер більше не запускається при переході в 3D на мобільних пристроях
+          break;
+      }
+      currentMobileMode = mode; // Оновити поточний мобільний режим
     }
-  }
 
-  // Функція для початку зміни розміру
-  function startResize(clientX) {
-    if (!isMobileView() && has3DContent) {
-      isResizing = true;
-      isDragging = false; // Скидаємо прапорець перетягування при старті
-      overlay.style.display = 'block'; // Показати накладання для захоплення подій
-      document.body.style.userSelect = 'none'; // Вимкнути виділення тексту
-      leftFrame.classList.add('no-transition'); // Вимкнути переходи
-      rightFrame.classList.add('no-transition'); // Вимкнути переходи
+    /**
+     * Оновлює активний стан кнопок перемикання режиму робочого столу на основі ширини фреймів.
+     * Це актуально лише для вигляду робочого столу.
+     */
+    function updateDesktopToggleButtons() {
+      // Ця функція викликається лише якщо has3DContent є true
+      const leftWidth = leftFrame.getBoundingClientRect().width;
+      const rightWidth = rightFrame.getBoundingClientRect().width;
 
-      initialPointerX = clientX; // Зберегти початкову X-координату вказівника
-      initialLeftFrameWidth = leftFrame.offsetWidth; // Зберегти початкову ширину лівого фрейма
+      // Видалити активний клас з усіх кнопок
+      btn2D.classList.remove('active');
+      btn3D.classList.remove('active');
+      btn2D3D.classList.remove('active');
 
-      // Додати глобальні обробники подій руху
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      // Додати активний клас до відповідної кнопки на основі ширини фреймів
+      if (leftWidth < 10) { // Використовуємо невеликий поріг замість minWidth + 1
+        btn2D.classList.add('active');
+      } else if (rightWidth < 10) { // Використовуємо невеликий поріг замість minWidth + 1
+        btn3D.classList.add('active');
+      } else {
+        btn2D3D.classList.add('active');
+      }
     }
-  }
 
-  // Обробник події mousedown розділювача для початку зміни розміру
-  divider.addEventListener('mousedown', (e) => {
-    startResize(e.clientX);
-  });
+    // Обробники подій для кнопок режиму робочого столу
+    btn3D.addEventListener('click', () => { if (has3DContent) setDesktopMode('3D'); });
+    btn2D.addEventListener('click', () => { if (has3DContent) setDesktopMode('2D'); });
+    btn2D3D.addEventListener('click', () => { if (has3DContent) setDesktopMode('2D3D'); });
 
-  // Обробник події touchstart для draggableHandle
-  draggableHandle.addEventListener('touchstart', (e) => {
-    e.preventDefault(); // Запобігти поведінці дотику за замовчуванням (наприклад, прокручуванню)
-    startResize(e.touches[0].clientX);
-  }, { passive: false });
-
-  // Обробник події touchstart для divider (якщо драг починається не з handle)
-  divider.addEventListener('touchstart', (e) => {
-    if (!isMobileView() && has3DContent && e.target !== draggableHandle) { // Перевірка, щоб уникнути подвійного запуску
-      e.preventDefault(); // Запобігти поведінці дотику за замовчуванням
-      startResize(e.touches[0].clientX);
-    }
-  }, { passive: false });
-
-  // Глобальні обробники руху
-  function onMouseMove(e) {
-    handleMove(e.clientX);
-  }
-
-  function onTouchMove(e) {
-    if (e.touches.length === 0) return;
-    e.preventDefault(); // Запобігти поведінці дотику за замовчуванням
-    handleMove(e.touches[0].clientX);
-  }
+    // Обробники подій для кнопок мобільного режиму
+    btnMobile2D.addEventListener('click', () => { if (has3DContent) setMobileMode('2D'); });
+    btnMobile3D.addEventListener('click', () => { if (has3DContent) setMobileMode('3D'); });
 
 
-  // Функція для обробки закінчення зміни розміру (відпускання миші або закінчення дотику)
-  function endResize() {
-    if (!isResizing) return;
+    // Функція для обробки логіки зміни розміру як для миші, так і для дотику
+    function handleMove(currentClientX) {
+      if (!isResizing) return; // Перевірка, щоб уникнути виконання, якщо isResizing === false
+      isDragging = true; // Встановити isDragging лише якщо відбувається рух
+      const deltaX = currentClientX - initialPointerX; // Обчислити зміну в X
+      let newLeftWidth = initialLeftFrameWidth + deltaX; // Обчислити нову ширину лівого фрейма
 
-    // Видалити глобальні обробники подій руху
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('touchmove', onTouchMove, { passive: false });
-
-    // Логіка прив'язки слайдера
-    if (!isMobileView() && isDragging && has3DContent) { // Застосовувати прив'язку лише на десктопі та якщо було перетягування та є 3D-вміст
       const containerWidth = divider.parentNode.getBoundingClientRect().width;
-      const snapThreshold = 40; // Поріг прив'язки в пікселях
-      const currentLeftWidth = leftFrame.getBoundingClientRect().width;
-      const currentRightWidth = rightFrame.getBoundingClientRect().width;
+      // Переконайтеся, що newLeftWidth знаходиться в межах контейнера
+      newLeftWidth = Math.max(0, Math.min(newLeftWidth, containerWidth - divider.offsetWidth));
 
-      if (currentLeftWidth < snapThreshold) {
-        setDesktopMode('2D'); // Перехід в режим 2D
-      } else if (currentRightWidth < snapThreshold) {
-        setDesktopMode('3D'); // Перехід в режим 3D
+      let newRightWidth = containerWidth - newLeftWidth - divider.offsetWidth;
+
+      leftFrame.style.width = newLeftWidth + 'px';
+      rightFrame.style.width = newRightWidth + 'px';
+
+      // Оновити збережений відсоток лише в режимі 2D/3D на робочому столі
+      if (!isMobileView() && currentDesktopMode === '2D3D') {
+        currentLeftFramePercentage = (newLeftWidth / containerWidth) * 100;
+      }
+      // updateDesktopToggleButtons() викликається лише якщо has3DContent є true
+      if (has3DContent) {
+        updateDesktopToggleButtons();
       }
     }
 
-    isResizing = false;
-    isDragging = false; // Скинути прапорець перетягування
-    overlay.style.display = 'none'; // Приховати накладання
-    document.body.style.userSelect = 'auto'; // Повторно увімкнути виділення тексту
+    // Функція для початку зміни розміру
+    function startResize(clientX) {
+      if (!isMobileView() && has3DContent) {
+        isResizing = true;
+        isDragging = false; // Скидаємо прапорець перетягування при старті
+        overlay.style.display = 'block'; // Показати накладання для захоплення подій
+        document.body.style.userSelect = 'none'; // Вимкнути виділення тексту
+        leftFrame.classList.add('no-transition'); // Вимкнути переходи
+        rightFrame.classList.add('no-transition'); // Вимкнути переходи
 
-    // Видалити клас no-transition, щоб повторно увімкнути анімації
-    leftFrame.classList.remove('no-transition');
-    rightFrame.classList.remove('no-transition');
-  }
+        initialPointerX = clientX; // Зберегти початкову X-координату вказівника
+        initialLeftFrameWidth = leftFrame.offsetWidth; // Зберегти початкову ширину лівого фрейма
 
-  // Обробник події mouseup накладання для зупинки зміни розміру
-  overlay.addEventListener('mouseup', endResize);
-
-  // Обробник події touchend накладання для зупинки зміни розміру
-  overlay.addEventListener('touchend', endResize);
-
-  // Глобальний обробник події mouseup документа для обробки випадків, коли миша покидає накладання або вікно
-  document.addEventListener('mouseup', endResize);
-
-  // Глобальний обробник події touchend документа для обробки випадків, коли дотик покидає накладання або вікно
-  document.addEventListener('touchend', endResize);
-
-  /* Функціонал панелі випадаючого списку заголовка */
-
-  // Функція для перемикання видимості панелі випадаючого списку
-  function toggleDropdownPanel() {
-    if (titleDropdownPanel.classList.contains('visible')) {
-      titleDropdownPanel.classList.remove('visible');
-      titleButton.classList.remove('active'); // Видалити активний клас з кнопки
-    } else {
-      // Закрити панель "Поділитись", якщо вона відкрита
-      if (shareDropdownPanel.classList.contains('visible')) {
-        shareDropdownPanel.classList.remove('visible');
-      }
-
-      const titleButtonRect = titleButton.getBoundingClientRect();
-      // Встановити ширину, щоб відповідати кнопці, але дотримуватися максимальної ширини для настільних ПК
-      let panelWidth = titleButtonRect.width;
-      if (!isMobileView() && panelWidth > 600) {
-          panelWidth = 600;
-      } else if (isMobileView()) {
-          // На мобільних пристроях панель повинна займати повну ширину мінус відступи
-          panelWidth = window.innerWidth - 10; // 5px відступу з кожного боку
-      }
-      titleDropdownPanel.style.width = panelWidth + 'px';
-
-      // Розташувати панель випадаючого списку
-      if (isMobileView()) {
-          titleDropdownPanel.style.left = '5px'; // Вирівняти по лівому краю екрана з відступом
-          titleDropdownPanel.style.right = '5px'; // Вирівняти по правому краю екрана з відступом
-      } else {
-          titleDropdownPanel.style.left = titleButtonRect.left + 'px';
-          titleDropdownPanel.style.right = 'auto'; // Скинути правий для настільних ПК
-      }
-
-      titleDropdownPanel.classList.add('visible');
-      titleButton.classList.add('active'); // Додати активний клас до кнопки
-    }
-  }
-
-  // Обробник події для відкриття/закриття панелі випадаючого списку при натисканні кнопки заголовка
-  titleButton.addEventListener('click', toggleDropdownPanel);
-
-  // Обробник події для закриття панелі випадаючого списку при натисканні кнопки закриття
-  closeDropdownPanel.addEventListener('click', () => {
-    titleDropdownPanel.classList.remove('visible');
-    titleButton.classList.remove('active'); // Видалити активний клас з кнопки
-  });
-
-  // Обробник події для закриття панелі випадаючого списку при натисканні за її межами
-  document.addEventListener('click', (event) => {
-    if (!titleButton.contains(event.target) && !titleDropdownPanel.contains(event.target) &&
-        !shareBtn.contains(event.target) && !shareDropdownPanel.contains(event.target)) {
-      titleDropdownPanel.classList.remove('visible');
-      titleButton.classList.remove('active'); // Видалити активний клас з кнопки
-      shareDropdownPanel.classList.remove('visible'); // Закрити панель "Поділитись"
-    }
-  });
-
-  /**
-   * Функція для оновлення вигляду (кнопок, фреймів, розділювача) на основі поточної ширини екрана.
-   * Ця функція тепер просто викликає updateUIBasedOn3D, яка є єдиним джерелом істини для макета.
-   */
-  function updateViewBasedOnWidth() {
-    updateUIBasedOn3D();
-    updateDraggableHandleSize(); // Оновити розмір кнопки слайдера при зміні ширини вікна
-  }
-
-  /**
-   * Функція, яка керує відображенням елементів інтерфейсу на основі наявності 3D-вмісту та типу пристрою.
-   */
-  function updateUIBasedOn3D() {
-    const mobile = isMobileView();
-    const desktopModeLabel = document.getElementById('desktopModeLabel');
-
-    if (has3DContent) {
-      // Показати елементи, пов'язані з 3D, та налаштувати подвійний/одиночний вигляд на основі поточного режиму
-      desktopModeLabel.style.display = mobile ? 'none' : 'block'; // Приховати на мобільних, показати на десктопі
-      desktopModeButtons.style.display = mobile ? 'none' : 'flex';
-      mobileModeButtons.style.display = mobile ? 'flex' : 'none';
-      divider.style.display = 'flex'; // Розділювач актуальний для 2D/3D на десктопі
-
-      // Завжди показувати draggableHandle, якщо є 3D-вміст
-      draggableHandle.style.display = 'flex';
-
-      if (!mobile) {
-        // Застосувати десктопний режим
-        setDesktopMode(currentDesktopMode);
-      } else {
-        // Застосувати мобільний режим
-        setMobileMode(currentMobileMode);
-      }
-    } else {
-      // Приховати всі елементи, пов'язані з 3D, і показати лише QGIS.cloud на всю ширину
-      desktopModeLabel.style.display = 'none'; // Завжди приховати, якщо немає 3D-вмісту
-      desktopModeButtons.style.display = 'none';
-      mobileModeButtons.style.display = 'none';
-      divider.style.display = 'none'; // Приховати розділювач
-      draggableHandle.style.display = 'none'; // Приховати кнопку перетягування, якщо немає 3D-вмісту
-
-      // Примусово встановити фрейм QGIS.cloud на всю ширину, приховати фрейм Sketchfab
-      leftFrame.style.width = '0%';
-      rightFrame.style.width = '100%';
-    }
-  }
-
-  /**
-   * Оновлює розмір кнопки перетягування залежно від того, чи є пристрій сенсорним.
-   */
-  function updateDraggableHandleSize() {
-    const iconElement = draggableHandle.querySelector('.icon');
-    if (isTouchDevice()) {
-      draggableHandle.style.width = '48px';
-      draggableHandle.style.height = '48px';
-      if (iconElement) {
-        iconElement.style.fontSize = '32px'; // Збільшити розмір символу Unicode
-        iconElement.style.top = '-3px'; // Додаткове коригування для центрування
-      }
-    } else {
-      draggableHandle.style.width = '24px';
-      draggableHandle.style.height = '24px';
-      if (iconElement) {
-        iconElement.style.fontSize = '16px'; // Повернути початковий розмір символу Unicode
-        iconElement.style.top = '-1px'; // Повернути початкове коригування
+        // Додати глобальні обробники подій руху
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
       }
     }
-  }
 
+    // Обробник події mousedown розділювача для початку зміни розміру
+    divider.addEventListener('mousedown', (e) => {
+      startResize(e.clientX);
+    });
 
-  // Обробник події зміни розміру вікна
-  window.addEventListener('resize', handleWindowResize);
+    // Обробник події touchstart для draggableHandle
+    draggableHandle.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Запобігти поведінці дотику за замовчуванням (наприклад, прокручуванню)
+      startResize(e.touches[0].clientX);
+    }, { passive: false });
 
-  // Модифікований handleWindowResize для виклику updateViewBasedOnWidth
-  function handleWindowResize() {
-    // Налаштовувати лише якщо наразі не відбувається зміна розміру за допомогою розділювача
-    if (!isResizing) {
-      updateViewBasedOnWidth();
+    // Обробник події touchstart для divider (якщо драг починається не з handle)
+    divider.addEventListener('touchstart', (e) => {
+      if (!isMobileView() && has3DContent && e.target !== draggableHandle) { // Перевірка, щоб уникнути подвійного запуску
+        e.preventDefault(); // Запобігти поведінці дотику за замовчуванням
+        startResize(e.touches[0].clientX);
+      }
+    }, { passive: false });
+
+    // Глобальні обробники руху
+    function onMouseMove(e) {
+      handleMove(e.clientX);
     }
-  }
 
-  /* Функціонал повноекранного режиму */
-  fullscreenBtn.addEventListener('click', () => {
-    if (!document.fullscreenElement) {
-      // Якщо не в повноекранному режимі, запитати повноекранний режим для всього документа
-      document.documentElement.requestFullscreen().catch(err => {
-        console.error(`Помилка при спробі увімкнути повноекранний режим: ${err.message} (${err.name})`);
-      });
-    } else {
-      // Якщо в повноекранному режимі, вийти з повноекранного режиму
-      document.exitFullscreen().catch(err => {
-        console.error(`Помилка при спробі вимкнути повноекранний режим: ${err.message} (${err.name})`);
-      });
+    function onTouchMove(e) {
+      if (e.touches.length === 0) return;
+      e.preventDefault(); // Запобігти поведінці дотику за замовчуванням
+      handleMove(e.touches[0].clientX);
     }
-  });
 
-  // Обробник події fullscreenchange для оновлення стану кнопки та підказки
-  document.addEventListener('fullscreenchange', () => {
-    if (document.fullscreenElement) {
-      fullscreenBtn.classList.add('active');
-      fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
-    } else {
-      fullscreenBtn.classList.remove('active');
-      fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+
+    // Функція для обробки закінчення зміни розміру (відпускання миші або закінчення дотику)
+    function endResize() {
+      if (!isResizing) return;
+
+      // Видалити глобальні обробники подій руху
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('touchmove', onTouchMove, { passive: false });
+
+      // Логіка прив'язки слайдера
+      if (!isMobileView() && isDragging && has3DContent) { // Застосовувати прив'язку лише на десктопі та якщо було перетягування та є 3D-вміст
+        const containerWidth = divider.parentNode.getBoundingClientRect().width;
+        const snapThreshold = 40; // Поріг прив'язки в пікселях
+        const currentLeftWidth = leftFrame.getBoundingClientRect().width;
+        const currentRightWidth = rightFrame.getBoundingClientRect().width;
+
+        if (currentLeftWidth < snapThreshold) {
+          setDesktopMode('2D'); // Перехід в режим 2D
+        } else if (currentRightWidth < snapThreshold) {
+          setDesktopMode('3D'); // Перехід в режим 3D
+        }
+      }
+
+      isResizing = false;
+      isDragging = false; // Скинути прапорець перетягування
+      overlay.style.display = 'none'; // Приховати накладання
+      document.body.style.userSelect = 'auto'; // Повторно увімкнути виділення тексту
+
+      // Видалити клас no-transition, щоб повторно увімкнути анімації
+      leftFrame.classList.remove('no-transition');
+      rightFrame.classList.remove('no-transition');
     }
-  });
 
-  // Функціонал кнопки "Поділитись"
-  shareBtn.addEventListener('click', () => {
-    toggleShareDropdownPanel();
-  });
+    // Обробник події mouseup накладання для зупинки зміни розміру
+    overlay.addEventListener('mouseup', endResize);
 
-  function toggleShareDropdownPanel() {
-    if (shareDropdownPanel.classList.contains('visible')) {
-      shareDropdownPanel.classList.remove('visible');
-    } else {
-      // Закрити панель заголовка, якщо вона відкрита
+    // Обробник події touchend накладання для зупинки зміни розміру
+    overlay.addEventListener('touchend', endResize);
+
+    // Глобальний обробник події mouseup документа для обробки випадків, коли миша покидає накладання або вікно
+    document.addEventListener('mouseup', endResize);
+
+    // Глобальний обробник події touchend документа для обробки випадків, коли дотик покидає накладання або вікно
+    document.addEventListener('touchend', endResize);
+
+    /* Функціонал панелі випадаючого списку заголовка */
+
+    // Функція для перемикання видимості панелі випадаючого списку
+    function toggleDropdownPanel() {
       if (titleDropdownPanel.classList.contains('visible')) {
         titleDropdownPanel.classList.remove('visible');
-        titleButton.classList.remove('active');
-      }
-
-      const currentUrl = window.location.href;
-      shareUrlInput.value = currentUrl;
-      // Приховати QR-код на мобільних пристроях
-      if (isMobileView()) {
-        qrCodeImage.style.display = 'none';
+        titleButton.classList.remove('active'); // Видалити активний клас з кнопки
       } else {
-        qrCodeImage.style.display = 'block';
-        qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`;
+        // Закрити панель "Поділитись", якщо вона відкрита
+        if (shareDropdownPanel.classList.contains('visible')) {
+          shareDropdownPanel.classList.remove('visible');
+        }
+
+        const titleButtonRect = titleButton.getBoundingClientRect();
+        // Встановити ширину, щоб відповідати кнопці, але дотримуватися максимальної ширини для настільних ПК
+        let panelWidth = titleButtonRect.width;
+        if (!isMobileView() && panelWidth > 600) {
+          panelWidth = 600;
+        } else if (isMobileView()) {
+          // На мобільних пристроях панель повинна займати повну ширину мінус відступи
+          panelWidth = window.innerWidth - 10; // 5px відступу з кожного боку
+        }
+        titleDropdownPanel.style.width = panelWidth + 'px';
+
+        // Розташувати панель випадаючого списку
+        if (isMobileView()) {
+          titleDropdownPanel.style.left = '5px'; // Вирівняти по лівому краю екрана з відступом
+          titleDropdownPanel.style.right = '5px'; // Вирівняти по правому краю екрана з відступом
+        } else {
+          titleDropdownPanel.style.left = titleButtonRect.left + 'px';
+          titleDropdownPanel.style.right = 'auto'; // Скинути правий для настільних ПК
+        }
+
+        titleDropdownPanel.classList.add('visible');
+        titleButton.classList.add('active'); // Додати активний клас до кнопки
       }
+    }
 
+    // Обробник події для відкриття/закриття панелі випадаючого списку при натисканні кнопки заголовка
+    titleButton.addEventListener('click', toggleDropdownPanel);
 
-      // Позиціонування панелі "Поділитись"
-      const shareBtnRect = shareBtn.getBoundingClientRect();
-      if (isMobileView()) {
-        shareDropdownPanel.style.left = '5px';
-        shareDropdownPanel.style.right = '5px';
-        shareDropdownPanel.style.width = 'auto';
+    // Обробник події для закриття панелі випадаючого списку при натисканні кнопки закриття
+    closeDropdownPanel.addEventListener('click', () => {
+      titleDropdownPanel.classList.remove('visible');
+      titleButton.classList.remove('active'); // Видалити активний клас з кнопки
+    });
+
+    // Обробник події для закриття панелі випадаючого списку при натисканні за її межами
+    document.addEventListener('click', (event) => {
+      if (!titleButton.contains(event.target) && !titleDropdownPanel.contains(event.target) &&
+        !shareBtn.contains(event.target) && !shareDropdownPanel.contains(event.target)) {
+        titleDropdownPanel.classList.remove('visible');
+        titleButton.classList.remove('active'); // Видалити активний клас з кнопки
+        shareDropdownPanel.classList.remove('visible'); // Закрити панель "Поділитись"
+      }
+    });
+
+    /**
+     * Функція для оновлення вигляду (кнопок, фреймів, розділювача) на основі поточної ширини екрана.
+     * Ця функція тепер просто викликає updateUIBasedOn3D, яка є єдиним джерелом істини для макета.
+     */
+    function updateViewBasedOnWidth() {
+      updateUIBasedOn3D();
+      updateDraggableHandleSize(); // Оновити розмір кнопки слайдера при зміні ширини вікна
+    }
+
+    /**
+     * Функція, яка керує відображенням елементів інтерфейсу на основі наявності 3D-вмісту та типу пристрою.
+     */
+    function updateUIBasedOn3D() {
+      const mobile = isMobileView();
+      const desktopModeLabel = document.getElementById('desktopModeLabel');
+
+      if (has3DContent) {
+        // Показати елементи, пов'язані з 3D, та налаштувати подвійний/одиночний вигляд на основі поточного режиму
+        desktopModeLabel.style.display = mobile ? 'none' : 'block'; // Приховати на мобільних, показати на десктопі
+        desktopModeButtons.style.display = mobile ? 'none' : 'flex';
+        mobileModeButtons.style.display = mobile ? 'flex' : 'none';
+        divider.style.display = 'flex'; // Розділювач актуальний для 2D/3D на десктопі
+
+        // Завжди показувати draggableHandle, якщо є 3D-вміст
+        draggableHandle.style.display = 'flex';
+
+        if (!mobile) {
+          // Застосувати десктопний режим
+          setDesktopMode(currentDesktopMode);
+        } else {
+          // Застосувати мобільний режим
+          setMobileMode(currentMobileMode);
+        }
       } else {
-        shareDropdownPanel.style.left = 'auto';
-        shareDropdownPanel.style.right = (window.innerWidth - shareBtnRect.right) + 'px';
-        shareDropdownPanel.style.width = '180px'; /* Ширина відповідає QR-коду */
+        // Приховати всі елементи, пов'язані з 3D, і показати лише QGIS.cloud на всю ширину
+        desktopModeLabel.style.display = 'none'; // Завжди приховати, якщо немає 3D-вмісту
+        desktopModeButtons.style.display = 'none';
+        mobileModeButtons.style.display = 'none';
+        divider.style.display = 'none'; // Приховати розділювач
+        draggableHandle.style.display = 'none'; // Приховати кнопку перетягування, якщо немає 3D-вмісту
+
+        // Примусово встановити фрейм QGIS.cloud на всю ширину, приховати фрейм Sketchfab
+        leftFrame.style.width = '0%';
+        rightFrame.style.width = '100%';
       }
-
-      shareDropdownPanel.classList.add('visible');
     }
-  }
 
-  closeSharePanel.addEventListener('click', () => {
-    shareDropdownPanel.classList.remove('visible');
-  });
-
-  copyUrlBtn.addEventListener('click', () => {
-    shareUrlInput.select();
-    shareUrlInput.setSelectionRange(0, 99999); // Для мобільних пристроїв
-    try {
-      document.execCommand('copy');
-      const copyIconImg = copyUrlBtn.querySelector('img');
-      const originalSrc = 'https://img.icons8.com/tiny-glyph/16/737373/documents.png'; // Store original src
-      copyIconImg.src = 'https://img.icons8.com/tiny-color/16/checked--v1.png'; // Change to checked icon
-      setTimeout(() => {
-        copyIconImg.src = originalSrc; // Revert to original icon
-      }, 1500);
-    } catch (err) {
-      console.error('Не вдалося скопіювати текст:', err);
+    /**
+     * Оновлює розмір кнопки перетягування залежно від того, чи є пристрій сенсорним.
+     */
+    function updateDraggableHandleSize() {
+      const iconElement = draggableHandle.querySelector('.icon');
+      if (isTouchDevice()) {
+        draggableHandle.style.width = '48px';
+        draggableHandle.style.height = '48px';
+        if (iconElement) {
+          iconElement.style.fontSize = '32px'; // Збільшити розмір символу Unicode
+          iconElement.style.top = '-3px'; // Додаткове коригування для центрування
+        }
+      } else {
+        draggableHandle.style.width = '24px';
+        draggableHandle.style.height = '24px';
+        if (iconElement) {
+          iconElement.style.fontSize = '16px'; // Повернути початковий розмір символу Unicode
+          iconElement.style.top = '-1px'; // Повернути початкове коригування
+        }
+      }
     }
-  });
 
 
-  // Ініціалізувати підказку та вигляд при завантаженні
-  document.addEventListener('DOMContentLoaded', () => {
+    // Обробник події зміни розміру вікна
+    window.addEventListener('resize', handleWindowResize);
+
+    // Модифікований handleWindowResize для виклику updateViewBasedOnWidth
+    function handleWindowResize() {
+      // Налаштовувати лише якщо наразі не відбувається зміна розміру за допомогою розділювача
+      if (!isResizing) {
+        updateViewBasedOnWidth();
+      }
+    }
+
+    /* Функціонал повноекранного режиму */
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        // Якщо не в повноекранному режимі, запитати повноекранний режим для всього документа
+        document.documentElement.requestFullscreen().catch(err => {
+          console.error(`Помилка при спробі увімкнути повноекранний режим: ${err.message} (${err.name})`);
+        });
+      } else {
+        // Якщо в повноекранному режимі, вийти з повноекранного режиму
+        document.exitFullscreen().catch(err => {
+          console.error(`Помилка при спробі вимкнути повноекранний режим: ${err.message} (${err.name})`);
+        });
+      }
+    });
+
+    // Обробник події fullscreenchange для оновлення стану кнопки та підказки
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        fullscreenBtn.classList.add('active');
+        fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
+      } else {
+        fullscreenBtn.classList.remove('active');
+        fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+      }
+    });
+
+    // Функціонал кнопки "Поділитись"
+    shareBtn.addEventListener('click', () => {
+      toggleShareDropdownPanel();
+    });
+
+    function toggleShareDropdownPanel() {
+      if (shareDropdownPanel.classList.contains('visible')) {
+        shareDropdownPanel.classList.remove('visible');
+      } else {
+        // Закрити панель заголовка, якщо вона відкрита
+        if (titleDropdownPanel.classList.contains('visible')) {
+          titleDropdownPanel.classList.remove('visible');
+          titleButton.classList.remove('active');
+        }
+
+        const currentUrl = window.location.href;
+        shareUrlInput.value = currentUrl;
+        // Приховати QR-код на мобільних пристроях
+        if (isMobileView()) {
+          qrCodeImage.style.display = 'none';
+        } else {
+          qrCodeImage.style.display = 'block';
+          qrCodeImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(currentUrl)}`;
+        }
+
+
+        // Позиціонування панелі "Поділитись"
+        const shareBtnRect = shareBtn.getBoundingClientRect();
+        if (isMobileView()) {
+          shareDropdownPanel.style.left = '5px';
+          shareDropdownPanel.style.right = '5px';
+          shareDropdownPanel.style.width = 'auto';
+        } else {
+          shareDropdownPanel.style.left = 'auto';
+          shareDropdownPanel.style.right = (window.innerWidth - shareBtnRect.right) + 'px';
+          shareDropdownPanel.style.width = '180px'; /* Ширина відповідає QR-коду */
+        }
+
+        shareDropdownPanel.classList.add('visible');
+      }
+    }
+
+    closeSharePanel.addEventListener('click', () => {
+      shareDropdownPanel.classList.remove('visible');
+    });
+
+    copyUrlBtn.addEventListener('click', () => {
+      shareUrlInput.select();
+      shareUrlInput.setSelectionRange(0, 99999); // Для мобільних пристроїв
+      try {
+        document.execCommand('copy');
+        const copyIconImg = copyUrlBtn.querySelector('img');
+        const originalSrc = 'https://img.icons8.com/tiny-glyph/16/737373/documents.png'; // Store original src
+        copyIconImg.src = 'https://img.icons8.com/tiny-color/16/checked--v1.png'; // Change to checked icon
+        setTimeout(() => {
+          copyIconImg.src = originalSrc; // Revert to original icon
+        }, 1500);
+      } catch (err) {
+        console.error('Не вдалося скопіювати текст:', err);
+      }
+    });
+
+
+    // Ініціалізувати підказку та вигляд при завантаженні
+    document.addEventListener('DOMContentLoaded', () => {
       // Спочатку приховати контент і показати лише основний оверлей завантаження
       document.getElementById('topBar').style.display = 'none';
       document.getElementById('container').style.display = 'none';
       mainLoadingOverlay.style.display = 'flex'; // Переконатися, що він видимий спочатку
 
       if (document.fullscreenElement) {
-          fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
+        fullscreenBtn.setAttribute('data-tooltip', 'Вийти з повноекранного режиму');
       } else {
-          fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
+        fullscreenBtn.setAttribute('data-tooltip', 'На весь екран');
       }
       loadConfig(); // Завантажити конфігурацію при завантаженні DOM
 
@@ -1583,22 +1682,23 @@ async function loadConfig() {
       divider.addEventListener('mouseleave', () => {
         draggableHandle.classList.remove('hovered');
       });
-  });
+    });
 
-  // Функціонал автоматичного приховування підказки
-  fullscreenBtn.addEventListener('mouseenter', () => {
-    clearTimeout(tooltipTimeout); // Очистити будь-який існуючий таймер
-    fullscreenBtn.classList.add('show-tooltip'); // Показати підказку
-    tooltipTimeout = setTimeout(() => {
-      fullscreenBtn.classList.remove('show-tooltip'); // Приховати через 5 секунд
-    }, 5000);
-  });
+    // Функціонал автоматичного приховування підказки
+    fullscreenBtn.addEventListener('mouseenter', () => {
+      clearTimeout(tooltipTimeout); // Очистити будь-який існуючий таймер
+      fullscreenBtn.classList.add('show-tooltip'); // Показати підказку
+      tooltipTimeout = setTimeout(() => {
+        fullscreenBtn.classList.remove('show-tooltip'); // Приховати через 5 секунд
+      }, 5000);
+    });
 
-  fullscreenBtn.addEventListener('mouseleave', () => {
-    clearTimeout(tooltipTimeout); // Очистити таймер, якщо миша покидає раніше 5 секунд
-    fullscreenBtn.classList.remove('show-tooltip'); // Приховати негайно при відведенні миші
-  });
-</script>
+    fullscreenBtn.addEventListener('mouseleave', () => {
+      clearTimeout(tooltipTimeout); // Очистити таймер, якщо миша покидає раніше 5 секунд
+      fullscreenBtn.classList.remove('show-tooltip'); // Приховати негайно при відведенні миші
+    });
+  </script>
 
 </body>
+
 </html>
