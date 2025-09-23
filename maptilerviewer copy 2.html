@@ -11,11 +11,12 @@
     <!-- Підключення Font Awesome для іконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="css/webkit-no-selection.css">
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,500,700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Montserrat', 'Inter', sans-serif;
             overflow: hidden;
         }
 
@@ -224,7 +225,7 @@
             display: inline-block;
             width: 20px;
             height: 20px;
-            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiPjxwYXRoIGQ9Ik0gMTIgMi4wOTk2MDk0IEwgMSAxMiBMIDQgMTIgTCA0IDIxIEwgMTEgMjEgTCAxMSAxNSBMIDEzIDE1IEwgMTMgMjEgTCAyMCAyMSBMIDIwIDEyIEwgMjMgMTIgTCAxMiAyLjA5OTYwOTQgeiBNIDEyIDQuNzkxMDE1NiBMIDE4IDEwLjE5MTQwNiBMIDE4IDExIEwgMTggMTkgTCAxNSAxOSBMIDE1IDEzIEwgOSAxMyBMIDkgMTkgTCA2IDE5IEwgNiAxMC4xOTE0MDYgTCAxMiA0Ljc5MTAxNTY geiIvPjwvc3ZnPg==') 50% 50% no-repeat;
+            background: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciICB2aWV3Qm94PSIwIDAgMjQgMjQiIHdpZHRoPSIyNHB4IiBoZWlnaHQ9IjI0cHgiPjxwYXRoIGQ9Ik0gMTIgMi4wOTk2MDk0IEwgMSAxMiBMIDQgMTIgTCA0IDIxIEwgMTEgMjEgTCAxMSAxNSBMIDEzIDE1IEwgMTMgMjEgTCAyMCAyMSBMIDIwIDEyIEwgMjMgMTIgTCAxMiAyLjA5OTYwOTQgeiBNIDEyIDQuNzkxMDE1NiBMIDE4IDEwLjE5MTQwNiBMIDE4IDExIEwgMTggMTkgTCAxNSAxOSBMIDE1IDEzIEwgOSAxMyBMIDkgMTkgTCA2IDE5IEwgNiAxMC4xOTE0MDYgTCAxMiA0Ljc5MTAxNTYgeiIvPjwvc3ZnPg==') 50% 50% no-repeat;
             background-size: 100%;
         }
 
@@ -274,35 +275,122 @@
             background-color: rgba(192, 192, 192, 0.7);
         }
 
-        /* Стилі для панелі шарів (layersPanel) */
+        /* --- Layers panel style and shape to match sv.html --- */
         .layers-panel {
-            position: fixed;
-            bottom: 20px;
+            position: absolute;
+            bottom: 80px;
             right: 80px;
-            width: 400px;
-            height: 300px;
-            background-color: rgba(255, 255, 255, 0.514);
-            backdrop-filter: blur(10px);
+            width: 320px;
+            max-height: 384px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
             z-index: 2000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-            display: flex;
-            flex-direction: column;
-            border-radius: 20px;
-            overflow: hidden;
-            box-sizing: border-box;
+            transition: opacity 0.3s, visibility 0.3s;
         }
 
-        /* Стиль для відображення панелі */
         .layers-panel.open {
             opacity: 1;
             visibility: visible;
         }
 
-        /* Стиль для кнопки закриття панелі, що імітує стиль .map-button */
         .layers-panel-close-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            color: #555;
+            cursor: pointer;
+            z-index: 2003;
+            transition: color 0.2s;
+        }
+
+        .layers-panel-close-button:hover {
+            color: #222;
+        }
+
+        /* --- Toggle button style for layersPanel items --- */
+        .basemap-option,
+        .overlay-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s, color 0.2s;
+            /* Remove shadow from list items */
+            box-shadow: none !important;
+            font-family: 'Montserrat', 'Inter', sans-serif;
+            box-sizing: border-box;
+        }
+
+        .basemap-option:hover,
+        .overlay-option:hover {
+            background: rgba(37, 99, 235, 0.08);
+            /* blue-600/8 */
+        }
+
+        .basemap-option.active {
+            background: rgba(37, 99, 235, 0.18);
+            /* blue-600/18 */
+            color: #2563eb;
+            /* blue-600 
+            border: 2px solid #2563eb;*/
+            /* Use same border width as default to prevent jump */
+            /* Remove shadow from active */
+            box-shadow: none !important;
+            box-sizing: border-box; /* Ensures border is inside the element */
+        }
+
+        .overlay-option.active {
+            background: rgba(37, 99, 235, 0.18);
+            color: #2563eb;
+            
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.08);
+            box-sizing: border-box; /* Ensures border is inside the element */
+        }
+
+        .overlay-option .eye-icon {
+            color: #6B7280;
+            transition: color 0.2s;
+        }
+
+        .overlay-option.active .eye-icon {
+            color: #2563eb;
+        }
+
+        .basemap-option span,
+        .overlay-option span,
+        .layers-panel h3,
+        .layers-panel {
+            font-family: 'Montserrat', 'Inter', sans-serif;
+        }
+
+        /* Стилі для елемента керування атрибуцією OpenLayers */
+        .ol-attribution {
+            left: 10px !important;
+            right: auto !important;
+            bottom: 10px !important;
+            background-color: rgba(224, 224, 224, 0.5);
+            backdrop-filter: blur(5px);
+            border-radius: 5px;
+            padding: 2px 5px;
+            box-shadow: none;
+            z-index: 1000;
+        }
+
+        .side-panel-close-button {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -323,17 +411,61 @@
             transition: background-color 0.3s ease;
         }
 
-        .layers-panel-close-button:hover {
+        .side-panel-close-button:hover {
             background-color: rgba(192, 192, 192, 0.7);
+        }
+
+        /* Стилі для панелі шарів (layersPanel) */
+        .layers-panel {
+            position: absolute;
+            bottom: 80px;
+            right: 80px;
+            width: 320px;
+            max-height: 384px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .layers-panel.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .layers-panel-close-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: transparent;
+            border: none;
+            font-size: 1.5em;
+            color: #555;
+            cursor: pointer;
+            z-index: 2003;
+            transition: color 0.2s;
+        }
+
+        .layers-panel-close-button:hover {
+            color: #222;
         }
 
         /* Стилі для елементів списку підкладок */
         .basemap-option {
-            transition: all 0.2s ease-in-out;
+            transition: background 0.2s, color 0.2s, border 0.2s;
+            /* Remove any transition that affects size */
         }
 
         .basemap-option:hover {
-            transform: translateY(-2px);
+            /* Remove any transform or scale effect */
+            background: rgba(37, 99, 235, 0.08);
         }
 
         /* Стиль для активної (обраної) підкладки */
@@ -611,16 +743,17 @@
         </button>
         <div class="flex flex-col space-y-6 text-gray-800 pt-8 h-full overflow-y-auto">
             <div class="space-y-3">
-                <h3 class="text-xl font-bold">Підкладки</h3>
+                <h3 class="text-xl font-bold">Фонова карта</h3>
                 <!-- Basemap list will be populated dynamically by JavaScript -->
                 <div id="basemapList" class="space-y-2 text-gray-600"></div>
             </div>
-            <hr class="border-gray-400">
+            <!-- Remove overlay layers section from layersPanel -->
+            <!--
             <div class="space-y-3">
                 <h3 class="text-xl font-bold">Оверлейні шари</h3>
-                <!-- Overlay layers list will be populated dynamically by JavaScript -->
                 <div id="layersList" class="space-y-2 text-gray-600"></div>
             </div>
+            -->
         </div>
     </div>
 
@@ -752,59 +885,81 @@
             { id: 'carto', title: 'CartoDB Voyager', iconClass: 'fa-compass', url: 'https://{1-4}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', attributions: '© <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, © <a href="https://carto.com/attributions">CARTO</a>' }
         ];
 
-        // JSON configuration for overlay layers
-        const overlayLayersConfig = [
-            { id: 'borders', title: 'Кордони України', tooltip: 'Цей шар використовується для центрування карти і не може бути вимкнений', togglable: false, url: 'https://wgis.project.co.ua/borders.geojson', type: 'vector' },
-            { id: 'maptiler_overlay', title: 'Maptiler Overlay', tooltip: 'Оверлейний шар з Maptiler', togglable: true, url: 'https://api.maptiler.com/tiles/01980822-6890-7fcf-8ee2-6aba7cca6ae7/{z}/{x}/{y}.webp?key=7JUTiyTWHkC7qe7Dy8Qj', type: 'tile' },
-            { id: 'highways', title: 'Автомагістралі', tooltip: 'Демонстраційний шар автомагістралей', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector' },
-            { id: 'hydrography', title: 'Гідрографія', tooltip: 'Демонстраційний шар річок та водойм', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector' },
-            { id: 'air_raids', title: 'Повітряні тривоги', tooltip: 'Дані недоступні. Цей шар є лише демонстрацією можливостей.', togglable: true, url: 'https://openlayers.org/data/vector/geojson/countries.geojson', type: 'vector' }
-        ];
-
         // Function to create and return a new basemap layer based on config
-        const createBasemapLayer = (id) => {
+        const createBasemapLayer = (id, visible = false) => {
             const config = basemapsConfig.find(c => c.id === id);
             if (!config) return null;
             const source = new ol.source.XYZ({ url: config.url, attributions: config.attributions });
-            return new ol.layer.Tile({ title: id, type: 'base', source });
+            return new ol.layer.Tile({ title: id, type: 'base', source, visible });
         };
 
         // Dynamically create and add basemap layers and their list items
         const baseMapLayerGroup = new ol.layer.Group({ title: 'Base Maps', layers: [] });
-        basemapsConfig.forEach(config => {
-            const layer = createBasemapLayer(config.id);
+        basemapsConfig.forEach((config, idx) => {
+            // CartoDB should be visible by default
+            const layer = createBasemapLayer(config.id, config.id === 'carto');
             if (layer) {
                 basemapLayers[config.id] = layer;
                 baseMapLayerGroup.getLayers().push(layer);
 
                 const listItem = document.createElement('div');
-                listItem.classList.add('flex', 'items-center', 'space-x-4', 'p-3', 'rounded-lg', 'border-2', 'border-transparent', 'cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
+                listItem.classList.add(
+                    'basemap-option',
+                    'flex', 'items-center', 'space-x-4', 'p-3', 'rounded-lg', 'border-2', 'border-transparent',
+                    'cursor-pointer', 'hover:bg-gray-100', 'transition-colors', 'select-none'
+                );
                 listItem.setAttribute('data-basemap', config.id);
+                listItem.style.userSelect = 'none';
                 listItem.innerHTML = `
-                        <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-300">
-                            <i class="fa-solid ${config.iconClass} text-gray-800 text-xl"></i>
-                        </div>
-                        <span>${config.title}</span>
-                    `;
+            <div class="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center bg-gray-300">
+                <i class="fa-solid ${config.iconClass} text-gray-800 text-xl"></i>
+            </div>
+            <span class="select-none" style="user-select:none;">${config.title}</span>
+        `;
+                if (config.id === 'carto') {
+                    listItem.classList.add('active');
+                }
                 basemapList.appendChild(listItem);
             }
         });
 
-        // Dynamically create and add overlay layer list items
-        overlayLayersConfig.forEach(config => {
-            const listItem = document.createElement('div');
-            listItem.classList.add('flex', 'items-center', 'space-x-2', 'p-3', 'rounded-lg', 'cursor-pointer', 'hover:bg-gray-100', 'transition-colors');
-            listItem.setAttribute('data-layer-id', config.id);
-            if (config.tooltip) {
-                listItem.setAttribute('title', config.tooltip);
-            }
-            const iconClass = config.togglable ? 'fa-eye-slash' : 'fa-eye text-gray-400';
-            listItem.innerHTML = `
-                    <i class="fas ${iconClass} text-lg"></i>
-                    <span class="flex-grow">${config.title}</span>
-                `;
-            layersList.appendChild(listItem);
+        // Toggle-button logic for basemap switching
+        basemapList.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-basemap]');
+            if (!target) return;
+            const type = target.dataset.basemap;
+
+            // Update UI: highlight active basemap
+            document.querySelectorAll('#basemapList .basemap-option').forEach(option => {
+                option.classList.remove('active');
+            });
+            target.classList.add('active');
+
+            // Switch OL layers
+            baseMapLayerGroup.getLayers().forEach(layer => {
+                layer.setVisible(layer.get('title') === type);
+            });
         });
+
+        // --- Close layersPanel on click/touch outside ---
+document.addEventListener('mousedown', function (e) {
+    if (layersPanel.classList.contains('open')) {
+        if (!layersPanel.contains(e.target) && !layersPanelOpenButton.contains(e.target)) {
+            layersPanel.classList.remove('open');
+            layersPanelOpenButton.classList.remove('active');
+            document.body.classList.remove('layers-panel-open');
+        }
+    }
+});
+document.addEventListener('touchstart', function (e) {
+    if (layersPanel.classList.contains('open')) {
+        if (!layersPanel.contains(e.target) && !layersPanelOpenButton.contains(e.target)) {
+            layersPanel.classList.remove('open');
+            layersPanelOpenButton.classList.remove('active');
+            document.body.classList.remove('layers-panel-open');
+        }
+    }
+});
 
         map = new ol.Map({
             target: 'map',
@@ -822,6 +977,14 @@
                 rotation: initialMapRotationRadians
             })
         });
+
+        // Ensure Maptiler overlay is created and added as the top layer
+        const maptilerOverlayLayer = new ol.layer.Tile({
+            source: new ol.source.XYZ({ url: customLayerUrl }),
+            visible: true,
+            zIndex: 1000 // Make sure it's on top
+        });
+        map.addLayer(maptilerOverlayLayer);
 
         // Create a vector source to load the GeoJSON data
         const geojsonSource = new ol.source.Vector({
@@ -1176,6 +1339,11 @@
                 document.body.classList.remove('layers-panel-open');
                 //layersPanelOpenButton.innerHTML = '<i class="fas fa-list"></i>';
                 layersPanelOpenButton.title = 'Відкрити панель шарів';
+                // Restore default icon
+                const layersIcon = layersPanelOpenButton.querySelector('.icons8-layers');
+                if (layersIcon) {
+                    layersIcon.style.backgroundImage = "url('https://img.icons8.com/forma-light/24/layers.png')";
+                }
             } else {
                 // Якщо панель закрита, відкриваємо її
                 layersPanel.classList.add('open');
@@ -1183,6 +1351,11 @@
                 document.body.classList.add('layers-panel-open');
                 //layersPanelOpenButton.innerHTML = '<i class="fas fa-times"></i>';
                 layersPanelOpenButton.title = 'Закрити панель шарів';
+                // Change icon to white
+                const layersIcon = layersPanelOpenButton.querySelector('.icons8-layers');
+                if (layersIcon) {
+                    layersIcon.style.backgroundImage = "url('img/icons/icons8-layers-white-24.png')";
+                }
             }
         }
 
