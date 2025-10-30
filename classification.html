@@ -31,6 +31,8 @@
   .code{text-align:center;font-weight:700;white-space:nowrap}
   a.code-link{color:var(--brand);text-decoration:underline;cursor:pointer}
   a.code-link:hover{color:#1d4ed8}
+  #toast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:var(--brand-2);color:#fff;padding:10px 20px;border-radius:10px;font-size:.92rem;opacity:0;transition:opacity .35s;pointer-events:none}
+  #toast.show{opacity:1}
   .desc{font-size:.95em;color:#374151}
   .desc ul{margin:.35rem 0 .6rem 1.05rem}
   .desc li{margin:.15rem 0}
@@ -60,6 +62,7 @@
       <tbody id="table-body"></tbody>
     </table>
   </div>
+  <div id="toast">Скопійовано</div>
 <script>
 (async function(){
   const tbody=document.getElementById('table-body');
@@ -68,28 +71,23 @@
   const status=document.getElementById('status');
   const theadEl=document.querySelector('thead');
   const headerEl=document.querySelector('header');
+  const toast=document.getElementById('toast');
 
   const JSON_URL='https://wgis.project.co.ua/building_classification_full.json';
 
   function getOffsetForTarget(){
-const headerEl=document.querySelector('header');
-const theadEl=document.querySelector('thead');
-// якщо елементи існують — беремо їхню висоту, інакше 0
-const headerH = (headerEl && headerEl.offsetHeight) ? headerEl.offsetHeight : 0;
-const theadH = (theadEl && theadEl.getBoundingClientRect().height) ? theadEl.getBoundingClientRect().height : 0;
-// якщо таблиця або хедер сховані (наприклад, при пошуку) — компенсуємо лише видимі елементи
-const totalOffset = (headerH > 0 ? headerH : 0) + (theadH > 0 ? theadH : 0) + 25;
-return totalOffset;
-}
+    const headerH=(headerEl&&headerEl.offsetHeight)?headerEl.offsetHeight:0;
+    const theadH=(theadEl&&theadEl.getBoundingClientRect().height)?theadEl.getBoundingClientRect().height:0;
+    return (headerH>0?headerH:0)+(theadH>0?theadH:0)+25;
+  }
 
-
-function smartScrollToId(id){
-const target=document.getElementById(id);
-if(!target)return;
-const offset=getOffsetForTarget();
-const top=target.getBoundingClientRect().top+window.scrollY-offset;
-window.scrollTo({top,behavior:'smooth'});
-}
+  function smartScrollToId(id){
+    const target=document.getElementById(id);
+    if(!target)return;
+    const offset=getOffsetForTarget();
+    const top=target.getBoundingClientRect().top+window.scrollY-offset;
+    window.scrollTo({top,behavior:'smooth'});
+  }
 
   try{
     const res=await fetch(JSON_URL,{mode:'cors'});
@@ -111,7 +109,16 @@ window.scrollTo({top,behavior:'smooth'});
     traverse(raw);
 
     const codeToLevel=code=>String(code).length;
-    const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=>i===lvl-1?`<td class='code'>${lvl>=4?`<a class='code-link' data-code='${code}'>${code}</a>`:code}</td>`:'<td></td>').join('');
+    const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=>{
+      if(i===lvl-1){
+        if(lvl>=4){
+          return `<td class='code'><a class='code-link' data-code='${code}' title='Копіювати код'>${code}</a></td>`;
+        }
+        return `<td class='code'>${code}</td>`;
+      }
+      return '<td></td>';
+    }).join('');
+
     const linkifyRefs=text=>text?text.replace(/\b(\d{1,4})\b/g,(m,code)=>`<a href='#sec-${code}'>${code}</a>`):'';
     const renderLists=(label,items)=>!items||!items.length?'':`<div class='desc'><b>${label}:</b><ul>${items.map(x=>`<li>${linkifyRefs(String(x))}</li>`).join('')}</ul></div>`;
 
@@ -144,6 +151,18 @@ window.scrollTo({top,behavior:'smooth'});
       navList.appendChild(li);
     });
 
+    // Копіювання коду з 4-го рівня
+    document.addEventListener('click',e=>{
+      const link=e.target.closest('.code-link');
+      if(link){
+        navigator.clipboard.writeText(link.dataset.code).then(()=>{
+          toast.classList.add('show');
+          setTimeout(()=>toast.classList.remove('show'),1200);
+        });
+        return;
+      }
+    });
+
     // Прокрутка для посилань у навігації
     navList.addEventListener('click',e=>{
       const a=e.target.closest('a');
@@ -151,6 +170,7 @@ window.scrollTo({top,behavior:'smooth'});
       e.preventDefault();
       const id=a.getAttribute('href').substring(1);
       smartScrollToId(id);
+      history.pushState(null,'','#'+id);
     });
 
     // Прокрутка для внутрішніх посилань у тексті
@@ -160,6 +180,16 @@ window.scrollTo({top,behavior:'smooth'});
       e.preventDefault();
       const id=a.getAttribute('href').substring(1);
       smartScrollToId(id);
+      history.pushState(null,'','#'+id);
+    });
+
+    // Обробка кнопок браузера Вперед/Назад
+    window.addEventListener('popstate',()=>{
+      if(location.hash){
+        const id=location.hash.substring(1);
+        const el=document.getElementById(id);
+        if(el)setTimeout(()=>smartScrollToId(id),0);
+      }
     });
 
     // Фільтрація
