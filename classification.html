@@ -15,18 +15,19 @@
   nav li{margin:4px 0;position:relative}
   nav a{display:block;text-decoration:none;color:var(--brand);font-weight:600;padding:6px 10px;border-radius:8px}
   nav a:hover{background:#eff6ff}
-  nav a.active{background:#dbeafe;color:var(--brand-2)}
   nav li.level-1 a{padding-left:6px}
-  nav li.level-2 a{padding-left:18px;font-weight:600;font-size:.95em}
-  nav li.level-3 a{padding-left:30px;font-weight:500;font-size:.9em}
+  nav li.level-2 a{padding-left:20px;font-weight:600;font-size:.95em}
+  nav li.level-3 a{padding-left:34px;font-weight:500;font-size:.9em}
   .wrap{flex:1;max-width:1100px;margin:0 auto;padding:20px;position:relative}
+  header{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:12px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+  header input{flex:1;margin-left:12px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;font-size:1rem}
   h1{font-weight:700;font-size:1.8rem;margin:.2rem 0 1rem}
   table{width:100%;border-collapse:collapse}
   th,td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;transition:background .15s}
-  thead th{background:#f3f4f6;position:sticky;top:0;z-index:10}
+  thead th{background:#f3f4f6;position:sticky;top:60px;z-index:10}
   tr:hover td{background:#f8fafc}
-  .group-title{background:#e0f2fe;font-weight:700;position:sticky;top:2.6rem;z-index:6}
-  .subgroup-title{background:#fef9c3;font-weight:600;position:sticky;top:calc(2.6rem + 1.9em);z-index:5}
+  .group-title{background:#e0f2fe;font-weight:700;position:sticky;top:calc(60px + 0rem);z-index:6}
+  .subgroup-title{background:#fef9c3;font-weight:600;position:sticky;top:calc(60px + 2rem);z-index:5}
   .code{text-align:center;font-weight:700;white-space:nowrap}
   a.code-link{color:var(--brand);text-decoration:underline;cursor:pointer}
   a.code-link:hover{color:#1d4ed8}
@@ -35,12 +36,7 @@
   .desc li{margin:.15rem 0}
   .meta{display:block;margin-top:.25rem;font-size:.85em;color:#374151}
   .meta b{color:#111827}
-  #toast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:var(--brand-2);color:#fff;padding:10px 20px;border-radius:10px;font-size:.92rem;opacity:0;transition:opacity .35s;pointer-events:none}
-  #toast.show{opacity:1}
-  #scrollTopBtn{position:fixed;bottom:24px;right:24px;background:var(--brand);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:0;visibility:hidden;transition:opacity .25s}
-  #scrollTopBtn.show{opacity:1;visibility:visible}
   .muted{color:#6b7280}
-  #test-badge{position:fixed;right:12px;top:10px;background:#111827;color:#fff;font-size:12px;padding:4px 8px;border-radius:6px;opacity:.85}
 </style>
 </head>
 <body>
@@ -49,7 +45,10 @@
     <ul id="nav-list"></ul>
   </nav>
   <div class="wrap">
-    <h1>Класифікація будівель і споруд</h1>
+    <header>
+      <h1 style="margin:0;font-size:1.4rem">Класифікація будівель</h1>
+      <input id="search" type="search" placeholder="Пошук за назвою або кодом…" aria-label="Пошук">
+    </header>
     <div class="muted" id="status">Завантаження даних…</div>
     <table id="classification" aria-live="polite">
       <thead>
@@ -61,171 +60,129 @@
       <tbody id="table-body"></tbody>
     </table>
   </div>
-  <div id="toast">Скопійовано</div>
-  <div id="test-badge" hidden>tests: …</div>
-  <button id="scrollTopBtn" title="Наверх">↑</button>
-
 <script>
 (async function(){
   const tbody=document.getElementById('table-body');
   const navList=document.getElementById('nav-list');
+  const search=document.getElementById('search');
   const status=document.getElementById('status');
-  const toast=document.getElementById('toast');
-  const scrollTopBtn=document.getElementById('scrollTopBtn');
   const theadEl=document.querySelector('thead');
-  const testBadge=document.getElementById('test-badge');
-
-  function measureHeights(){
-    const headerH=theadEl?theadEl.getBoundingClientRect().height:0;
-    const grp=document.querySelector('tr.group-title');
-    const sub=document.querySelector('tr.subgroup-title');
-    const groupH=grp?grp.getBoundingClientRect().height:0;
-    const subH=sub?sub.getBoundingClientRect().height:0;
-    return {headerH,groupH,subH};
-  }
-
-  function getOffsetForTarget(target){
-    const {headerH,groupH,subH}=measureHeights();
-    let hasGroup=false,hasSub=false;
-    for(let el=target.previousElementSibling;el;el=el.previousElementSibling){
-      if(!hasSub&&el.classList&&el.classList.contains('subgroup-title'))hasSub=true;
-      if(el.classList&&el.classList.contains('group-title')){hasGroup=true;break;}
-    }
-    return headerH+(hasGroup?groupH:0)+(hasSub?subH:0);
-  }
+  const headerEl=document.querySelector('header');
 
   const JSON_URL='https://wgis.project.co.ua/building_classification_full.json';
-  let raw;
-  try{
-    const res=await fetch(JSON_URL,{mode:'cors',cache:'no-cache'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    raw=await res.json();
-    status.textContent='Дані завантажено';
-  }catch(err){
-    status.textContent='Не вдалося завантажити '+JSON_URL+' — '+err;
-    console.error(err);
-    return;
-  }
 
-  const rows=[];
-  function traverse(node,level=1){
-    if(!node)return;
-    Object.entries(node).forEach(([code,obj])=>{
-      if(obj&&typeof obj==='object'&&obj.name){
-        rows.push({id:String(code),level,name:obj.name,includes:obj.includes||[],excludes:obj.excludes||[],seeAlso:obj.ref||[],note:obj.note||''});
-      }
-      if(obj&&typeof obj==='object'){
+  function getOffsetForTarget(){
+const headerEl=document.querySelector('header');
+const theadEl=document.querySelector('thead');
+// якщо елементи існують — беремо їхню висоту, інакше 0
+const headerH = (headerEl && headerEl.offsetHeight) ? headerEl.offsetHeight : 0;
+const theadH = (theadEl && theadEl.getBoundingClientRect().height) ? theadEl.getBoundingClientRect().height : 0;
+// якщо таблиця або хедер сховані (наприклад, при пошуку) — компенсуємо лише видимі елементи
+const totalOffset = (headerH > 0 ? headerH : 0) + (theadH > 0 ? theadH : 0) + 25;
+return totalOffset;
+}
+
+
+function smartScrollToId(id){
+const target=document.getElementById(id);
+if(!target)return;
+const offset=getOffsetForTarget();
+const top=target.getBoundingClientRect().top+window.scrollY-offset;
+window.scrollTo({top,behavior:'smooth'});
+}
+
+  try{
+    const res=await fetch(JSON_URL,{mode:'cors'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const raw=await res.json();
+
+    const rows=[];
+    function traverse(node,level=1){
+      if(!node)return;
+      Object.entries(node).forEach(([code,obj])=>{
+        if(obj&&typeof obj==='object'&&obj.name){
+          rows.push({id:String(code),level,name:obj.name,includes:obj.includes||[],excludes:obj.excludes||[],seeAlso:obj.ref||[],note:obj.note||''});
+        }
         if(obj.groups)traverse(obj.groups,level+1);
         if(obj.classes)traverse(obj.classes,level+1);
         if(obj.subclasses)traverse(obj.subclasses,level+1);
-      }
-    });
-  }
-  traverse(raw,1);
-
-  rows.sort((a,b)=>a.id.localeCompare(b.id,'uk'));
-
-  const codeToLevel=code=>String(code).length;
-  const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=>i===lvl-1?`<td class='code'>${lvl>=4?`<a class='code-link' data-code='${code}'>${code}</a>`:code}</td>`:'<td></td>').join('');
-  const linkifyRefs=text=>text?text.replace(/\b(\d{1,4})\b/g,(m,code)=>`<a href='#sec-${code}'>${code}</a>`):'';
-  const renderLists=(label,items)=>!items||!items.length?'':`<div class='desc'><b>${label}:</b><ul>${items.map(x=>`<li>${linkifyRefs(String(x))}</li>`).join('')}</ul></div>`;
-
-  for(const r of rows){
-    const tr=document.createElement('tr');
-    const lvl=r.level||codeToLevel(r.id);
-    tr.id=`sec-${r.id}`;
-    if(lvl===1)tr.classList.add('group-title');
-    if(lvl===2)tr.classList.add('subgroup-title');
-    const codeCells=makeCodeCells(r.id,lvl);
-    const noteBlock=r.note?`<div class='desc'>${linkifyRefs(String(r.note))}</div>`:'';
-    const includes=renderLists('Цей клас включає',r.includes);
-    const excludes=renderLists('Цей клас не включає',r.excludes);
-    const seeAlso=renderLists('Див. також',r.seeAlso||[]);
-    const meta=(includes||excludes||seeAlso||noteBlock)?`<span class='meta'><b>Деталі:</b></span>${noteBlock}${includes}${excludes}${seeAlso}`:'';
-    tr.innerHTML=`${codeCells}<td><strong>${r.name||''}</strong>${meta}</td>`;
-    tbody.appendChild(tr);
-  }
-
-  const uniqBy=(arr,key)=>Array.from(new Map(arr.map(o=>[key(o),o])).values());
-  const navItems=uniqBy(rows.filter(r=>r.id.length<=3),r=>r.id).sort((a,b)=>a.id.localeCompare(b.id,'uk'));
-  navItems.forEach(r=>{
-    const li=document.createElement('li');
-    const lvl=r.level||codeToLevel(r.id);
-    li.classList.add(`level-${Math.min(lvl,3)}`);
-    const a=document.createElement('a');
-    a.href=`#sec-${r.id}`;
-    a.textContent=`${r.id} — ${r.name}`;
-    li.appendChild(a);
-    navList.appendChild(li);
-  });
-
-  document.addEventListener('click',e=>{
-    const link=e.target.closest('.code-link');
-    if(link){
-      navigator.clipboard.writeText(link.dataset.code).then(()=>{
-        toast.classList.add('show');
-        setTimeout(()=>toast.classList.remove('show'),1200);
       });
     }
-  });
+    traverse(raw);
 
-  function smartScrollToId(id){
-    const target=document.getElementById(id);
-    if(!target)return;
-    const rect=target.getBoundingClientRect();
-    const offset=getOffsetForTarget(target);
-    window.scrollTo({top:window.scrollY+rect.top-offset-6,behavior:'smooth'});
-  }
+    const codeToLevel=code=>String(code).length;
+    const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=>i===lvl-1?`<td class='code'>${lvl>=4?`<a class='code-link' data-code='${code}'>${code}</a>`:code}</td>`:'<td></td>').join('');
+    const linkifyRefs=text=>text?text.replace(/\b(\d{1,4})\b/g,(m,code)=>`<a href='#sec-${code}'>${code}</a>`):'';
+    const renderLists=(label,items)=>!items||!items.length?'':`<div class='desc'><b>${label}:</b><ul>${items.map(x=>`<li>${linkifyRefs(String(x))}</li>`).join('')}</ul></div>`;
 
-  // Клік по пункту навігації — оновлення історії
-  navList.addEventListener('click',e=>{
-    const a=e.target.closest('a');
-    if(!a)return;
-    e.preventDefault();
-    const id=a.getAttribute('href').slice(1);
-    smartScrollToId(id);
-    history.pushState(null,'','#'+id);
-  });
+    rows.sort((a,b)=>a.id.localeCompare(b.id,'uk'));
 
-  // Клік по внутрішніх посиланнях у тексті
-  document.addEventListener('click',e=>{
-    const a=e.target.closest('a[href^="#sec-"]');
-    if(!a)return;
-    e.preventDefault();
-    const id=a.getAttribute('href').slice(1);
-    smartScrollToId(id);
-    history.pushState(null,'','#'+id);
-  });
-
-  // Обробка переходів Назад/Вперед у браузері
-  window.addEventListener('popstate',()=>{
-    if(location.hash){
-      const id=location.hash.substring(1);
-      const el=document.getElementById(id);
-      if(el)setTimeout(()=>smartScrollToId(id),0);
+    for(const r of rows){
+      const tr=document.createElement('tr');
+      const lvl=r.level||codeToLevel(r.id);
+      tr.id=`sec-${r.id}`;
+      if(lvl===1)tr.classList.add('group-title');
+      if(lvl===2)tr.classList.add('subgroup-title');
+      const codeCells=makeCodeCells(r.id,lvl);
+      const noteBlock=r.note?`<div class='desc'>${linkifyRefs(String(r.note))}</div>`:'';
+      const includes=renderLists('Цей клас включає',r.includes);
+      const excludes=renderLists('Цей клас не включає',r.excludes);
+      const seeAlso=renderLists('Див. також',r.seeAlso||[]);
+      const meta=(includes||excludes||seeAlso||noteBlock)?`<span class='meta'><b>Деталі:</b></span>${noteBlock}${includes}${excludes}${seeAlso}`:'';
+      tr.innerHTML=`${codeCells}<td><strong>${r.name||''}</strong>${meta}</td>`;
+      tbody.appendChild(tr);
     }
-  });
 
-  window.addEventListener('load',()=>{
-    if(location.hash&&document.getElementById(location.hash.substring(1))){
-      setTimeout(()=>smartScrollToId(location.hash.substring(1)),0);
-    }
-  });
+    rows.forEach(r=>{
+      const li=document.createElement('li');
+      li.classList.add(`level-${Math.min(r.level,3)}`);
+      const a=document.createElement('a');
+      a.href=`#sec-${r.id}`;
+      a.textContent=`${r.id} — ${r.name}`;
+      li.dataset.target=`sec-${r.id}`;
+      li.appendChild(a);
+      navList.appendChild(li);
+    });
 
-  window.addEventListener('scroll',()=>{
-    if(window.scrollY>400)scrollTopBtn.classList.add('show');else scrollTopBtn.classList.remove('show');
-  },{passive:true});
-  scrollTopBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+    // Прокрутка для посилань у навігації
+    navList.addEventListener('click',e=>{
+      const a=e.target.closest('a');
+      if(!a)return;
+      e.preventDefault();
+      const id=a.getAttribute('href').substring(1);
+      smartScrollToId(id);
+    });
 
-  const tests=[{id:'1110',desc:'існує 4-й рівень 1110'},{id:'1230',desc:'існує 4-й рівень 1230'},{id:'2211',desc:'існує 4-й рівень 2211'}];
-  let ok=0,total=tests.length,missing=[];
-  for(const t of tests){
-    const pass=!!document.getElementById('sec-'+t.id);
-    if(pass){ok++;}else{missing.push(t.id);}
-    console.assert(pass,'Відсутній рядок',t.id,t.desc);
+    // Прокрутка для внутрішніх посилань у тексті
+    document.addEventListener('click',e=>{
+      const a=e.target.closest('a[href^="#sec-"]');
+      if(!a)return;
+      e.preventDefault();
+      const id=a.getAttribute('href').substring(1);
+      smartScrollToId(id);
+    });
+
+    // Фільтрація
+    search.addEventListener('input',()=>{
+      const q=search.value.toLowerCase().trim();
+      const visibleIds=new Set();
+      for(const tr of tbody.querySelectorAll('tr')){
+        const text=tr.textContent.toLowerCase();
+        const show=(q===''||text.includes(q));
+        tr.style.display=show?'':'none';
+        if(show)visibleIds.add(tr.id);
+      }
+      for(const li of navList.querySelectorAll('li')){
+        const targetId=li.dataset.target;
+        li.style.display=visibleIds.has(targetId)?'':'none';
+      }
+    });
+
+    status.textContent='Дані завантажено';
+  }catch(err){
+    status.textContent='Не вдалося завантажити дані: '+err;
+    console.error(err);
   }
-  testBadge.hidden=false;
-  testBadge.textContent=`tests: ${ok}/${total}`+(missing.length?` missing: ${missing.join(', ')}`:'');
 })();
 </script>
 </body>
