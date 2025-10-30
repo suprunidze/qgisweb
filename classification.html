@@ -66,41 +66,32 @@
   <button id="scrollTopBtn" title="Наверх">↑</button>
 
 <script>
-  window.addEventListener('popstate', ()=>{
-if(location.hash){
-const id = location.hash.substring(1);
-const el = document.getElementById(id);
-if(el){
-el.scrollIntoView({behavior:'smooth', block:'start'});
-}
-}
-});
 (async function(){
   const tbody=document.getElementById('table-body');
   const navList=document.getElementById('nav-list');
   const status=document.getElementById('status');
   const toast=document.getElementById('toast');
   const scrollTopBtn=document.getElementById('scrollTopBtn');
-  const theadEl = document.querySelector('thead');
+  const theadEl=document.querySelector('thead');
   const testBadge=document.getElementById('test-badge');
 
   function measureHeights(){
-    const headerH = theadEl ? theadEl.getBoundingClientRect().height : 0;
-    const grp = document.querySelector('tr.group-title');
-    const sub = document.querySelector('tr.subgroup-title');
-    const groupH = grp ? grp.getBoundingClientRect().height : 0;
-    const subH = sub ? sub.getBoundingClientRect().height : 0;
-    return {headerH, groupH, subH};
+    const headerH=theadEl?theadEl.getBoundingClientRect().height:0;
+    const grp=document.querySelector('tr.group-title');
+    const sub=document.querySelector('tr.subgroup-title');
+    const groupH=grp?grp.getBoundingClientRect().height:0;
+    const subH=sub?sub.getBoundingClientRect().height:0;
+    return {headerH,groupH,subH};
   }
 
   function getOffsetForTarget(target){
-    const {headerH, groupH, subH} = measureHeights();
-    let hasGroup=false, hasSub=false;
-    for(let el=target.previousElementSibling; el; el=el.previousElementSibling){
-      if(!hasSub && el.classList && el.classList.contains('subgroup-title')) hasSub=true;
-      if(el.classList && el.classList.contains('group-title')) { hasGroup=true; break; }
+    const {headerH,groupH,subH}=measureHeights();
+    let hasGroup=false,hasSub=false;
+    for(let el=target.previousElementSibling;el;el=el.previousElementSibling){
+      if(!hasSub&&el.classList&&el.classList.contains('subgroup-title'))hasSub=true;
+      if(el.classList&&el.classList.contains('group-title')){hasGroup=true;break;}
     }
-    return headerH + (hasGroup?groupH:0) + (hasSub?subH:0);
+    return headerH+(hasGroup?groupH:0)+(hasSub?subH:0);
   }
 
   const JSON_URL='https://wgis.project.co.ua/building_classification_full.json';
@@ -117,36 +108,25 @@ el.scrollIntoView({behavior:'smooth', block:'start'});
   }
 
   const rows=[];
-  function traverse(node, level = 1) {
-    if (!node) return;
-    Object.entries(node).forEach(([code, obj]) => {
-      if (obj && typeof obj === 'object' && obj.name) {
-        rows.push({
-          id: String(code),
-          level,
-          name: obj.name,
-          includes: obj.includes || [],
-          excludes: obj.excludes || [],
-          seeAlso: obj.ref || [],
-          note: obj.note || ''
-        });
+  function traverse(node,level=1){
+    if(!node)return;
+    Object.entries(node).forEach(([code,obj])=>{
+      if(obj&&typeof obj==='object'&&obj.name){
+        rows.push({id:String(code),level,name:obj.name,includes:obj.includes||[],excludes:obj.excludes||[],seeAlso:obj.ref||[],note:obj.note||''});
       }
-      if (obj && typeof obj === 'object'){
-        if (obj.groups) traverse(obj.groups, level + 1);
-        if (obj.classes) traverse(obj.classes, level + 1);
-        if (obj.subclasses) traverse(obj.subclasses, level + 1);
+      if(obj&&typeof obj==='object'){
+        if(obj.groups)traverse(obj.groups,level+1);
+        if(obj.classes)traverse(obj.classes,level+1);
+        if(obj.subclasses)traverse(obj.subclasses,level+1);
       }
     });
   }
-  traverse(raw, 1);
+  traverse(raw,1);
 
   rows.sort((a,b)=>a.id.localeCompare(b.id,'uk'));
 
   const codeToLevel=code=>String(code).length;
-  const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=> i===lvl-1
-    ? `<td class='code'>${lvl>=4?`<a class='code-link' data-code='${code}'>${code}</a>`:code}</td>`
-    : '<td></td>'
-  ).join('');
+  const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=>i===lvl-1?`<td class='code'>${lvl>=4?`<a class='code-link' data-code='${code}'>${code}</a>`:code}</td>`:'<td></td>').join('');
   const linkifyRefs=text=>text?text.replace(/\b(\d{1,4})\b/g,(m,code)=>`<a href='#sec-${code}'>${code}</a>`):'';
   const renderLists=(label,items)=>!items||!items.length?'':`<div class='desc'><b>${label}:</b><ul>${items.map(x=>`<li>${linkifyRefs(String(x))}</li>`).join('')}</ul></div>`;
 
@@ -191,54 +171,61 @@ el.scrollIntoView({behavior:'smooth', block:'start'});
 
   function smartScrollToId(id){
     const target=document.getElementById(id);
-    if(!target) return;
+    if(!target)return;
     const rect=target.getBoundingClientRect();
     const offset=getOffsetForTarget(target);
-    window.scrollTo({top:window.scrollY + rect.top - offset - 6, behavior:'smooth'});
+    window.scrollTo({top:window.scrollY+rect.top-offset-6,behavior:'smooth'});
   }
 
+  // Клік по пункту навігації — оновлення історії
   navList.addEventListener('click',e=>{
     const a=e.target.closest('a');
-    if(!a) return;
+    if(!a)return;
     e.preventDefault();
     const id=a.getAttribute('href').slice(1);
     smartScrollToId(id);
-    history.replaceState(null, '', '#' + id);
+    history.pushState(null,'','#'+id);
   });
 
+  // Клік по внутрішніх посиланнях у тексті
   document.addEventListener('click',e=>{
     const a=e.target.closest('a[href^="#sec-"]');
-    if(!a) return;
+    if(!a)return;
     e.preventDefault();
     const id=a.getAttribute('href').slice(1);
     smartScrollToId(id);
-    history.replaceState(null, '', '#' + id);
+    history.pushState(null,'','#'+id);
   });
 
-  window.addEventListener('load',()=>{
-    if(location.hash && document.getElementById(location.hash.substring(1))){
-      setTimeout(()=>smartScrollToId(location.hash.substring(1)), 0);
+  // Обробка переходів Назад/Вперед у браузері
+  window.addEventListener('popstate',()=>{
+    if(location.hash){
+      const id=location.hash.substring(1);
+      const el=document.getElementById(id);
+      if(el)setTimeout(()=>smartScrollToId(id),0);
     }
   });
 
-  window.addEventListener('scroll', ()=>{
-    if(window.scrollY>400) scrollTopBtn.classList.add('show'); else scrollTopBtn.classList.remove('show');
-  }, {passive:true});
-  scrollTopBtn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+  window.addEventListener('load',()=>{
+    if(location.hash&&document.getElementById(location.hash.substring(1))){
+      setTimeout(()=>smartScrollToId(location.hash.substring(1)),0);
+    }
+  });
 
-  const tests=[
-    {id:'1110', desc:'існує 4-й рівень 1110'},
-    {id:'1230', desc:'існує 4-й рівень 1230'},
-    {id:'2211', desc:'існує 4-й рівень 2211'},
-  ];
-  let ok=0; let total=tests.length; const missing=[];
+  window.addEventListener('scroll',()=>{
+    if(window.scrollY>400)scrollTopBtn.classList.add('show');else scrollTopBtn.classList.remove('show');
+  },{passive:true});
+  scrollTopBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+  const tests=[{id:'1110',desc:'існує 4-й рівень 1110'},{id:'1230',desc:'існує 4-й рівень 1230'},{id:'2211',desc:'існує 4-й рівень 2211'}];
+  let ok=0,total=tests.length,missing=[];
   for(const t of tests){
-    const pass= !!document.getElementById('sec-'+t.id);
-    if(pass){ ok++; } else { missing.push(t.id); }
-    console.assert(pass, 'Відсутній рядок', t.id, t.desc);
+    const pass=!!document.getElementById('sec-'+t.id);
+    if(pass){ok++;}else{missing.push(t.id);}
+    console.assert(pass,'Відсутній рядок',t.id,t.desc);
   }
   testBadge.hidden=false;
-  testBadge.textContent = `tests: ${ok}/${total}` + (missing.length? ` missing: ${missing.join(', ')}`:'' );
+  testBadge.textContent=`tests: ${ok}/${total}`+(missing.length?` missing: ${missing.join(', ')}`:'');
 })();
 </script>
 </body>
