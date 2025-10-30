@@ -40,7 +40,6 @@
   #scrollTopBtn{position:fixed;bottom:24px;right:24px;background:var(--brand);color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:22px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:0;visibility:hidden;transition:opacity .25s}
   #scrollTopBtn.show{opacity:1;visibility:visible}
   .muted{color:#6b7280}
-  /* тест-бейдж */
   #test-badge{position:fixed;right:12px;top:10px;background:#111827;color:#fff;font-size:12px;padding:4px 8px;border-radius:6px;opacity:.85}
 </style>
 </head>
@@ -67,6 +66,15 @@
   <button id="scrollTopBtn" title="Наверх">↑</button>
 
 <script>
+  window.addEventListener('popstate', ()=>{
+if(location.hash){
+const id = location.hash.substring(1);
+const el = document.getElementById(id);
+if(el){
+el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+}
+});
 (async function(){
   const tbody=document.getElementById('table-body');
   const navList=document.getElementById('nav-list');
@@ -108,7 +116,6 @@
     return;
   }
 
-  // --- Побудова плоского списку рядків ---
   const rows=[];
   function traverse(node, level = 1) {
     if (!node) return;
@@ -182,7 +189,6 @@
     }
   });
 
-  // --- Плавна прокрутка з урахуванням ЛИПКИХ елементів ---
   function smartScrollToId(id){
     const target=document.getElementById(id);
     if(!target) return;
@@ -200,7 +206,6 @@
     history.replaceState(null, '', '#' + id);
   });
 
-  // Кліки по внутрішніх посиланнях у контенті (наприклад, "див. 1230")
   document.addEventListener('click',e=>{
     const a=e.target.closest('a[href^="#sec-"]');
     if(!a) return;
@@ -210,20 +215,17 @@
     history.replaceState(null, '', '#' + id);
   });
 
-  // Корекція при прямому відкритті з хешем
   window.addEventListener('load',()=>{
     if(location.hash && document.getElementById(location.hash.substring(1))){
       setTimeout(()=>smartScrollToId(location.hash.substring(1)), 0);
     }
   });
 
-  // Кнопка "Наверх"
   window.addEventListener('scroll', ()=>{
     if(window.scrollY>400) scrollTopBtn.classList.add('show'); else scrollTopBtn.classList.remove('show');
   }, {passive:true});
   scrollTopBtn.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
 
-  // --- Мінімальні автотести (не змінюють UI) ---
   const tests=[
     {id:'1110', desc:'існує 4-й рівень 1110'},
     {id:'1230', desc:'існує 4-й рівень 1230'},
