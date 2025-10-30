@@ -93,8 +93,15 @@
     try{localStorage.setItem('navCollapsed', collapsed?'1':'0');}catch{}
   }
   function getStoredCollapse(){
-    try{return localStorage.getItem('navCollapsed')==='1';}catch{return false}
-  }
+try {
+// Якщо запису немає — панель вважається відкритою (false)
+const stored = localStorage.getItem('navCollapsed');
+if (stored === null) return false; // дефолт — ВІДКРИТА
+return stored === '1';
+} catch {
+return false; // fallback — відкрита
+}
+}
   setNavCollapsed(getStoredCollapse());
   toggleNavBtn.addEventListener('click',()=>{
     const collapsed=document.body.classList.contains('nav-collapsed');
