@@ -36,8 +36,14 @@
   .group-title{background:#e0f2fe;font-weight:700;position:sticky;top:calc(60px + 0rem);z-index:6}
   .subgroup-title{background:#fef9c3;font-weight:600;position:sticky;top:calc(60px + 2rem);z-index:5}
   .code{text-align:center;font-weight:700;white-space:nowrap}
-  a.code-link{color:var(--brand);text-decoration:underline;cursor:pointer}
-  a.code-link:hover{color:#1d4ed8}
+  a.code-link{color:var(--brand);text-decoration:underline;cursor:pointer;position:relative}
+  a.code-link:hover::after{content:'Копіювати';position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:3px 6px;border-radius:6px;font-size:.75em;white-space:nowrap;opacity:1;pointer-events:none}
+  a.code-link::after{opacity:0;transition:opacity .2s}
+
+  a.ref-link{color:var(--brand-2);text-decoration:underline;position:relative}
+  a.ref-link:hover::after{content:attr(data-title);position:absolute;bottom:120%;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:3px 6px;border-radius:6px;font-size:.75em;white-space:nowrap;opacity:1;pointer-events:none}
+  a.ref-link::after{opacity:0;transition:opacity .2s}
+
   .desc{font-size:.95em;color:#374151}
   .desc ul{margin:.35rem 0 .6rem 1.05rem}
   .desc li{margin:.15rem 0}
@@ -47,6 +53,14 @@
 
   #toast{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);background:var(--brand-2);color:#fff;padding:10px 20px;border-radius:10px;font-size:.92rem;opacity:0;transition:opacity .25s;pointer-events:none}
   #toast.show{opacity:1}
+
+  /* ефект підморгування */
+  .highlight-flash{animation:flash-bg 1.5s ease-in-out}
+  @keyframes flash-bg{
+    0%{background-color:#fff3cd;}
+    50%{background-color:#ffeeba;}
+    100%{background-color:inherit;}
+  }
 </style>
 </head>
 <body>
@@ -93,15 +107,12 @@
     try{localStorage.setItem('navCollapsed', collapsed?'1':'0');}catch{}
   }
   function getStoredCollapse(){
-try {
-// Якщо запису немає — панель вважається відкритою (false)
-const stored = localStorage.getItem('navCollapsed');
-if (stored === null) return false; // дефолт — ВІДКРИТА
-return stored === '1';
-} catch {
-return false; // fallback — відкрита
-}
-}
+    try{
+      const stored=localStorage.getItem('navCollapsed');
+      if(stored===null)return false;
+      return stored==='1';
+    }catch{return false;}
+  }
   setNavCollapsed(getStoredCollapse());
   toggleNavBtn.addEventListener('click',()=>{
     const collapsed=document.body.classList.contains('nav-collapsed');
@@ -113,12 +124,17 @@ return false; // fallback — відкрита
     const theadH=theadEl?.getBoundingClientRect().height||0;
     return headerH+theadH+20;
   }
+  function highlightElement(el){
+    el.classList.add('highlight-flash');
+    setTimeout(()=>el.classList.remove('highlight-flash'),1500);
+  }
   function smartScrollToId(id){
     const target=document.getElementById(id);
     if(!target)return;
     const offset=getOffsetForTarget();
     const top=target.getBoundingClientRect().top+window.scrollY-offset;
     window.scrollTo({top,behavior:'smooth'});
+    setTimeout(()=>highlightElement(target),600);
   }
 
   try{
@@ -141,17 +157,33 @@ return false; // fallback — відкрита
     traverse(raw);
 
     const codeToLevel=code=>String(code).length;
+
     const makeCodeCells=(code,lvl)=>Array(4).fill('').map((_,i)=>{
       if(i===lvl-1){
         if(lvl>=4){
-          return `<td class='code'><a class='code-link' data-code='${code}' title='Скопіювати код у буфер'>${code}</a></td>`;
+          return `<td class='code'><a class='code-link' data-code='${code}' title='Копіювати код: ${code}'>${code}</a></td>`;
         }
-        return `<td class='code'>${code}</td>`;
+        return `<td class='code' title='Код: ${code}'>${code}</td>`;
       }
       return '<td></td>';
     }).join('');
 
-    const linkifyRefs=text=>text?text.replace(/\b(\d{1,4})\b/g,(m,code)=>`<a href='#sec-${code}'>${code}</a>`):'';
+    const refTitles={};
+    function mapTitles(node){
+      Object.entries(node).forEach(([code,obj])=>{
+        if(obj&&obj.name)refTitles[code]=obj.name;
+        if(obj.groups)mapTitles(obj.groups);
+        if(obj.classes)mapTitles(obj.classes);
+        if(obj.subclasses)mapTitles(obj.subclasses);
+      });
+    }
+    mapTitles(raw);
+
+    const linkifyRefs=text=>text?text.replace(/\b(\d{1,4})\b/g,(m,code)=>{
+      const title=refTitles[code]?`Розділ ${code}: ${refTitles[code]}`:`Перейти до розділу ${code}`;
+      return `<a class='ref-link' href='#sec-${code}' data-title='${title}'>${code}</a>`;
+    }):'';
+
     const renderLists=(label,items)=>!items||!items.length?'':`<div class='desc'><b>${label}:</b><ul>${items.map(x=>`<li>${linkifyRefs(String(x))}</li>`).join('')}</ul></div>`;
 
     rows.sort((a,b)=>a.id.localeCompare(b.id,'uk'));
@@ -162,7 +194,7 @@ return false; // fallback — відкрита
       tr.id=`sec-${r.id}`;
       if(lvl===1)tr.classList.add('group-title');
       if(lvl===2)tr.classList.add('subgroup-title');
-      const codeCells=makeCodeCells(r.id,lvl);
+      const codeCells=makeCodeCells(r.id,lvl,r.name);
       const noteBlock=r.note?`<div class='desc'>${linkifyRefs(String(r.note))}</div>`:'';
       const includes=renderLists('Цей клас включає',r.includes);
       const excludes=renderLists('Цей клас не включає',r.excludes);
