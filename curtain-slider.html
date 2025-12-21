@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>OpenLayers Curtain (Drag Handle)</title>
+
+    <!-- OpenLayers CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@7.5.2/ol.css">
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            cursor: grab;
+        }
+
+        /* Curtain handle */
+        #curtain {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #ffcc00;
+            cursor: ew-resize;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+
+        #curtain::after {
+            content: '↔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+            background: #ffcc00;
+            border-radius: 4px;
+            cursor: ew-resize;
+            user-select: none;
+        }
+
+        #home-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            font-size: 20px;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1100;
+            user-select: none;
+        }
+
+        #home-btn:hover {
+            background: #f0f0f0;
+        }
+
+        #basemap-toggle {
+            position: fixed;
+            top: 16px;
+            right: 64px;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            font-size: 18px;
+            background: #ffffff;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            cursor: pointer;
+            z-index: 1100;
+            user-select: none;
+        }
+
+        #basemap-toggle:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="home-btn" title="Початковий вид">🏠</div>
+<div id="curtain"></div>
+
+<div id="basemap-toggle" title="Перемкнути фонову карту">🛰️</div>
+
+<!-- OpenLayers JS -->
+<script src="https://cdn.jsdelivr.net/npm/ol@7.5.2/dist/ol.js"></script>
+
+<script>
+    if (typeof ol === 'undefined') {
+        alert('OpenLayers не завантажився. Перевір доступ до CDN.');
+    }
+
+    const mapEl = document.getElementById('map');
+    const curtain = document.getElementById('curtain');
+    const EDGE_PADDING = 22;
+
+    /* ----------- MAP & LAYERS ----------- */
+
+    const osmLayer = new ol.layer.Tile({
+        visible: false,
+        source: new ol.source.OSM()
+    });
+
+    const googleLayer = new ol.layer.Tile({
+        visible: true,
+        source: new ol.source.XYZ({
+            url: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+            crossOrigin: 'anonymous'
+        })
+    });
+
+    const leftLayer = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+            url: 'https://api.maptiler.com/tiles/019b3c5e-e21a-7408-aa43-e2d77da63686/{z}/{x}/{y}.png?key=uXAD36HvKVb9oMB5dFlV'
+            
+        })
+    });
+const key = '7JUTiyTWHkC7qe7Dy8Qj';
+    const rightLayer = new ol.layer.Tile({
+        source: new ol.source.XYZ({
+            url: 'https://api.maptiler.com/tiles/019b3caa-7bd6-7a5e-a2d3-4288ad101799/{z}/{x}/{y}.webp?key=7JUTiyTWHkC7qe7Dy8Qj'
+            
+        })
+    });
+
+    const initialView = {
+        center: ol.proj.fromLonLat([31.998418,49.451599 ]),
+        zoom: 15
+    };
+
+    const map = new ol.Map({
+        target: 'map',
+        layers: [googleLayer, osmLayer, leftLayer, rightLayer],
+        view: new ol.View(initialView)
+    });
+
+    /* ----------- CURTAIN STATE ----------- */
+
+    let curtainX = 0;
+
+    function setCurtainFromFraction(fraction) {
+        const rect = mapEl.getBoundingClientRect();
+        curtainX = Math.round(rect.width * fraction);
+        curtainX = Math.max(EDGE_PADDING, Math.min(curtainX, rect.width - EDGE_PADDING));
+        curtain.style.left = (rect.left + curtainX) + 'px';
+        map.render();
+    }
+
+    map.once('postrender', () => setCurtainFromFraction(0.5));
+
+    /* ----------- CLIP RIGHT LAYER ----------- */
+
+    rightLayer.on('prerender', function (event) {
+        const ctx = event.context;
+        const pixelRatio = event.frameState.pixelRatio || 1;
+        const clipX = curtainX * pixelRatio;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(clipX, 0, ctx.canvas.width - clipX, ctx.canvas.height);
+        ctx.clip();
+    });
+
+    rightLayer.on('postrender', function (event) {
+        event.context.restore();
+    });
+
+    /* ----------- CLIP LEFT LAYER ----------- */
+
+    leftLayer.on('prerender', function (event) {
+        const ctx = event.context;
+        const pixelRatio = event.frameState.pixelRatio || 1;
+        const clipX = curtainX * pixelRatio;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, clipX, ctx.canvas.height);
+        ctx.clip();
+    });
+
+    leftLayer.on('postrender', function (event) {
+        event.context.restore();
+    });
+
+
+    /* ----------- DRAG LOGIC ----------- */
+
+    let dragging = false;
+
+    curtain.addEventListener('mousedown', () => dragging = true);
+    window.addEventListener('mouseup', () => dragging = false);
+
+    window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        const rect = mapEl.getBoundingClientRect();
+        curtainX = e.clientX - rect.left;
+        curtainX = Math.max(EDGE_PADDING, Math.min(curtainX, rect.width - EDGE_PADDING));
+        curtain.style.left = (rect.left + curtainX) + 'px';
+        map.render();
+    });
+
+    window.addEventListener('resize', () => {
+        const rect = mapEl.getBoundingClientRect();
+        const fraction = curtainX / rect.width;
+        map.updateSize();
+        setCurtainFromFraction(fraction);
+    });
+
+    /* ----------- HOME BUTTON ----------- */
+
+    document.getElementById('home-btn').addEventListener('click', () => {
+        map.getView().setCenter(initialView.center);
+        map.getView().setZoom(initialView.zoom);
+    });
+
+    /* ----------- BASEMAP SWITCHER ----------- */
+
+    let currentBasemap = 'google';
+
+    function updateBasemapIcon() {
+        basemapToggle.textContent = currentBasemap === 'google' ? '🛰️' : '🗺️';
+        basemapToggle.title = currentBasemap === 'google'
+            ? 'Google Satellite'
+            : 'OpenStreetMap';
+    }
+
+    const basemapToggle = document.getElementById('basemap-toggle');
+    updateBasemapIcon();
+
+    basemapToggle.addEventListener('click', () => {
+        if (currentBasemap === 'google') {
+            googleLayer.setVisible(false);
+            osmLayer.setVisible(true);
+            currentBasemap = 'osm';
+        } else {
+            googleLayer.setVisible(true);
+            osmLayer.setVisible(false);
+            currentBasemap = 'google';
+        }
+        updateBasemapIcon();
+    });
+
+</script>
+</body>
+</html>
